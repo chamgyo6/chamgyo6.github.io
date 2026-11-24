@@ -57,6 +57,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .hr small{display:block;font-size:12px;color:var(--mute);margin-top:4px}
 #combo{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 92px);z-index:5;pointer-events:none;
   font:400 34px/1 var(--display);color:var(--hazard);-webkit-text-stroke:6px #120d08;paint-order:stroke fill;transform-origin:right center}
+#game.dead{filter:grayscale(1) contrast(1.15) brightness(.8);transition:filter 1.4s ease-out}
+#deathTxt{position:fixed;left:0;right:0;top:42%;z-index:7;pointer-events:none;text-align:center;background:linear-gradient(90deg,transparent,rgba(0,0,0,.72) 20%,rgba(0,0,0,.72) 80%,transparent);padding:14px 0;opacity:0;transition:opacity .5s}
+#deathTxt.on{opacity:1}
+#deathTxt .dt{font:400 clamp(48px,13vw,96px)/1 var(--display);color:#d11f1f;letter-spacing:.08em;-webkit-text-stroke:2px #2a0505;animation:dstamp .6s cubic-bezier(.2,1.6,.4,1) both}
+#deathTxt .ds{margin-top:8px;font:700 clamp(13px,3.6vw,17px)/1.3 var(--body);color:#eee}
+@keyframes dstamp{from{transform:scale(2.6);opacity:0}to{transform:scale(1);opacity:1}}
 #banner{position:fixed;left:0;right:0;top:30%;z-index:6;pointer-events:none;text-align:center;padding:0 16px}
 #banner .t{font:400 clamp(40px,10vw,68px)/1 var(--display);-webkit-text-stroke:10px #120d08;paint-order:stroke fill;color:var(--hazard)}
 #banner .s{margin-top:10px;font:700 clamp(14px,3.6vw,18px)/1.3 var(--body);-webkit-text-stroke:5px #120d08;paint-order:stroke fill}
@@ -131,6 +137,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 </div>
 <div id="combo"></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
+<div id="deathTxt" hidden><div class="dt"></div><div class="ds"></div></div>
 <div id="topbtns" hidden><button id="viewBtn">시점: 3인칭</button><button id="mute">소리 ON</button></div>
 <div id="touch" hidden>
   <div id="look"></div>
@@ -664,6 +671,7 @@ let S=null,best=loadBest(),running=false,viewMode='3rd';
 const v3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 
 function newGame(){
+  cv.classList.remove('dead');{const d=document.getElementById('deathTxt');d.hidden=true;d.classList.remove('on')}
   if(S)disposeGame();
   if(!gymGroup){gymGroup=buildGym();scene.add(gymGroup)}
   const pm=makePerson(LOOKS.player);scene.add(pm.root);scene.add(pm.shadow);
@@ -1641,7 +1649,8 @@ function updateInno(n,dt){
 // ================= main update =================
 let promptEl=null,hintEl=null;S=null;
 function update(dt){
-  if(!S)return;
+  if(!S||S.frozen)return;
+  if(S.death){S.death.t+=dt;S.death.yaw+=dt*.45;const p=S.p;if(p.pos.y>0){p.pos.y=Math.max(0,p.pos.y-dt*5);if(p.state==='climb')p.pos.z=Math.min(p.pos.z+dt*2,WALL_Z+.9)}}
   S.t+=dt;
   if(S.slowT>0){S.slowT-=dt;if(S.slowT<=0)S.slow=1}
   if(S.paused){input.jumpP=input.atkP=input.actP=0;return}
@@ -1689,17 +1698,24 @@ function update(dt){
   input.jumpP=input.atkP=input.actP=0;
 }
 function gameOver(reason,sub){
-  if(S.over)return;if(reason.startsWith('출입금지'))sub='직원: "저도 이러고 싶지 않아요 ㅠㅠ" · '+sub;S.over=true;S.slow=.3;S.slowT=1.2;sfx('slam');bgmStop();
+  if(S.over)return;if(reason.startsWith('출입금지'))sub='직원: "저도 이러고 싶지 않아요 ㅠㅠ" · '+sub;S.over=true;S.slow=.25;S.slowT=2.4;bgmStop(.4);
+  const ban=reason.startsWith('출입금지');S.death={t:0,yaw:camYaw};S.combo=0;
+  sfx('slam');if(AC&&!muted){tone(130,38,1.6,'sawtooth',.3,.15);noise(1.4,380,.7,.15);tone(65,30,1.8,'sine',.8,.15)}buzz([120,60,300]);
+  cv.classList.add('dead');banner('','',0.01);
+  const dtx=document.getElementById('deathTxt');dtx.querySelector('.dt').textContent=ban?'출입 금지':'멘탈 붕괴';
+  dtx.querySelector('.ds').textContent=ban?pick(['직원: "회원님... 짐 싸서 나가주세요"','직원: "멀쩡한 회원 때리시면 안 돼요 ㅠㅠ"','회원권 정지 처리되었습니다']):pick(['빌런들한테 멘탈이 털렸다...','오늘은 그냥 집에 가자...','초크통 끌어안고 오열 중']);
+  setTimeout(()=>{dtx.hidden=false;requestAnimationFrame(()=>dtx.classList.add('on'))},450);
   const nb=S.score>best;if(nb){best=S.score;saveBest(best)}
   setTimeout(()=>{
     document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
     document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
+    S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{dtx.hidden=true},500);
     showHighlight();
     document.getElementById('kpBtn').textContent=pick(['💉 개발자 체외충격파 치료비 보태주기','🩴 개발자 암벽화 창갈이값 보태주기','☕ 개발자 커피 한 잔 사주기','🩹 개발자 테이핑값 보태주기','🎫 개발자 1일권 쏴주기']);
     submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
-  },1300);
+  },2800);
 }
 
 // ================= render sync =================
@@ -1714,7 +1730,8 @@ function syncScene(){
   const p=S.p;
   // player
   let pn='stand',kk=0;
-  if(p.state==='climb')pn=p.atkKind?'kick':'climb';
+  if(S.death)pn=S.death.t<.35?'hurt':'down';
+  else if(p.state==='climb')pn=p.atkKind?'kick':'climb';
   else if(p.state==='air')pn=p.dive?'dive':'air';
   else if(p.mv&&p.atkKind){pn=p.mv.pose;kk=1-p.atkT/p.atkDur}
   else if(p.atkKind==='punch'){pn='punch';kk=1-p.atkT/p.atkDur}
@@ -1811,7 +1828,10 @@ function updateCamera(dt){
   const p=S.p;let tgt=p.pos;
   if(S.camFocus&&S.camFocus.t>0&&S.camFocus.v)tgt=S.camFocus.v.pos;
   let look2=null;if(S.koCam&&S.koCam.t>0&&viewMode==='3rd'&&!(S.camFocus&&S.camFocus.t>0)){const kv=S.koCam.v.pos;look2=v3((p.pos.x+kv.x)/2,Math.max(p.pos.y,kv.y*.6)+1.2,(p.pos.z+kv.z)/2)}
-  if(viewMode==='iso'){
+  if(S.death){const k=Math.min(1,S.death.t/2),d=4.2-1.8*k,y=S.death.yaw;
+    const want=v3(p.pos.x+Math.sin(y)*d,1.2+2.6*k,p.pos.z+Math.cos(y)*d);want.x=clamp(want.x,RX0+.4,RX1-.4);want.z=clamp(want.z,WALL_Z+.6,RZ1-.3);
+    camPos.lerp(want,Math.min(1,dt*3));camLook.lerp(v3(p.pos.x,.3,p.pos.z),Math.min(1,dt*4));camera.fov+=(48-camera.fov)*Math.min(1,dt*2);
+  }else if(viewMode==='iso'){
     camera.fov+= (32-camera.fov)*Math.min(1,dt*6);camFov=60;
     const z=camera.aspect<1?1.45:1;const want=v3(tgt.x+Math.sin(ISO_YAW)*15*z,tgt.y*.5+15*z,tgt.z+Math.cos(ISO_YAW)*15*z);
     camPos.lerp(want,Math.min(1,dt*5));camLook.lerp(v3(tgt.x,tgt.y*.5+.8,tgt.z),Math.min(1,dt*6));
