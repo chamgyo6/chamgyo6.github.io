@@ -33,6 +33,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .beta{font:600 15px/1.2 var(--body);background:#fff;color:#2a1b4a;border:2.5px solid #7b4fd6;padding:7px 12px;border-radius:12px;animation:beta 3.4s ease-out forwards}
 @keyframes beta{0%{opacity:0;scale:.6}5%{opacity:1;scale:1}85%{opacity:1}100%{opacity:0;translate:0 -50px}}
 .arrow{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:22px solid var(--hit);filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
+.credit{display:block;text-align:center;font:700 13px/1.6 var(--body);color:var(--mute);text-decoration:none;padding:6px;word-break:keep-all}
+.credit b{color:var(--chalk)}.credit:hover b,.credit:focus-visible b{color:var(--hazard)}
+.igbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#fff;padding:12px 16px;border-radius:8px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af);box-shadow:0 4px 0 #5b1f7a}
 .linkbtn{background:none;border:0;color:var(--mute);font:700 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
 .prompt{font:400 19px/1 var(--display);color:var(--ok);-webkit-text-stroke:5px #120d08;paint-order:stroke fill}
 #hud{position:fixed;left:0;right:0;top:0;z-index:5;pointer-events:none;
@@ -145,6 +148,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <button class="btn" id="start3">참교육 시작<small>3인칭 · 등 뒤 카메라</small></button>
     <button class="btn alt" id="startDaily">📅 오늘의 챌린지<small id="dailyMod">오늘의 규칙</small></button>
     <button class="linkbtn" id="startIso">쿼터뷰(2.5D)로 하기</button>
+    <a class="credit" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">🧗 만든 사람 <b>@hyeok_73</b> · 인스타에서 클라이밍 일상 보기</a>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
   </div>
 </div>
@@ -159,6 +163,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <p class="lead" id="overSub"></p>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
+    <a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 만든 사람 @hyeok_73 팔로우하기</a>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
     <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
   </div>
@@ -1867,7 +1872,7 @@ async function submitScore(){
 const SHARE_URL=(window.claude&&window.claude.use)?'https://claude.ai/artifact/HYxAJj3SZmPxCRzicqtWq6':(location.protocol.startsWith('http')?location.origin+location.pathname:'');
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
-  const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점 · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'');
+  const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점 · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n만든 사람 인스타 @hyeok_73';
   const ta=document.getElementById('shareText');
   if(!window.claude&&navigator.share){try{await navigator.share({text:txt});return}catch(err){}}
   try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
@@ -1889,6 +1894,7 @@ function grabHighlight(){
     x.textAlign='left';x.lineJoin='round';
     x.font="44px 'Black Han Sans',sans-serif";x.lineWidth=8;x.strokeStyle='#120d08';x.strokeText(r.text,22,H-46);x.fillStyle='#ffd23f';x.fillText(r.text,22,H-46);
     x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='#f4f1ea';x.fillText(`참교육 클라이밍 · WAVE ${S.wave} · ${S.score.toLocaleString()}점`,24,H-18);
+    x.textAlign='right';x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='rgba(255,255,255,.85)';x.fillText('📷 @hyeok_73',W-18,28);x.textAlign='left';
     S.hl={prio:r.prio,url:c.toDataURL('image/jpeg',.85),text:r.text};
   }catch(e){}
 }
