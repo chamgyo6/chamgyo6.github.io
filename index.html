@@ -986,6 +986,10 @@ function knockOut(v,kind,dir){
   cheer(style||v.type==='boss'?2:1);
   S.fovKick=Math.max(S.fovKick,.8);S.koCam={v,t:.7};if(v.type!=='boss'){S.slow=Math.min(S.slow,.35);S.slowT=Math.max(S.slowT,.3)}
   lastHit(v);
+  // 주변 사람들 반응 (2초에 한 번, 가까운 두 명)
+  if(!(S.reactCD>S.t)){S.reactCD=S.t+2;const near=S.walkers.concat(S.crowd).filter(o=>o.state!=='fly'&&xzDist(o.pos,v.pos)<9).sort((a,b)=>xzDist(a.pos,v.pos)-xzDist(b.pos,v.pos)).slice(0,2);
+    const L=v.type==='boss'?['사장님 불러!!!','이건 역사다','오늘 센터 레전드 찍혔다']:['헐 방금 봤어??','영상 찍었어?','와 저 무브 뭐야','인스타 각','속이 다 시원하네','저거 몇 점짜리야'];
+    near.forEach((o,i)=>setTimeout(()=>{if(S&&!S.over)say(o,pick(L),1.6)},250+i*450))}
   if(v.type==='boss'){S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!','텃세 대마왕 퇴치',2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
 }
 function despairKO(v,label,bonus,line){
