@@ -16,11 +16,12 @@ service cloud.firestore {
         && d.title is string && d.title.size() <= 20;
     }
 
-    // 닉네임 소유권: 문서 id = 닉네임, 처음 등록한 사람 것. 바꾸거나 지울 수 없음
+    // 닉네임 소유권: 문서 id = 닉네임, 처음 등록한 사람 것. 바꾸거나 지울 수 없음. '개발자'가 들어간 이름은 콘솔에서만 만들 수 있음
     match /names/{n} {
       allow read: if true;
       allow create: if request.auth != null
         && n.size() >= 2 && n.size() <= 12
+        && !n.matches('.*개발자.*')
         && request.resource.data.keys().hasOnly(['uid'])
         && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
