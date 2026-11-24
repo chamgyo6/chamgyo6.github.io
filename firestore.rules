@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 랭킹: 누구나 읽고, 각자 자기 기록(익명 로그인 uid)만 쓰며, 최고 기록은 내려갈 수 없음
+    match /scores/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'best', 'wave', 'kos', 'combo', 'at', 'title'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 12
+        && request.resource.data.best is int
+        && request.resource.data.best >= 0 && request.resource.data.best <= 2000000
+        && (resource == null || request.resource.data.best >= resource.data.best);
+      allow delete: if false;
+    }
+  }
+}
