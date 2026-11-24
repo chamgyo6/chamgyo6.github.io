@@ -450,7 +450,6 @@ const LOOKS={
   chatter:{skin:0xe3b892,shirt:0xf472b6,pants:0x1f2937,hair:0x3b2416,shoe:0xeeeeee,pony:true},
   photogroup:{skin:0xd9a577,shirt:0x22d3ee,pants:0x1e293b,hair:0x111111,shoe:0xffffff},
   thief:{skin:0xc99067,shirt:0x1f1f1f,pants:0x111111,hat:'beanie',hatC:0x111111,shoe:0x555555},
-  chalkthief:{skin:0xe3b892,shirt:0xf97316,pants:0x334155,hair:0x2a1d14,shoe:0xeeeeee},
   barefoot:{skin:0xd9a577,shirt:0x14b8a6,pants:0x3f3f46,shorts:true,hair:0x1a1a1a,shoe:0xd9a577},
   screamer:{skin:0xd8a77c,shirt:0xec4899,pants:0x1e293b,shorts:true,hair:0x111111,band:0xfacc15,shoe:0xffffff},
   hogger:{skin:0xe0b48a,shirt:0x64748b,pants:0x111827,shorts:true,hat:'beanie',hatC:0x0ea5e9,shoe:0xd9d9d9},
@@ -639,7 +638,6 @@ const VT={
   chatter:{name:'벽 앞 수다 모임',hp:2,speed:2.12,score:80,drain:.25},
   photogroup:{name:'매트 위 인증샷 무리',hp:2,speed:2.25,score:80,drain:.3},
   thief:{name:'락커 털이범',hp:3,speed:2.5,score:300,drain:.4},
-  chalkthief:{name:'남의 초크 쓰는 놈',hp:3,speed:2.25,score:150,drain:.5},
   barefoot:{name:'맨발 클라이머',hp:3,speed:2.25,score:150,drain:.4},
   screamer:{name:'비명 클라이머',hp:3,speed:2.38,score:150,drain:.4},
   hogger:{name:'문제 독점러',hp:4,speed:2.38,score:200,drain:.6},
@@ -659,7 +657,6 @@ const LINES={
   chatter:{idle:['ㅋㅋㅋ 그래서 걔가~','아 진짜?? 대박','근데 저번에 그 문제 있잖아','아 오늘 몸이 안 풀리네~','ㅋㅋㅋㅋㅋ'],hurt:['아 왜요?!','얘기 중이었는데!']},
   photogroup:{idle:['하나 둘 셋 김치~','한 장만 더!','이번엔 점프샷!','다들 손 브이~'],hurt:['아 사진 흔들렸잖아!','왜 때려요?!']},
   thief:{idle:[],hurt:['놔! 놔!!','아 걸렸다!']},
-  chalkthief:{idle:['초크 좀 빌릴게요~ (안 물어봄)','이거 좋은 초크네'],hurt:['초크 좀 쓴 거 갖고!','아 왜요!']},
   barefoot:{idle:['맨발이 그립감 최고지~','신발은 사치야','발가락으로 잡는 거야'],hurt:['발 시원한데 왜요!','신발 답답하단 말이에요!']},
   screamer:{idle:['하앗!!','으랏차!!','끄아앗!!'],hurt:['끼야아악!!!','아악 왜 때려!!']},
   hogger:{idle:['아 왜 안 풀리지!!','씨... 한 번만 더','이게 왜 안 돼','거의 다 됐는데!!'],hurt:['제 문제인데요?!','아 왜요!']},
@@ -669,8 +666,8 @@ const LINES={
   boss:{idle:['내가 여기 10년 다녔어','클린이는 저쪽 벽 써','이 문제 내 거야, 손대지 마','여긴 원래 우리 자리야','인사도 안 하네 요즘 것들'],hurt:['어딜 감히 클린이가!','크윽... 클린이 주제에...!']},
 };
 const BETA=['왼발 하이스텝!','그거 다이노로 가야돼요','제가 해봤는데요~','힘으로 하지 마시고요','힐훅 거세요 힐훅','코어! 코어!','그 홀드 아니에요','팔 펴세요 팔!','저는 플래시했는데','숨 쉬세요~','발 보세요 발!'];
-const WAVES=[['sitter','sitter','chalker'],['dumper','chalker','chatter','sitter'],['crowder','filmer','hogger','matwalker'],['locker','photogroup','chalkthief'],['boss'],['thief','spoiler','screamer','barefoot'],['chalkhand','chalkthief','sprayer','matwalker'],['thief','chatter','photogroup','crowder']];
-const WAVE_HINT=['회원들 사이에 빌런이 숨어 있다. 빌런짓으로 마커가 뜬 놈만 응징!','짐 폭탄 물건은 출구로 차버려라 · 벽 앞 수다 모임은 셋이 뭉쳐 있다 (도미노 찬스)','촬영충 삼각대 E = 녹화 정지 · 문제 독점러는 계속 다시 붙는다 · 매트 산책러는 벽 위에서 덮쳐라','락커 방치범은 패지 말고 E로 잠가버려 · 인증샷 무리는 벽 위에서 덮쳐라!','보스 등장! 돌진 전 "!"가 뜨면 옆으로 피해라','락커 털이범은 털고 나면 출구로 튄다! 놓치지 마라','남의 초크백 앞에서 E = 주인에게 반납 · 초크 손자국 놈을 막아라'];
+const WAVES=[['sitter','sitter','chalker'],['dumper','chalker','chatter','sitter'],['crowder','filmer','hogger','matwalker'],['locker','photogroup','chalker'],['boss'],['thief','spoiler','screamer','barefoot'],['chalkhand','chalker','sprayer','matwalker'],['thief','chatter','photogroup','crowder']];
+const WAVE_HINT=['회원들 사이에 빌런이 숨어 있다. 빌런짓으로 마커가 뜬 놈만 응징!','짐 폭탄 물건은 출구로 차버려라 · 벽 앞 수다 모임은 셋이 뭉쳐 있다 (도미노 찬스)','촬영충 삼각대 E = 녹화 정지 · 문제 독점러는 계속 다시 붙는다 · 매트 산책러는 벽 위에서 덮쳐라','락커 방치범은 패지 말고 E로 잠가버려 · 인증샷 무리는 벽 위에서 덮쳐라!','보스 등장! 돌진 전 "!"가 뜨면 옆으로 피해라','락커 털이범은 털고 나면 출구로 튄다! 놓치지 마라','초크 손자국 놈을 막아라 · 초크 폭격기는 앉은 사람 얼굴 앞에서 턴다'];
 // 지상 5단 연계: 잽 → 스트레이트 → 어퍼 → 돌려차기 → 캠퍼싱 연타(팡팡팡)
 // w: [시작, 끝, 타격 종류, 이름] — 연타는 구간마다 다시 맞힘
 const MOVES=[
@@ -811,7 +808,7 @@ const modIs=id=>!!(S&&S.daily&&TODAY_MOD.id===id);
 const DAY_LABEL=`${+DAY.slice(4,6)}월 ${+DAY.slice(6)}일`;
 document.getElementById('dailyMod').textContent=`${DAY_LABEL} · 오늘의 규칙: ${TODAY_MOD.name}`;
 function dailyWave(n){
-  const r=rngFor(n),pool=['sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','chalkthief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot'];
+  const r=rngFor(n),pool=['sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot'];
   const k=n<=4?n+1:Math.min(9,3+Math.floor((n-5)/1.4));const list=[];for(let i=0;i<k;i++)list.push(pool[(r()*pool.length)|0]);
   if(n%5===0)list.unshift('boss');return list;
 }
@@ -908,7 +905,7 @@ function startWave(){
   S.wave++;const n=S.wave;let list;
   if(S.daily)list=dailyWave(n);
   else if(n<=WAVES.length)list=WAVES[n-1].slice();
-  else if(!S.daily){const k=Math.min(11,4+Math.floor((n-5)/1.1));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','chalkthief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot']));if(n%5===0)list.unshift('boss')}
+  else if(!S.daily){const k=Math.min(11,4+Math.floor((n-5)/1.1));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot']));if(n%5===0)list.unshift('boss')}
   S.queue=list;S.spawnT=.35;
   banner((S.daily?'📅 ':'')+`WAVE ${n}`,S.daily?(list.includes('boss')?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'텃세 대마왕 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
 }
@@ -1333,19 +1330,6 @@ const AI={
       if(v.n>=2)reveal(v);
       if(v.revealed){S.mental-=3*Math.pow(.7,pk('mind'));S.shake=Math.max(S.shake,.06);if(Math.random()<.5)crowdMurmur(['깜짝이야!!','아 귀 아파','또 소리 지르네...'],.25)}
       if(Math.random()<.35)v.wallX=rand(WALL_X0+1,WALL_X1-1);
-    }
-  },
-  chalkthief(v,dt,p,d){
-    let bag=v.bag;
-    if(!bag&&!v.lost){const x=rand(WALL_X0+1.5,WALL_X1-1.5);bag=v.bag=makeChalkbag(v3(x,0,MAT_Z1+.35),v);S.objs.push(bag)}
-    if(v.lost){v.timer-=dt;if(v.timer<=0){v.timer=rand(3,5);say(v,pick(['내 초크 어디 갔지?','아 초크 없이 어떻게 해','누가 가져갔어?']),1.6)}
-      if(walkTo(v,v.tx,v.tz,d.speed*.7,dt))[v.tx,v.tz]=matSpot();return}
-    if(v.ph==='climb'){climbLoop(v,dt,v.wallX,.6);v.climbT-=dt;if(v.climbT<=0&&!v.onWall){v.ph=''}else if(v.climbT<=0){v.pos.y-=1.5*dt;if(v.pos.y<=0){v.pos.y=0;v.onWall=false;v.pos.z=WALL_Z+.6;v.ph=''}}return}
-    if(walkTo(v,bag.pos.x+.45,bag.pos.z,d.speed,dt)){
-      v.head=-Math.PI/2;v.dipT=(v.dipT==null?2.6:v.dipT)-dt;if(v.clap<=0)v.clap=.4;v.clap-=dt;
-      if(Math.random()<dt*6)puff(v3(bag.pos.x,.4,bag.pos.z),2,0xffffff,1.2,.06);
-      if(!v.revealed&&v.dipT<2){reveal(v,'(남의 초크백에 손 푹)');const n=pick(S.inno);if(n)pop(headPos(n,.2),'어...? 제 초크...',20,'#fff',1.4)}
-      if(v.dipT<=0){v.dipT=null;v.clap=0;v.ph='climb';v.climbT=rand(6,9);v.wallX=clamp(bag.pos.x+rand(-2,2),WALL_X0+.6,WALL_X1-.6)}
     }
   },
   thief(v,dt,p,d){
