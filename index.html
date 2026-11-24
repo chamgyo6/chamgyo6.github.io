@@ -1724,7 +1724,8 @@ function gameOver(reason,sub){
     S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{dtx.hidden=true},500);
     showHighlight();
     document.getElementById('kpBtn').textContent=pick(['💉 개발자 체외충격파 치료비 보태주기','🩴 개발자 암벽화 창갈이값 보태주기','☕ 개발자 커피 한 잔 사주기','🩹 개발자 테이핑값 보태주기','🎫 개발자 1일권 쏴주기']);
-    submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
+    const run=S;submitScore().then(async r=>{const el=document.getElementById('overSub');if(r==='new')el.textContent+=' · 🏆 랭킹 기록 갱신!';
+      const rk=await rankOf(run.score,run.daily?'daily':'all');if(rk&&S===run){run.rank=rk;el.textContent+=` · ${run.daily?'오늘':'전체'} ${rk}위`}});renderLB();
   },2800);
 }
 
@@ -1937,6 +1938,19 @@ function renderLB(){
 const sortTop=a=>a.sort((x,y)=>(Number(y.best)||0)-(Number(x.best)||0)).slice(0,10);
 // --- local ---
 const localKey=b=>b==='daily'?'chamgyo3d-local-d'+DAY:'chamgyo3d-local';
+// 이번 점수가 몇 위인지 (전체: 서버에서 나보다 높은 기록 수를 셈, 오늘: 받아둔 목록으로 계산)
+async function rankOf(score,b){
+  try{
+    if(LB.backend==='firebase'&&b==='all'){
+      const r=await fetch(`${FS}:runAggregationQuery?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredAggregationQuery:{
+        structuredQuery:{from:[{collectionId:'scores'}],where:{fieldFilter:{field:{fieldPath:'best'},op:'GREATER_THAN',value:{integerValue:String(score)}}}},aggregations:[{alias:'n',count:{}}]}})});
+      if(!r.ok)return null;const j=await r.json();const n=+(j[0]&&j[0].result&&j[0].result.aggregateFields&&j[0].result.aggregateFields.n&&j[0].result.aggregateFields.n.integerValue);
+      return Number.isFinite(n)?n+1:null}
+    const top=brd(b).top||[];if(!top.length)return null;
+    if(b==='all'&&LB.backend!=='local'&&top.length>=10&&score<Number(top[top.length-1].best))return null;
+    return top.filter(x=>x.id!==LB.uid&&x.id!=='local-me'&&Number(x.best)>score).length+1;
+  }catch(e){return null}
+}
 function localTop(b){let a=[];try{a=JSON.parse(localStorage.getItem(localKey(b))||'[]')}catch(e){}return Array.isArray(a)?a:[]}
 function localAdd(b,r){const out=sortTop(localTop(b).concat([r]));try{localStorage.setItem(localKey(b),JSON.stringify(out))}catch(e){}return out}
 // --- firebase (REST, anonymous auth) ---
@@ -2026,7 +2040,7 @@ async function submitScore(){
 const SHARE_URL='https://seo-kang-hyeok.github.io/seoakng/';
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
-  const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점 · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n개발자 인스타 @hyeok_73';
+  const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n개발자 인스타 @hyeok_73';
   const ta=document.getElementById('shareText');
   if(!window.claude&&navigator.share){try{await navigator.share({text:txt});return}catch(err){}}
   try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
