@@ -88,6 +88,9 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
 #bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
 #btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
+.hl{margin:0;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
+.hl img{width:100%;max-width:420px;border-radius:8px;border:2px solid #4a4038;display:block}
+.hl figcaption{font-size:12px;color:var(--mute)}
 .ttl{font:400 22px/1.2 var(--display);color:var(--ok)}
 .lbtabs{display:flex;gap:6px}.lbtabs button{flex:1;background:#2d2721;color:var(--mute);border:0;border-radius:6px;font:700 12px/1 var(--body);padding:8px;cursor:pointer}
 .lbtabs button.on{background:var(--hazard);color:#1a1300}
@@ -150,6 +153,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <div class="reason" id="overReason"></div>
     <div class="big" id="overScore">0</div>
     <div class="ttl" id="overTitle"></div>
+    <figure class="hl" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
     <p class="lead" id="overSub"></p>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
@@ -588,7 +592,7 @@ function newGame(){
     p:{pos:v3(-2,0,0),vel:v3(),head:Math.PI,state:'ground',pump:100,atkT:0,atkDur:0,atkKind:null,cstep:0,comboWin:0,hitSet:new Set(),dive:false,peakY:0,grabCD:0,inv:0,fireT:0,t:0,hurtT:0,m:pm,near:null,moving:0},
     inno:[]};
   PROBLEMS.forEach(p=>p.cd=0);
-  S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.grat=0;S.perks={};S.paused=false;S.perkT=0;
+  S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.hl=null;hlReq=null;S.grat=0;S.perks={};S.paused=false;S.perkT=0;
   PROBLEMS.forEach(pr=>pr.hog=null);
   [-9,-2,4.5].forEach((x,i)=>{const m=makePerson(INNO_LOOKS[i]);scene.add(m.root);scene.add(m.shadow);
     S.inno.push({pos:v3(x,.4+i*.7,CLIMB_Z),vel:v3(),state:'climb',dir:1,speed:rand(.45,.65),t:rand(0,5),m,scared:0,rest:0,head:Math.PI,spin:0,knocked:false})});
@@ -841,6 +845,7 @@ function knockOut(v,kind,dir){
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
   S.kos++;S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
   sfx('big');sfx('ko');ring(v.pos,2.2,0xffd23f);
+  highlight(v.type==='boss'?5:(v.lastKind||kind)==='slam'?4:(v.lastKind||kind)==='throw'||(v.lastKind||kind)==='domino'?3:1,v.type==='boss'?'텃세 대마왕 참교육 완료!!!':`${({slam:'바디슬램',throw:'멱살 던지기',dive:'드롭킥',domino:'도미노',juggle:'공중 콤보'})[v.lastKind||kind]||'참교육'}! ${v.name} 퇴치`);
   const style={slam:['바디슬램',300],dive:['드롭킥',150],domino:['도미노',200],juggle:['공중 콤보',150],throw:['멱살 던지기',150]}[v.lastKind||kind];
   let pts=VT[v.type].score*(1+S.combo*.1);if(style)pts+=style[1];
   const got=addScore(pts);
@@ -856,6 +861,7 @@ function despairKO(v,label,bonus,line){
   v.revealed=true;v.ko=true;v.state='despair';v.t=2.8;v.onWall=false;v.pos.y=0;v.vel.set(0,0,0);v.sitting=true;say(v,line,2.8);S.kos++;bumpCombo();
   const got=addScore(VT[v.type].score+bonus);
   pop(headPos(v,.6),label+'!',34,'#46d18c',1.7);pop(headPos(v,.1),`+${got}`,26,'#46d18c',1.7);
+  highlight(3,`${label}! ${v.name} 멘붕`);
   sfx('sad');S.slow=.5;S.slowT=.6;S.camFocus={v,t:2.4};setTimeout(()=>cheer(2),900);
 }
 function hitInnocent(n,dir){
@@ -1047,6 +1053,7 @@ function updateVillain(v,dt){
     }
     if(v.ko&&v.pos.x>RX1-.9&&v.pos.z>DOOR.z0-.3&&v.pos.z<DOOR.z1+.3&&v.pos.y<2.8&&!v.exited){
       v.exited=true;v.state='gone';const b=addScore(500);const dp=v3(RX1-1,2.6,(DOOR.z0+DOOR.z1)/2);
+      highlight(3,`${v.name} 문 밖으로 퇴장!`);
       pop(dp,'문 밖으로 퇴장!',36,'#46d18c',1.4);pop(v3(dp.x,dp.y-.5,dp.z),`+${b}`,28,'#46d18c',1.4);puff(v3(RX1-.5,1,dp.z),18,0xf4f1ea,4,.15);sfx('door');S.shake=.18;cheer(2);break;
     }
     const bounce=(ax,lo,hi)=>{if(v.pos[ax]<lo){v.pos[ax]=lo;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){S.shake=Math.max(S.shake,.1);sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6)}}
@@ -1533,6 +1540,7 @@ function gameOver(reason,sub){
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
     document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
+    showHighlight();
     submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
   },1300);
 }
@@ -1798,6 +1806,37 @@ document.getElementById('shareBtn').addEventListener('click',async e=>{
 });
 setTimeout(initLB,0);
 
+// ================= highlight capture =================
+// The best moment of the run (boss KO > body slam > throw/exit/meltdown > other KO) is grabbed
+// from the canvas right after a render, captioned, and shown on the game-over screen.
+let hlReq=null;
+function highlight(prio,text){if(!S||S.over)return;if(S.hl&&S.hl.prio>prio)return;if(hlReq&&hlReq.prio>prio)return;hlReq={prio,text,delay:.12}}
+function grabHighlight(){
+  const r=hlReq;hlReq=null;
+  try{
+    const W=640,H=Math.round(W*cv.height/cv.width),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    x.drawImage(cv,0,0,W,H);
+    const g=x.createLinearGradient(0,H*.62,0,H);g.addColorStop(0,'rgba(14,11,8,0)');g.addColorStop(1,'rgba(14,11,8,.85)');x.fillStyle=g;x.fillRect(0,H*.6,W,H*.4);
+    x.textAlign='left';x.lineJoin='round';
+    x.font="44px 'Black Han Sans',sans-serif";x.lineWidth=8;x.strokeStyle='#120d08';x.strokeText(r.text,22,H-46);x.fillStyle='#ffd23f';x.fillText(r.text,22,H-46);
+    x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='#f4f1ea';x.fillText(`참교육 클라이밍 · WAVE ${S.wave} · ${S.score.toLocaleString()}점`,24,H-18);
+    S.hl={prio:r.prio,url:c.toDataURL('image/jpeg',.85),text:r.text};
+  }catch(e){}
+}
+function showHighlight(){
+  const fig=document.getElementById('hl');if(!S||!S.hl){fig.hidden=true;return}
+  document.getElementById('hlImg').src=S.hl.url;fig.hidden=false;document.getElementById('hlSave').textContent='하이라이트 사진 저장';
+}
+document.getElementById('hlSave').addEventListener('click',async e=>{
+  if(!S||!S.hl)return;const btn=e.currentTarget,name=`참교육클라이밍_${S.score}점.jpg`;
+  const blob=await (await fetch(S.hl.url)).blob();
+  const C=window.claude;
+  if(C&&C.use){const dl=await C.use('downloads').catch(()=>null);
+    if(dl){try{await dl.save({filename:name,data:blob});btn.textContent='저장했어요!'}catch(err){btn.textContent=err&&err.code==='declined'?'저장 취소됨':'사진을 길게 눌러 저장하세요'}return}
+    btn.textContent='사진을 길게 눌러 저장하세요';return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();btn.textContent='저장했어요!';
+});
+
 // ================= loop =================
 let last=performance.now();
 function frame(now){
@@ -1805,6 +1844,7 @@ function frame(now){
   if(running)update(dt);
   if(S){if(running)syncScene();updateCamera(dt)}else{camera.position.set(Math.sin(now/4000)*6,3.2,4);camera.lookAt(0,2,WALL_Z)}
   renderer.render(scene,camera);
+  if(hlReq&&S&&running){hlReq.delay-=dt;if(hlReq.delay<=0)grabHighlight()}
   requestAnimationFrame(frame);
 }
 const muteBtn=document.getElementById('mute');
