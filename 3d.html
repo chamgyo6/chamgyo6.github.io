@@ -88,6 +88,20 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
 #bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
 #btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
+.lb{background:var(--panel);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;box-sizing:border-box}
+.lb h2{margin:0;font:400 20px/1 var(--display);color:var(--hazard)}
+.lb ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.lb li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:baseline;font-size:14px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.lb li b{font:400 16px/1 var(--display);color:var(--mute)}
+.lb li:nth-child(1) b{color:#ffd23f}.lb li:nth-child(2) b{color:#d9dde6}.lb li:nth-child(3) b{color:#e0a06a}
+.lb li.me{color:var(--ok)}
+.lb li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lb li em{font-style:normal;font-weight:700}
+.lb li small{color:var(--mute);font-size:11px;margin-left:6px}
+.lbnote{font-size:12px;color:var(--mute);line-height:1.5}
+.nick{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mute)}
+.nick input{flex:1;min-width:0;background:#2d2721;border:1px solid #4a4038;border-radius:6px;color:var(--chalk);font:700 15px/1 var(--body);padding:9px 10px;user-select:text;-webkit-user-select:text}
+.nick input:focus-visible{outline:2px solid var(--hazard);outline-offset:1px}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}#banner.show{animation:none}}
 </style>
 </head>
@@ -119,8 +133,10 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
       <kbd>E</kbd> 빌런 앞에서 <b style="color:var(--hazard)">멱살 잡기 → 다시 E로 던지기</b> · 벽 잡기 · 녹화 정지 · 락커 자물쇠<br>
       마우스 드래그 시점 회전 · <kbd>V</kbd> 3인칭 ↔ 쿼터뷰 전환
     </div>
+    <label class="nick" for="nick1">닉네임 <input id="nick1" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
     <button class="btn" id="start3">참교육 시작<small>3인칭 · 등 뒤 카메라</small></button>
     <button class="linkbtn" id="startIso">쿼터뷰(2.5D)로 하기</button>
+    <section class="lb" hidden><h2>🏆 명예의 전당</h2><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
   </div>
 </div>
 
@@ -130,6 +146,8 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <div class="reason" id="overReason"></div>
     <div class="big" id="overScore">0</div>
     <p class="lead" id="overSub"></p>
+    <section class="lb" hidden><h2>🏆 명예의 전당</h2><ol></ol><div class="lbnote"></div></section>
+    <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
     <button class="btn" id="retryBtn">다시 참교육</button>
   </div>
 </div>
@@ -422,10 +440,11 @@ function updateParts(dt){for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.l
 const input={fx:0,fz:0,kF:0,kB:0,kL:0,kR:0,jump:0,atk:0,act:0,jumpP:0,atkP:0,actP:0,stickX:0,stickY:0};
 const KM={KeyW:'kF',ArrowUp:'kF',KeyS:'kB',ArrowDown:'kB',KeyA:'kL',ArrowLeft:'kL',KeyD:'kR',ArrowRight:'kR',Space:'jump',KeyK:'jump',ShiftLeft:'run',ShiftRight:'run',KeyJ:'atk',KeyX:'atk',KeyE:'act',KeyF:'act'};
 addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='INPUT')return;
   if(e.code==='KeyV'&&S&&running){toggleView();return}
   const k=KM[e.code];if(!k)return;e.preventDefault();
   if(!input[k]){if(k==='jump')input.jumpP=1;if(k==='atk')input.atkP=1;if(k==='act')input.actP=1}input[k]=1});
-addEventListener('keyup',e=>{const k=KM[e.code];if(k){input[k]=0;e.preventDefault()}});
+addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;const k=KM[e.code];if(k){input[k]=0;e.preventDefault()}});
 // mouse: drag to orbit, click to attack
 let camYaw=0,camPitch=.4,dragging=null,lastManual=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;dragging={x:e.clientX,y:e.clientY,moved:0};cv.setPointerCapture(e.pointerId)});
@@ -1253,6 +1272,7 @@ function gameOver(reason,sub){
     document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
     document.getElementById('overSub').textContent=`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
+    submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
   },1300);
 }
 
@@ -1381,6 +1401,54 @@ function updateCamera(dt){
 }
 function toggleView(){viewMode=viewMode==='3rd'?'iso':'3rd';document.getElementById('viewBtn').textContent='시점: '+(viewMode==='3rd'?'3인칭':'쿼터뷰')}
 document.getElementById('viewBtn').addEventListener('click',e=>{toggleView();e.currentTarget.blur()});
+
+// ================= leaderboard (shared db) =================
+const LB={db:null,uid:null,top:[],mine:null,state:'loading',writeOff:false,lastRank:null};
+function nickVal(){let n='';try{n=localStorage.getItem('chamgyo3d-nick')||''}catch(e){}return n}
+function cleanNick(n){return String(n||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,12)}
+['nick1','nick2'].forEach(id=>{const el=document.getElementById(id);el.value=nickVal();
+  el.addEventListener('input',()=>{const v=cleanNick(el.value);try{localStorage.setItem('chamgyo3d-nick',v)}catch(e){}['nick1','nick2'].forEach(o=>{if(o!==id)document.getElementById(o).value=v})})});
+function renderLB(){
+  for(const sec of document.querySelectorAll('.lb')){
+    sec.hidden=LB.state==='off';const ol=sec.querySelector('ol'),note=sec.querySelector('.lbnote');ol.textContent='';
+    LB.top.forEach((r,i)=>{const li=document.createElement('li');if(r.id===LB.uid)li.className='me';
+      const b=document.createElement('b');b.textContent=i+1;const sp=document.createElement('span');sp.textContent=cleanNick(r.name)||'익명 클라이머';
+      const em=document.createElement('em');em.textContent=(Number(r.best)||0).toLocaleString();const sm=document.createElement('small');sm.textContent='W'+(Number(r.wave)||0);em.appendChild(sm);
+      li.append(b,sp,em);ol.appendChild(li)});
+    let t='';
+    if(LB.state==='loading')t='랭킹 불러오는 중...';
+    else if(LB.state==='slow')t='랭킹 서버에 아직 연결이 안 돼요. 잠시 후 다시 보여요.';
+    else if(LB.state==='error')t='랭킹을 불러오지 못했어요.';
+    else if(!LB.top.length)t='아직 기록이 없어요. 첫 번째 참교육러가 되어보세요!';
+    if(LB.state==='ok'){
+      if(!LB.uid)t+=(t?' ':'')+'로그인하면 내 기록을 올릴 수 있어요.';
+      else if(LB.writeOff)t+=(t?' ':'')+'지금 권한으로는 보기만 가능해요. 링크 주인에게 참여자 권한을 받으면 등록돼요.';
+      else if(LB.mine&&!LB.top.some(r=>r.id===LB.uid))t+=(t?' ':'')+`내 최고 기록 ${(Number(LB.mine.best)||0).toLocaleString()}점`;
+    }
+    note.textContent=t;note.hidden=!t;
+  }
+}
+async function initLB(){
+  const C=window.claude;if(!C||!C.use){LB.state='off';renderLB();return}
+  let db=null,user=null;try{[db,user]=await Promise.all([C.use('db'),C.use('user')])}catch(e){}
+  if(!db){LB.state='off';renderLB();return}
+  LB.db=db;try{LB.uid=user?await user.id():null;const cw=user?await user.can('data.write'):null;if(cw===false)LB.writeOff=true}catch(e){}
+  let slow=setTimeout(()=>{if(LB.state==='loading'){LB.state='slow';renderLB()}},10000);
+  try{db.collection('scores').orderBy('best','desc').limit(10).onSnapshot(snap=>{
+      LB.top=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(!snap.metadata.fromCache){clearTimeout(slow);LB.state='ok'}else if(LB.state==='loading')LB.state='ok';renderLB()},
+    ()=>{clearTimeout(slow);LB.state='error';renderLB()});
+    if(LB.uid)db.doc('scores/'+LB.uid).onSnapshot(d=>{LB.mine=d.exists?d.data():null;renderLB()},()=>{});
+  }catch(e){LB.state='error';renderLB()}
+}
+async function submitScore(){
+  if(!LB.db||!LB.uid||LB.writeOff||!S||S.score<=0)return;
+  const name=cleanNick(nickVal())||'익명 클라이머';const ref=LB.db.doc('scores/'+LB.uid);
+  try{
+    if(!LB.mine||S.score>(Number(LB.mine.best)||0)){await ref.set({name,best:S.score,wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now()});return 'new'}
+    if(LB.mine.name!==name)await ref.update({name});
+  }catch(e){if(e&&(e.code==='invalid_argument'||e.code==='not_granted'))LB.writeOff=true;renderLB()}
+}
+setTimeout(initLB,0);
 
 // ================= loop =================
 let last=performance.now();
