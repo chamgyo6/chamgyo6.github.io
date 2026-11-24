@@ -648,7 +648,7 @@ const VT={
 };
 const LINES={
   sitter:{idle:['잠깐 쉬는 건데요?','여기 자리 좋네~','(폰 보는 중)','낙하 구역? 그게 뭔데','5분만요~'],hurt:['아니 왜요?!','악! 내 폰!','쉬는 것도 안 돼요?']},
-  chalker:{idle:['손 미끄러워서요~','초크는 털어야 제맛','어릴 때부터 이렇게 했는데요?','선출 루틴입니다~','이거 원래 다 이렇게 해요'],hurt:['저 선출인데요?!','코치님!!','콜록 내 초크!','아 대회 준비 중인데!']},
+  chalker:{idle:['손 미끄러워서요~','초크는 털어야 제맛','이거 원래 다 이렇게 해요','털어야 잘 붙어요~'],hurt:['콜록 내 초크!','아 손 털던 중인데!','초크 아깝다!']},
   crowder:{idle:['저도 이거 할게요~','같이 붙어요 ㅎㅎ'],hurt:['으악 떨어진다!','붙은 것뿐인데!']},
   sprayer:{idle:['제가 좀 아는데요'],hurt:['아니 제 말은요!','도와드린 건데?!']},
   spoiler:{idle:[],hurt:['아니 그냥 해본 건데?!','쉬운 걸 쉽다고 한 거지!']},
@@ -1256,7 +1256,7 @@ const AI={
       if(v.flickCD<=0){v.flickCD=.38;v.flicks++;
         S.clouds.push(makeCloud(v3(c.pos.x+rand(-.25,.25),1.05,c.pos.z-.25),rand(.9,1.25),2.4));puff(v3(c.pos.x,1.1,c.pos.z-.2),6,0xffffff,1.6,.07);sfx('chalk');
         if(v.flicks===1){reveal(v,'(앉은 사람 얼굴 앞에서 손 탈탈)');say(v,pick(['탈탈탈~','팡팡!']),1);c.booT=1.6;setTimeout(()=>{if(S&&!S.over)say(c,pick(['아 얼굴에!!','콜록콜록!!','저기요...!!','눈에 들어갔어요','아 진짜 왜 여기서 털어']),1.8)},250)}
-        if(v.flicks===3&&Math.random()<.5)crowdMurmur(['또 저러네','선출 특','매트 앞에서 왜 털어','아 초크 냄새'])}
+        if(v.flicks===3&&Math.random()<.5)crowdMurmur(['또 저러네','매트 앞에서 왜 털어','아 초크 냄새','저기서 털지 좀...'])}
       v.timer-=dt;if(v.timer<=0){v.ph='walk';v.timer=rand(2.2,3.2);v.posePN=null;[v.tx,v.tz]=matSpot()}return}
     if(walkTo(v,v.tx,v.tz,d.speed*.8,dt))[v.tx,v.tz]=matSpot();
     v.timer-=dt;if(v.timer<=0)pickSeat();
