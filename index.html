@@ -40,6 +40,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
   background:linear-gradient(rgba(14,11,8,.85),rgba(14,11,8,0));display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .hl{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font:400 14px/1 var(--display)}
 .bar{width:min(200px,34vw);height:14px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden}
+.bar.ult b{background:#7fc8ff}.bar.ult.full{box-shadow:0 0 0 2px #7fc8ff,0 0 12px #7fc8ff;animation:ultp .8s ease-in-out infinite alternate}
+@keyframes ultp{to{box-shadow:0 0 0 2px #bfe6ff,0 0 20px #7fc8ff}}
 .bar b{display:block;height:100%;border-radius:7px;background:var(--ok);transition:width .15s}
 .cards{display:flex;gap:6px}.cards span{width:14px;height:18px;border-radius:3px;background:rgba(255,255,255,.18)}.cards span.on{background:var(--hit)}
 .hc{text-align:center;font:400 15px/1.3 var(--display)}
@@ -88,9 +90,9 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
 #bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
 #btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
-.hl{margin:0;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
-.hl img{width:100%;max-width:420px;border-radius:8px;border:2px solid #4a4038;display:block}
-.hl figcaption{font-size:12px;color:var(--mute)}
+.hlfig{margin:0;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
+.hlfig img{width:100%;max-width:420px;border-radius:8px;border:2px solid #4a4038;display:block}
+.hlfig figcaption{font-size:12px;color:var(--mute)}
 .ttl{font:400 22px/1.2 var(--display);color:var(--ok)}
 .lbtabs{display:flex;gap:6px}.lbtabs button{flex:1;background:#2d2721;color:var(--mute);border:0;border-radius:6px;font:700 12px/1 var(--body);padding:8px;cursor:pointer}
 .lbtabs button.on{background:var(--hazard);color:#1a1300}
@@ -116,7 +118,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="labels"></div>
 <div id="white"></div><div id="flash"></div>
 <div id="hud" hidden>
-  <div class="hl"><span>멘탈</span><div class="bar"><b id="mBar"></b></div><span>경고</span><div class="cards" id="cards"><span></span><span></span><span></span></div></div>
+  <div class="hl"><span>멘탈</span><div class="bar"><b id="mBar"></b></div><span>경고</span><div class="cards" id="cards"><span></span><span></span><span></span></div><span>필살기</span><div class="bar ult"><b id="uBar"></b></div></div>
   <div class="hc"><div id="waveTxt">WAVE 1</div><div class="fire" id="fireTxt"></div></div>
   <div class="hr"><span id="scoreTxt">0</span><small id="bestTxt">최고 0</small></div>
 </div>
@@ -135,7 +137,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <h1>참교육<br><em>클라이밍</em></h1>
     <p class="lead">우리 짐에 빌런들이 섞여 들어왔다. 빌런짓을 하기 전까진 평범한 회원과 똑같아 보인다. 빌런짓을 해서 <b style="color:var(--hit)">빨간 마커</b>가 뜬 놈만 응징하라. 멀쩡한 회원을 때리면 경고, 3번이면 출입금지. 빌런을 치우면 카운터 직원이 감동해서 선물을 던져준다.</p>
     <div class="keys">
-      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Shift</kbd> 달리기 · <kbd>Space</kbd> 점프 · <kbd>J</kbd>/클릭 공격 · <kbd>J</kbd> 길게 = <b style="color:#7fc8ff">체외충격파</b> (3타째 발차기, 공중에선 드롭킥)<br>
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Shift</kbd> 달리기 · <kbd>Space</kbd> 점프 · <kbd>J</kbd>/클릭 공격 · <kbd>J</kbd> 길게 = 필살기 <b style="color:#7fc8ff">체외충격파</b> (게이지가 차면 · 맞은 빌런은 건강해져서 착해짐)<br>
       <kbd>E</kbd> 빌런 앞에서 <b style="color:var(--hazard)">멱살 잡기 → 다시 E로 던지기</b> · 벽 잡기 · 녹화 정지 · 락커 자물쇠<br>
       마우스 드래그 시점 회전 · <kbd>V</kbd> 3인칭 ↔ 쿼터뷰 전환
     </div>
@@ -153,7 +155,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <div class="reason" id="overReason"></div>
     <div class="big" id="overScore">0</div>
     <div class="ttl" id="overTitle"></div>
-    <figure class="hl" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
+    <figure class="hlfig" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
     <p class="lead" id="overSub"></p>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
@@ -466,6 +468,7 @@ function pose(m,name,t,k=0){
     case 'dash':{const p=t*20;B.rotation.x=.5;sw(aL,1.1,0);sw(aR,1.1,0);sw(lL,S(p)*.9,0);lL.k.rotation.x=.6;sw(lR,-S(p)*.9,0);lR.k.rotation.x=.6;break}
     case 'cheer':{const w=S(t*14);B.position.y=.95+Math.abs(S(t*9))*.16;sw(aL,2.95,0);sw(aR,2.95,0);aL.j.rotation.z=-.45-w*.25;aR.j.rotation.z=.45+w*.25;m.head.rotation.x=-.25;break}
     case 'cheerSit':{const w=S(t*14);B.position.y=.28;sw(lL,1.45,0);lL.k.rotation.x=1.9;sw(lR,1.4,0);lR.k.rotation.x=1.95;sw(aL,2.95,0);sw(aR,2.95,0);aL.j.rotation.z=-.4-w*.25;aR.j.rotation.z=.4+w*.25;m.head.rotation.x=-.25;break}
+    case 'bow':B.rotation.x=.75;sw(aL,.15,0);sw(aR,.15,0);aL.j.rotation.z=.12;aR.j.rotation.z=-.12;m.head.rotation.x=.2;break;
     case 'cry':sw(aL,2.2,2.3);sw(aR,2.2,2.3);aL.j.rotation.z=.35;aR.j.rotation.z=-.35;m.head.rotation.x=.35+S(t*18)*.06;B.position.y=.95+Math.abs(S(t*16))*.03;B.rotation.x=.12;break;
     case 'boo':sw(aL,2.1,1.9);sw(aR,2.1,1.9);aL.j.rotation.z=.25;aR.j.rotation.z=-.25;m.head.rotation.y=S(t*12)*.35;break;
     case 'film':sw(aR,1.7,.5);sw(aL,1.5,.7);aL.j.rotation.z=.3;m.head.rotation.x=.05;break;
@@ -597,7 +600,7 @@ function newGame(){
     p:{pos:v3(-2,0,0),vel:v3(),head:Math.PI,state:'ground',pump:100,atkT:0,atkDur:0,atkKind:null,cstep:0,comboWin:0,hitSet:new Set(),dive:false,peakY:0,grabCD:0,inv:0,fireT:0,t:0,hurtT:0,m:pm,near:null,moving:0},
     inno:[]};
   PROBLEMS.forEach(p=>p.cd=0);
-  S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.hl=null;hlReq=null;S.grat=0;S.perks={};S.paused=false;S.perkT=0;
+  S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.hl=null;S.ult=0;hlReq=null;S.grat=0;S.perks={};S.paused=false;S.perkT=0;
   PROBLEMS.forEach(pr=>pr.hog=null);
   [-9,-2,4.5].forEach((x,i)=>{const m=makePerson(INNO_LOOKS[i]);scene.add(m.root);scene.add(m.shadow);
     S.inno.push({pos:v3(x,.4+i*.7,CLIMB_Z),vel:v3(),state:'climb',dir:1,speed:rand(.45,.65),t:rand(0,5),m,scared:0,rest:0,head:Math.PI,spin:0,knocked:false})});
@@ -805,7 +808,7 @@ function startWave(){
 }
 
 // ================= combat =================
-const alive=v=>v.state!=='gone'&&v.state!=='down'&&v.state!=='despair';
+const alive=v=>v.state!=='gone'&&v.state!=='down'&&v.state!=='despair'&&v.state!=='reform';
 function vHeight(v){return(v.sitting||v.state==='despair'?1.1:1.85)*v.s}
 function hitVillain(v,kind,dir){
   if(!alive(v))return;
@@ -816,6 +819,7 @@ function hitVillain(v,kind,dir){
     return;
   }
   const p=S.p,fire=p.fireT>0;
+  if(kind==='wave'){if(v.type==='boss'){v.hp-=6;v.flash=.12;sfx('kick');if(v.hp<=0){reformKO(v,dir);return}v.state='fly';v.vel.set(dir.x*4,4,dir.z*4);setSpin(v,dir,4);return}reformKO(v,dir);return}
   if(v.state==='held'&&kind!=='throw'){
     v.hp-=fire?2:1;v.flash=.1;bumpCombo();addScore(10);S.stop=Math.max(S.stop,.05);S.shake=Math.max(S.shake,.06);S.fovKick=Math.max(S.fovKick,.15);
     const hp=v.pos.clone();hp.y+=1;puff(hp,6,0xf4f1ea,2,.08);sparks(hp,5);pop(v3(hp.x,hp.y+.7,hp.z),pick(['퍽!','빡!','멱살 펀치!']),30);sfx('hit');
@@ -826,7 +830,7 @@ function hitVillain(v,kind,dir){
   const base=({wave:2,punch:1,kick:2,dive:3+2*pk('dive'),slam:99,domino:1,shock:1,throw:2+2*pk('grab')})[kind]||1;
   const wasFly=v.state==='fly';
   v.hp-=base*(fire?2:1);v.flash=.1;v.lastKind=wasFly&&kind!=='domino'&&kind!=='slam'?'juggle':kind;v.sitting=false;
-  bumpCombo();addScore(10*base*(1+S.combo*.1));
+  bumpCombo();addScore(10*base*(1+S.combo*.1));if(kind!=='wave')addUlt(8);
   const hp=v.pos.clone();hp.y+=1.1*v.s;
   S.stop=Math.max(S.stop,kind==='punch'?.05:kind==='slam'?.16:.09);
   S.shake=Math.max(S.shake,kind==='punch'?.06:kind==='slam'?.3:.15);
@@ -848,7 +852,7 @@ function knockOut(v,kind,dir){
   v.ko=true;v.onWall=false;v.state='fly';
   const hk=v.heavy?.85:1;
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
-  S.kos++;S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
+  S.kos++;addUlt(15);S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
   sfx('big');sfx('ko');ring(v.pos,2.2,0xffd23f);
   highlight(v.type==='boss'?5:(v.lastKind||kind)==='slam'?4:(v.lastKind||kind)==='throw'||(v.lastKind||kind)==='domino'?3:1,v.type==='boss'?'텃세 대마왕 참교육 완료!!!':`${({slam:'바디슬램',throw:'랜지 던지기',dive:'다이노 킥',domino:'도미노',juggle:'공중 콤보',wave:'체외충격파'})[v.lastKind||kind]||'참교육'}! ${v.name} 퇴치`);
   const style={slam:['바디슬램',300],dive:['다이노 킥',150],domino:['도미노',200],juggle:['공중 콤보',150],throw:['랜지 던지기',150],wave:['체외충격파',200]}[v.lastKind||kind];
@@ -878,14 +882,24 @@ function hitInnocent(n,dir){
   banner(`경고 ${S.warn} / 3`,S.warn>=3?'출입금지...':'직원: "등반 중인 분은 안 돼요 ㅠㅠ"',1.8,'#ff3b30');staffPanic();
   if(S.warn>=3)gameOver('출입금지 당했다','선량한 회원을 3번 때림');
 }
+const REFORM_LINES=['덕분에 건강해졌어요. 감사합니다!','어깨가 하나도 안 아파요...! 착하게 살게요','팔꿈치 통증이 사라졌어요 ㅠㅠ 매너 지킬게요','손가락이 다 나았어요! 감사합니다!','저 그동안 왜 그랬을까요... 죄송합니다','이제 매트에 안 앉을게요... 감사합니다'];
+function addUlt(n){if(!S)return;const was=S.ult;S.ult=Math.min(100,(S.ult||0)+n);if(was<100&&S.ult>=100){pop(headPos(S.p,.8),'체외충격파 준비! (공격 길게)',24,'#7fc8ff',1.6);sfx('charge')}}
+function reformKO(v,dir){
+  v.ko=true;v.state='reform';v.reformPh='fall';v.t=0;v.onWall=false;v.sitting=false;v.mourning=false;v.vel.set(dir.x*3,4.5,dir.z*3);setSpin(v,dir,5);
+  if(v.grp)v.grp=v.grp;S.kos++;bumpCombo();
+  const got=addScore(VT[v.type].score+300);pop(headPos(v,.9),'정화 참교육!',32,'#7fc8ff',1.5);pop(headPos(v,.4),`+${got}`,24,'#46d18c',1.5);
+  highlight(v.type==='boss'?5:3,v.type==='boss'?'체외충격파! 텃세 대마왕 정화':`체외충격파! ${v.name} 정화`);
+  if(v.type==='boss'){S.slow=.25;S.slowT=1.2;banner('정화 완료!!!','텃세 대마왕이 착해졌다',2.6,'#7fc8ff');setTimeout(()=>staffSay('사장님!!! 그 텃세 대마왕이 착해졌어요!!! ㅠㅠㅠ',2.8),500)}
+}
 function shockwave(p){
-  p.swCD=5;p.atkT=.25;p.atkKind=null;const r=3.4;
+  p.swCD=1;S.ult=0;p.atkT=.25;p.atkKind=null;const r=3.6;const before=S.kos;
   for(const v of S.villains){if(!alive(v)||v.onWall||v.state==='held')continue;const d=xzDist(v.pos,p.pos);
     if(d<r){const dir=v3(v.pos.x-p.pos.x,0,v.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(faceVec(p.head));hitVillain(v,'wave',dir.normalize())}}
   for(const w of S.walkers)if(w.state!=='fly'&&xzDist(w.pos,p.pos)<r){w.state='hurt';w.t2=.6;const dir=v3(w.pos.x-p.pos.x,0,w.pos.z-p.pos.z).normalize();w.vel.set(dir.x*3,0,dir.z*3);say(w,'으앗 뭐야!',1)}
   ring(p.pos,r+.6,0x7fc8ff);ring(p.pos,r,0xffffff);ring(p.pos,r*.55,0x7fc8ff);puff(v3(p.pos.x,.3,p.pos.z),24,0xbfe6ff,5,.13);
   S.shake=Math.max(S.shake,.3);S.flash=Math.max(S.flash,.18);S.stop=Math.max(S.stop,.12);S.fovKick=Math.max(S.fovKick,1);sfx('wave');
   pop(headPos(p,.7),'체외충격파!!!',46,'#7fc8ff',1.3);
+  if(S.kos>before)setTimeout(()=>cheer(2),700);
 }
 function faceVec(h){return v3(Math.sin(h),0,Math.cos(h))}
 // targeting: nearest villain in front (also drives the floor ring and the lunge)
@@ -955,7 +969,7 @@ function updatePlayer(dt){
   const mi=moveInput();
   // hold attack ~0.55s on the ground = 체외충격파 (radial shockwave, 5s cooldown)
   p.swCD=(p.swCD||0)-dt;
-  if(input.atk&&p.state==='ground'&&!p.held&&p.hurtT<=0&&p.swCD<=0){p.atkHold=(p.atkHold||0)+dt;if(p.atkHold>.15&&!p.charging){p.charging=true;sfx('charge')}if(p.atkHold>=.55){p.atkHold=0;p.charging=false;shockwave(p)}}
+  if(input.atk&&p.state==='ground'&&!p.held&&p.hurtT<=0&&p.swCD<=0&&S.ult>=100){p.atkHold=(p.atkHold||0)+dt;if(p.atkHold>.15&&!p.charging){p.charging=true;sfx('charge')}if(p.atkHold>=.55){p.atkHold=0;p.charging=false;shockwave(p)}}
   else{p.atkHold=0;p.charging=false}
   if(input.atkP&&p.hurtT<=0){
     if(p.state==='air'&&!p.dive&&p.atkT<=0){autoAim(p);const f=faceVec(p.head);p.dive=true;p.atkKind='dive';const ds=Math.hypot(p.vel.x,p.vel.z)>6?11:9;p.vel.x=f.x*ds;p.vel.z=f.z*ds;p.vel.y=Math.min(p.vel.y,-5);p.hitSet=new Set();sfx('whoosh')}
@@ -1085,6 +1099,18 @@ function updateVillain(v,dt){
     }
     break;}
   case 'down':v.t-=dt;if(v.t<=0){v.state='gone';puff(v.pos.clone().setY(.3),10,0xf4f1ea,2,.12)}break;
+  case 'reform':{
+    v.t+=dt;
+    if(v.reformPh==='fall'){v.vel.y+=G*dt;v.pos.addScaledVector(v.vel,dt);v.pos.x=clamp(v.pos.x,RX0+.4,RX1-.4);v.pos.z=clamp(v.pos.z,WALL_Z+.4,RZ1-.4);
+      if(v.spin)v.m.root.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(v.spinAxis,v.spin*dt));
+      if(v.pos.y<=0){v.pos.y=0;v.vel.set(0,0,0);v.spin=0;v.m.root.quaternion.identity();v.reformPh='lie';v.t=0;puff(v.pos.clone().setY(.2),8,0xbfe6ff,2,.1)}}
+    else if(v.reformPh==='lie'){if(v.t>1.1){v.reformPh='bow';v.t=0;faceTo(v,p.pos.x,p.pos.z);
+      say(v,v.type==='boss'?'클린이들아... 그동안 미안했다':pick(REFORM_LINES),2.8);sfx('ding');
+      if(!v.halo){const h=new T.Mesh(new T.TorusGeometry(.17,.03,6,18),new T.MeshBasicMaterial({color:0xffe066}));h.rotation.x=Math.PI/2;h.position.y=.42;v.m.head.add(h);v.halo=h}
+      puff(headPos(v,.2),12,0xffe066,1.5,.07)}}
+    else if(v.reformPh==='bow'){faceTo(v,p.pos.x,p.pos.z,dt);if(v.t>2.4){v.reformPh='leave';v.t=0}}
+    else{walkTo(v,RX1+.6,(DOOR.z0+DOOR.z1)/2,3.4,dt);if(v.pos.x>=RX1-.1||v.t>8)v.state='gone'}
+    break;}
   case 'despair':v.t-=dt;if(Math.random()<dt*5)puff(headPos(v,-.3),1,0x7fc8ff,.3,.04);if(v.t<=0){v.state='gone';puff(v.pos.clone().setY(.3),10,0xf4f1ea,2,.12)}break;
   case 'act':AI[v.type](v,dt,p,d);break;
   case 'held':{
@@ -1620,6 +1646,7 @@ function syncScene(){
   for(const v of S.villains){
     let pn='stand';
     if(v.state==='despair'||v.mourning&&v.sitting)pn='despair';
+    else if(v.state==='reform')pn=v.reformPh==='fall'?'fly':v.reformPh==='lie'?'down':v.reformPh==='bow'?'bow':'walk';
     else if(v.state==='fly'||v.state==='held')pn='fly';
     else if(v.state==='down')pn='down';
     else if(v.state==='hurt')pn='hurt';
@@ -1659,7 +1686,8 @@ function syncScene(){
     b.d.style.transform=`translate(${hp[0]+b.ox}px,${hp[1]+b.oy}px) translate(-50%,-100%)`;if(b.t>b.life){b.d.remove();betas.splice(i,1)}}
   // interact prompt / hints
   if(!promptEl){promptEl=mkLbl('prompt')}
-  if(p.charging){promptEl.textContent='체외충격파 충전...';promptEl.style.color='#7fc8ff';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
+  if(!p.charging&&input.atk&&S.ult<100&&p.state==='ground'&&(p.atkHoldDry=(p.atkHoldDry||0)+1/60)>.5){promptEl.textContent=`필살기 게이지 ${Math.floor(S.ult)}% · 빌런을 때려서 채우기`;promptEl.style.color='#7fc8ff';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
+  else if(p.charging){if(!input.atk)p.atkHoldDry=0;promptEl.textContent='체외충격파 충전...';promptEl.style.color='#7fc8ff';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.held){promptEl.textContent=isTouch?'잡기: 던지기 · 공격: 멱살 펀치':'E 던지기 · J 멱살 펀치';promptEl.style.color='';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.state==='ground'&&p.near){promptEl.textContent=(isTouch?'잡기 ':'E ')+(p.near.kind==='tripod'?'몰래 녹화 정지':p.near.kind==='chalkbag'?'초크백 주인에게 돌려주기':'자물쇠 잠그기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.state==='ground'&&p.grabT){promptEl.textContent=(isTouch?'잡기 ':'E ')+(p.grabT.type==='boss'?'잡기 (너무 무거움)':'멱살 잡기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
@@ -1669,6 +1697,7 @@ function syncScene(){
   if(!(p.state==='climb'||p.pump<99))promptEl.style.color='';
   // HUD
   const m=clamp(S.mental/100,0,1),mb=document.getElementById('mBar');mb.style.width=m*100+'%';mb.style.background=m>.5?'#46d18c':m>.25?'#ffd23f':'#ff3b30';
+  if(!input.atk)S.p.atkHoldDry=0;{const u=document.getElementById('uBar');u.style.width=(S.ult||0)+'%';u.parentNode.classList.toggle('full',S.ult>=100)}
   document.querySelectorAll('#cards span').forEach((s,i)=>s.classList.toggle('on',i<S.warn));
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
   document.getElementById('waveTxt').textContent=(S.daily?'📅 ':'')+`WAVE ${S.wave} · 빌런 ${left}`;
