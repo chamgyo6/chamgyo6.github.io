@@ -36,6 +36,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .credit{display:block;text-align:center;font:700 13px/1.6 var(--body);color:var(--mute);text-decoration:none;padding:6px;word-break:keep-all}
 .credit b{color:var(--chalk)}.credit:hover b,.credit:focus-visible b{color:var(--hazard)}
 .kpbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#191600;padding:12px 16px;border-radius:8px;background:#fee500;box-shadow:0 4px 0 #b8a500}
+.tipnote{margin:0;font-size:12px;color:var(--mute);text-align:center}
 .supbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .igbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#fff;padding:12px 16px;border-radius:8px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af);box-shadow:0 4px 0 #5b1f7a}
 .linkbtn{background:none;border:0;color:var(--mute);font:700 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
@@ -165,7 +166,8 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <p class="lead" id="overSub"></p>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
-    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a><a class="kpbtn" href="https://qr.kakaopay.com/Ej8IIIz52" target="_blank" rel="noopener">☕ 만든 사람 초크값 보태주기</a></div>
+    <p class="tipnote">재밌었으면 한 잔! (안 눌러도 랭킹은 그대로예요 😉)</p>
+    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a><a class="kpbtn" id="kpBtn" href="https://qr.kakaopay.com/Ej8IIIz52" target="_blank" rel="noopener">☕ 만든 사람 커피 한 잔 사주기</a></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
     <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
   </div>
@@ -1613,6 +1615,7 @@ function gameOver(reason,sub){
     document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
     showHighlight();
+    document.getElementById('kpBtn').textContent=pick(['💉 만든 사람 체외충격파 치료비 보태주기','🩴 만든 사람 암벽화 리솔값 보태주기','☕ 만든 사람 커피 한 잔 사주기','🩹 만든 사람 테이핑값 보태주기','🎫 만든 사람 1일권 쏴주기']);
     submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
   },1300);
 }
