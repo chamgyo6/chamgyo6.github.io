@@ -1615,7 +1615,7 @@ function gameOver(reason,sub){
     document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
     showHighlight();
-    document.getElementById('kpBtn').textContent=pick(['💉 만든 사람 체외충격파 치료비 보태주기','🩴 만든 사람 암벽화 리솔값 보태주기','☕ 만든 사람 커피 한 잔 사주기','🩹 만든 사람 테이핑값 보태주기','🎫 만든 사람 1일권 쏴주기']);
+    document.getElementById('kpBtn').textContent=pick(['💉 만든 사람 체외충격파 치료비 보태주기','🩴 만든 사람 암벽화 창갈이값 보태주기','☕ 만든 사람 커피 한 잔 사주기','🩹 만든 사람 테이핑값 보태주기','🎫 만든 사람 1일권 쏴주기']);
     submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
   },1300);
 }
