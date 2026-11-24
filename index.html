@@ -633,7 +633,7 @@ function makeCrowd(){
 function cheer(level){
   if(!S||S.over)return;const big=level>=2;
   sfx(big?'cheerBig':'cheer');
-  const gain=(big?8:3)*(1+pk('insa'))*(modIs('cheer')?2:1);S.mental=Math.min(100,S.mental+gain);
+  const gain=(big?5:2)*(1+pk('insa'))*(modIs('cheer')?2:1);S.mental=Math.min(100,S.mental+gain);
   pop(headPos(S.p,.9),`환호! 멘탈 +${gain}`,22,'#46d18c',1.2);
   for(const c of S.crowd){c.cheerT=rand(1,1.5)*(big?1.8:1);c.booT=0;if(Math.random()<(big?.6:.3))say(c,pick(CHEER_LINES),1.5)}
   for(const n of S.inno)if(Math.random()<.35)pop(headPos(n,.2),pick(['나이스!','와!','👏']),18,'#fff',1);
@@ -733,7 +733,7 @@ function crowdMurmur(lines,prob=.35){for(const c of S.crowd)if(Math.random()<pro
 
 // ================= staff & rewards =================
 const REWARDS=[
-  {name:'프로틴 쉐이크',col:0xf5c518,fx:()=>{S.mental=Math.min(100,S.mental+35);return '멘탈 +35'}},
+  {name:'프로틴 쉐이크',col:0xf5c518,fx:()=>{S.mental=Math.min(100,S.mental+25);return '멘탈 +25'}},
   {name:'1일 무료 이용권',col:0x3aa0ff,fx:()=>`+${addScore(500)}점`},
   {name:'신상 암벽화',col:0xff5fa2,fx:()=>{S.p.fireT=Math.max(S.p.fireT,10);return '10초 불꽃 모드 (점수 2배)'}},
   {name:'고급 초크볼',col:0xf4f1ea,fx:()=>{S.p.pump=100;S.mental=Math.min(100,S.mental+15);return '펌프 회복 · 멘탈 +15'}},
@@ -1560,15 +1560,20 @@ function update(dt){
     updatePlayer(gdt);
     if(S.waveT>0){S.waveT-=gdt;if(S.waveT<=0)startWave()}
     else{
-      if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(1.1,1.8)}}
-      else if(!S.villains.some(v=>v.state!=='gone')&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+20);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +20',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*S.wave);S.waveT=3}
+      if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(.8,1.4)}}
+      else if(!S.villains.some(v=>v.state!=='gone')&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*S.wave);S.waveT=3}
     }
     if(S.clearT>0)S.clearT-=gdt;
   }
   for(const v of S.villains)updateVillain(v,gdt);
   for(const v of S.villains)if(v.state==='gone'){scene.remove(v.m.root);scene.remove(v.m.shadow);scene.remove(v.marker);v.tag.remove();v.arrow.remove();v.sayEl&&v.sayEl.remove()}
   S.villains=S.villains.filter(v=>v.state!=='gone');
-  if(!S.over)for(const v of S.villains)if(v.state==='act'&&!v.ko&&v.revealed)S.mental-=VT[v.type].drain*gdt*Math.pow(.7,pk('mind'));
+  if(!S.over)for(const v of S.villains)if(v.state==='act'&&!v.ko&&v.revealed){
+    const was=v.annoyT||0;v.annoyT=was+gdt;
+    if(was<8&&v.annoyT>=8)pop(headPos(v,.9),'민폐 심해짐!',26,'#ff9f43',1.2);
+    if(was<16&&v.annoyT>=16){pop(headPos(v,.9),'민폐 폭주!!',30,'#ff3b30',1.3);crowdMurmur(['아 언제까지 저래...','누가 좀 말려봐','직원 어디 갔어'],.3)}
+    S.mental-=VT[v.type].drain*1.5*(1+v.annoyT/10)*(1+.12*(S.wave-1))*gdt*Math.pow(.7,pk('mind'));
+  }
   updateObjs(gdt);
   for(const n of S.inno)updateInno(n,gdt);
   updateWalkers(gdt);updateStaff(gdt);updatePickups(gdt);S.warnCD-=gdt;
