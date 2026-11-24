@@ -261,6 +261,9 @@ function bgmStart(){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect
   BGM.iv=setInterval(()=>{if(!AC)return;const bpm=Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0),sp=60/bpm/4;
     if(BGM.next<AC.currentTime-.2)BGM.next=AC.currentTime+.05;
     while(BGM.next<AC.currentTime+.15){if(!muted&&!document.hidden)try{bgmBeat(BGM.step,BGM.next,sp)}catch(e){}BGM.next+=sp;BGM.step++}},30)}
+// 체외충격파: 음악이 순간 뚝 끊겼다가 쿵 하고 다시 터짐
+function bgmDrop(){if(!BGM.g||!AC||!BGM.iv)return;const t=AC.currentTime,g=BGM.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(0,t+.03);
+  g.setValueAtTime(0,t+.38);g.linearRampToValueAtTime(.42,t+.42);if(!muted){bOsc('sine',120,30,t+.38,.7,1);bNoise(t+.38,1.1,.35,3500);bNoise(t+.38,.25,.6)}}
 function bgmStop(fade=1.2){clearInterval(BGM.iv);BGM.iv=null;if(BGM.g&&AC){const t=AC.currentTime;BGM.g.gain.cancelScheduledValues(t);BGM.g.gain.setValueAtTime(BGM.g.gain.value,t);BGM.g.gain.linearRampToValueAtTime(0,t+fade)}}
 // 폰 진동 (소리 끄면 같이 꺼짐)
 function buzz(ms){if(!isTouch||muted||!navigator.vibrate)return;try{navigator.vibrate(ms)}catch(e){}}
@@ -995,7 +998,7 @@ function reformKO(v,dir){
   if(v.type==='boss'){S.slow=.25;S.slowT=1.2;banner('정화 완료!!!','텃세 대마왕이 착해졌다',2.6,'#7fc8ff');setTimeout(()=>staffSay('사장님!!! 그 텃세 대마왕이 착해졌어요!!! ㅠㅠㅠ',2.8),500)}
 }
 function shockwave(p){
-  buzz([40,30,90]);
+  buzz([40,30,90]);bgmDrop();
   p.swCD=1;S.ult=0;p.atkT=.25;p.atkKind=null;const r=3.6;const before=S.kos;
   for(const v of S.villains){if(!alive(v)||v.onWall||v.state==='held')continue;const d=xzDist(v.pos,p.pos);
     if(d<r){const dir=v3(v.pos.x-p.pos.x,0,v.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(faceVec(p.head));hitVillain(v,'wave',dir.normalize())}}
