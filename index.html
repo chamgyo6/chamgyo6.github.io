@@ -69,12 +69,16 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <p class="lead">우리 짐에 빌런들이 들어왔다. 매트에 눌러앉는 놈, 초크를 허공에 터뜨리는 놈, 남의 루트에 들러붙는 놈. 직접 응징해라. 단, 선량한 회원을 때리면 경고, 3번이면 출입금지다.</p>
     <div class="dex">
       <div><b>매트 죽돌이</b>낙하 구역에 앉아 폰 본다. 벽 위에서 떨어져 덮치면 한 방.</div>
-      <div><b>초크 폭격기</b>초크를 허공에 털어서 시야를 하얗게 만든다.</div>
-      <div><b>들이대기</b>남이 등반하는 루트 옆에 바짝 붙는다.</div>
+      <div><b>짐 폭탄</b>매트에 가방·물병·신발을 늘어놓는다. 출구로 차버리면 따라 나간다.</div>
+      <div><b>초크 폭격기</b>사람들 쉬는 데 와서 초크를 허공에 턴다.</div>
+      <div><b>들이대기</b>루트 겹치게 붙어놓고 "안 겹쳐요~" 우긴다.</div>
+      <div><b>촬영충</b>삼각대 앞을 지나가면 갈았다고 난리. 몰래 녹화 정지 띵.</div>
+      <div><b>락커 방치범</b>락커 열어두고 등반 중. 자물쇠 잠그고 비번 걸어버려라.</div>
       <div><b>훈수충</b>묻지도 않은 베타를 쏟아낸다. 잘 도망간다.</div>
     </div>
     <div class="keys">
       <kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>↑</kbd> 벽 잡기/오르기 · <kbd>↓</kbd> 내려가기 · <kbd>Space</kbd> 점프/벽에서 뛰어내리기 · <kbd>J</kbd> 공격 (3타째 발차기, 공중에선 드롭킥)<br>
+      삼각대·열린 락커 앞에서 <kbd>↑</kbd> = <b style="color:var(--ok)">몰래 장난</b>. 빌런이 멘붕하면 보너스 +800.<br>
       벽 꼭대기 <b style="color:var(--hazard)">TOP 홀드</b>를 잡으면 완등! 멘탈 회복 + 점수 2배 불꽃 모드.
     </div>
     <button class="btn" id="startBtn">참교육 시작</button>
@@ -162,6 +166,10 @@ function sfx(k){
     case 'door':[784,988,1318].forEach((f,i)=>tone(f,f,.16,'square',.07,i*.07));break;
     case 'bubble':tone(900,700,.06,'square',.04);break;
     case 'hurt':tone(220,110,.2,'sawtooth',.12);break;
+    case 'ding':tone(1568,1568,.12,'sine',.25);tone(2093,2093,.4,'sine',.22,.1);break;
+    case 'lock':noise(.03,8000,.4);tone(1800,1200,.04,'square',.08);break;
+    case 'crash':noise(.35,3000,.7);[1200,900,1500].forEach((f,i)=>tone(f,f*.7,.12,'triangle',.1,i*.05));break;
+    case 'sad':[392,370,349,294].forEach((f,i)=>tone(f,f*.97,i===3?.6:.25,'sawtooth',.08,i*.28));break;
   }}catch(e){}
 }
 
@@ -171,7 +179,7 @@ const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Arrow
   Space:'jump',KeyK:'jump',KeyZ:'jump',KeyJ:'atk',KeyX:'atk'};
 addEventListener('keydown',e=>{
   const k=KEYMAP[e.code];if(!k)return;e.preventDefault();
-  if(!input[k]){if(k==='jump')input.jumpP=1;if(k==='atk')input.atkP=1}
+  if(!input[k]){if(k==='jump')input.jumpP=1;if(k==='atk')input.atkP=1;if(k==='up')input.upP=1}
   input[k]=1;
 });
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k){input[k]=0;e.preventDefault()}});
@@ -184,7 +192,8 @@ function stickMove(e){
   let dx=e.clientX-cx,dy=e.clientY-cy;const m=Math.hypot(dx,dy),max=48;
   if(m>max){dx*=max/m;dy*=max/m}
   knob.style.transform=`translate(${dx}px,${dy}px)`;
-  input.left=dx<-14?1:0;input.right=dx>14?1:0;input.up=dy<-22?1:0;input.down=dy>22?1:0;
+  const nu=dy<-22?1:0;if(nu&&!input.up)input.upP=1;
+  input.left=dx<-14?1:0;input.right=dx>14?1:0;input.up=nu;input.down=dy>22?1:0;
 }
 stick.addEventListener('pointerdown',e=>{stickId=e.pointerId;stick.setPointerCapture(e.pointerId);stickMove(e);e.preventDefault()});
 stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)stickMove(e)});
@@ -305,6 +314,9 @@ const LOOKS={
   chalker:{skin:'#d8a77c',shirt:'#d64541',pants:'#2b2f3a',hair:'#2a1d14',shoe:'#333',bag:true},
   crowder:{skin:'#c7966b',shirt:'#b6f03c',pants:'#3a3a3a',shorts:true,hair:'#1a1a1a',band:'#ff2d55',shoe:'#ff2d55'},
   sprayer:{skin:'#e6bb93',shirt:'#7b4fd6',pants:'#c8b68a',hat:'cap',hatC:'#111',glasses:true,shoe:'#eee'},
+  dumper:{skin:'#e3b892',shirt:'#6b7280',pants:'#111827',hat:'beanie',hatC:'#d64541',shoe:'#f4f1ea'},
+  filmer:{skin:'#d9a577',shirt:'#111111',pants:'#4b5563',hat:'cap',hatC:'#f4f1ea',shoe:'#f4f1ea'},
+  locker:{skin:'#c99067',shirt:'#0ea5e9',pants:'#1f2937',shorts:true,hair:'#3b2416',shoe:'#facc15'},
   boss:{skin:'#c58b5c',shirt:'#ff8a00',tank:true,pants:'#222',bald:true,mustache:true,shoe:'#111'},
 };
 const INNO_LOOKS=[
@@ -341,6 +353,7 @@ function getPose(o){
     case 'hurt':P.lean=-7;P.arms=[[-2.4,-2.7],[2.5,2.9]];P.legs=[[-.3,0],[.35,0]];P.tilt=-.3;P.mouth=1;break;
     case 'fly':{const a=t*22;P.arms=[[-2.4+s(a)*.7,-2.0+s(a)],[2.3+Math.cos(a)*.7,2.8]];P.legs=[[-.6+s(a)*.6,0],[.7+Math.cos(a)*.5,.2]];P.mouth=1;break}
     case 'down':P.arms=[[-2.0,-1.6],[1.9,1.5]];P.legs=[[-.25,0],[.25,0]];break;
+    case 'despair':P.hip=20;P.legs=[[1.4,-.6],[1.5,-.5]];P.arms=[[2.5,4.1],[2.3,4.0]];P.tilt=.65;P.lean=6;break;
     case 'clap':{const cl=s(t*30)>0?.25:0;P.arms=[[1.25+cl,1.6],[1.35-cl,1.5]];P.mouth=1;break}
     case 'point':{P.arms=[[.15,.5],[2.3+s(t*10)*.15,2.6]];P.mouth=s(t*14)>0?1:0;P.tilt=-.1;break}
     case 'tele':P.lean=10;P.arms=[[-.9,-.4],[-.7,-.2]];P.legs=[[-.6,0],[.5,0]];P.hip=44;break;
@@ -408,6 +421,9 @@ const VT={
   chalker:{name:'초크 폭격기',hp:4,speed:110,score:150,drain:.6},
   crowder:{name:'들이대기',hp:3,speed:150,score:150,drain:.8},
   sprayer:{name:'훈수충',hp:3,speed:190,score:200,drain:.5},
+  dumper:{name:'짐 폭탄',hp:3,speed:130,score:150,drain:.4},
+  filmer:{name:'촬영충',hp:4,speed:125,score:250,drain:.6},
+  locker:{name:'락커 방치범',hp:3,speed:125,score:200,drain:.5},
   boss:{name:'센터 고인물',hp:26,speed:110,score:1000,drain:1.5,heavy:true,s:1.45},
 };
 const LINES={
@@ -415,15 +431,18 @@ const LINES={
   chalker:{idle:['팡!!','초크는 넉넉하게~','콜록? 난 괜찮은데','파우더 데이~'],hurt:['콜록콜록!','내 초크!!']},
   crowder:{idle:['저도 이거 할게요~','같이 붙어요 ㅎㅎ','옆에 자리 있죠?','어 저도 그 홀드요'],hurt:['으악 떨어진다!','붙은 것뿐인데!']},
   sprayer:{idle:['제가 좀 아는데요','잠깐만요 그거~'],hurt:['아니 제 말은요!','도와드린 건데?!']},
+  dumper:{idle:['여기 둘게요~','잠깐만 놔둘게요','매트 넓은데 뭐 어때'],hurt:['내 물건 건들지 마!','아 왜요!']},
+  filmer:{idle:['각 좋다~','이거 인스타 올려야지','지나가지 마세요~'],hurt:['찍지 마요!','내 영상!!']},
+  locker:{idle:['금방 올 거라~','문 열어둬도 괜찮겠지~'],hurt:['내 락커!','아 뭐야!']},
   boss:{idle:['내가 여기 10년 다녔어','비켜봐~ 내 자리야','요즘 애들은 매너가...'],hurt:['어딜 감히!','크윽...!']},
 };
 const BETA=['왼발 하이스텝!','그거 다이노로 가야돼요','제가 해봤는데요~','힘으로 하지 마시고요','힐훅 거세요 힐훅','코어! 코어!','그 홀드 아니에요','팔 펴세요 팔!','저는 플래시했는데','숨 쉬세요~','발 보세요 발!'];
-const WAVES=[['sitter','sitter'],['sitter','chalker','sitter'],['crowder','chalker','sitter'],['sprayer','crowder','sitter','chalker'],['boss']];
-const WAVE_HINT=['매트에 앉은 놈 → 때리거나, 벽 위에서 떨어져 덮쳐라!','초크 구름 안에 있으면 멘탈이 깎인다','남의 등반에 들러붙는 놈은 벽 위에서 걷어차라','훈수충은 도망간다. 벽 끝으로 몰아라','보스 등장! 돌진 전 "!"가 뜨면 점프로 피해라'];
+const WAVES=[['sitter','sitter'],['dumper','sitter','chalker'],['crowder','filmer','sitter'],['locker','sprayer','dumper','chalker'],['boss']];
+const WAVE_HINT=['매트에 앉은 놈 → 때리거나, 벽 위에서 떨어져 덮쳐라!','짐 폭탄의 물건을 출구로 차버리면 주인이 따라 나간다','촬영충 삼각대 옆에서 ↑ = 몰래 녹화 정지 띵♪','락커 방치범의 열린 락커 앞에서 ↑ = 자물쇠 잠그기','보스 등장! 돌진 전 "!"가 뜨면 점프로 피해라'];
 
 function newGame(){
   S={t:0,score:0,wave:0,warn:0,mental:100,queue:[],spawnT:0,waveT:1.2,clearT:0,
-    villains:[],parts:[],texts:[],clouds:[],bubbles:[],banner:null,
+    villains:[],parts:[],texts:[],clouds:[],bubbles:[],objs:[],lockerUsed:[false,false,false],banner:null,
     shake:0,stop:0,flash:0,slow:1,slowT:0,combo:0,comboT:0,maxCombo:0,kos:0,over:false,overT:0,
     hintGrab:3,
     p:{x:300,y:FLOOR,vx:0,vy:0,face:1,state:'ground',pump:100,atkT:0,atkDur:0,atkKind:null,cstep:0,comboWin:0,
@@ -448,7 +467,7 @@ function spawn(type){
   const d=VT[type],fromLeft=type!=='boss'&&Math.random()<.3;
   const v={type,name:d.name,hp:d.hp,max:d.hp,x:fromLeft?-30:DOOR_X+40,y:FLOOR,vx:0,vy:0,face:fromLeft?1:-1,s:d.s||1,heavy:!!d.heavy,
     state:'enter',t:0,anim:rand(0,5),rot:0,vr:0,onWall:false,ko:false,flash:0,say:null,
-    tx:rand(WALL_X0+80,WALL_X1-80),timer:rand(1,3),cd2:3,cd3:6,dash:0,tele:0,stun:0,lastKind:null,domino:null,look:LOOKS[type],scared:0};
+    tx:rand(WALL_X0+80,WALL_X1-80),timer:rand(1,3),ph:'',items:type==='dumper'?3:0,yellCD:0,cd2:3,cd3:6,dash:0,tele:0,stun:0,lastKind:null,domino:null,look:LOOKS[type],scared:0};
   if(type==='boss'){v.tx=1200;say(v,'여기 내 구역인데?',2.5);sfx('warn')}
   S.villains.push(v);
 }
@@ -456,7 +475,7 @@ function startWave(){
   S.wave++;const n=S.wave;
   let list;
   if(n<=WAVES.length)list=WAVES[n-1].slice();
-  else{const k=Math.min(9,3+Math.floor((n-5)/1.4));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer']));if(n%5===0)list.unshift('boss')}
+  else{const k=Math.min(9,3+Math.floor((n-5)/1.4));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker']));if(n%5===0)list.unshift('boss')}
   S.queue=list;S.spawnT=.6;
   banner(`WAVE ${n}`,n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'고인물 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
 }
@@ -470,7 +489,7 @@ function hurtbox(v){
 function bumpCombo(){S.combo++;S.comboT=2.6;S.maxCombo=Math.max(S.maxCombo,S.combo)}
 const ONO={punch:['퍽!','팍!','빡!'],kick:['콰직!','뻐억!','쾅!'],dive:['드롭킥!!'],slam:['바디슬램!!'],domino:['도미노!'],shock:['쿵!']};
 function hitVillain(v,kind,dir){
-  if(v.state==='gone'||v.state==='down')return;
+  if(v.state==='gone'||v.state==='down'||v.state==='despair')return;
   const p=S.p,fire=p.fireT>0;
   const base={punch:1,kick:2,dive:3,slam:99,domino:1,shock:1,juggle:2}[kind]||1;
   const wasFly=v.state==='fly';
@@ -505,6 +524,7 @@ function knockOut(v,kind,dir){
   const got=addScore(pts);
   setTimeout(()=>{if(S&&!S.over)pop(v.x,v.y-130,`참교육 +${got}`,30,'#46d18c',1.2)},90);
   if(style)pop(v.x,v.y-170,style[0]+'!',38,'#ff3b30',1.1);
+  if(v.type==='crowder')pop(v.x,v.y-200,'...겹치네요',24,'#fff',1.4);
   if(v.type==='boss'){
     S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=30;v.vx=Math.abs(v.vx)*1.15;v.vy=-900;
     banner('참교육 완료!!!','센터 고인물 퇴치',2.6,'#ff3b30');sfx('slam');
@@ -527,12 +547,16 @@ function attackBox(p){
 function doHits(p){
   const box=attackBox(p),kind=p.atkKind;
   for(const v of S.villains){
-    if(p.hitSet.has(v)||v.state==='gone'||v.state==='down'||v.state==='enter'&&v.x>DOOR_X)continue;
+    if(p.hitSet.has(v)||v.state==='gone'||v.state==='down'||v.state==='despair'||v.state==='enter'&&v.x>DOOR_X)continue;
     if(rectHit(box,hurtbox(v))){p.hitSet.add(v);hitVillain(v,kind,p.face);if(kind==='dive'){p.vy=-420;p.vx=-p.face*120;p.dive=false;p.peakY=p.y}}
+  }
+  for(const o of S.objs){
+    if(o.kind==='locker'||p.hitSet.has(o)||o.fly||o.fallen)continue;
+    if(rectHit(box,{x0:o.x-o.w-6,x1:o.x+o.w+6,y0:o.y-Math.max(o.h,60),y1:o.y+4})){p.hitSet.add(o);kickObj(o,p.face)}
   }
   for(const n of S.inno){
     if(p.hitSet.has(n)||n.state==='fall')continue;
-    if(n.state==='climb'&&p.state!=='climb')continue; // wall climbers are only in reach when you're on the wall too
+    if(n.state!=='climb'||p.state!=='climb')continue; // members can only be hit when you're both on the wall
     const hb={x0:n.x-18,x1:n.x+18,y0:n.y-105,y1:n.y-5};
     if(rectHit(box,hb)){p.hitSet.add(n);hitInnocent(n,p.face)}
   }
@@ -543,6 +567,7 @@ function onWallX(x){return x>WALL_X0+18&&x<WALL_X1-18}
 function updatePlayer(dt){
   const p=S.p;p.t+=dt;
   const L=input.left,R=input.right,U=input.up,D=input.down;
+  p.near=null;
   if(p.atkT>0)p.atkT-=dt;p.comboWin-=dt;p.inv-=dt;p.grabCD-=dt;p.hurtT-=dt;
   if(p.fireT>0)p.fireT-=dt;
   // attack input
@@ -560,6 +585,7 @@ function updatePlayer(dt){
     const spd=300*(p.fireT>0?1.15:1)*(p.atkT>0?.25:1);
     p.vx=dir*spd;if(dir&&p.atkT<=0)p.face=dir;
     if(input.jumpP&&p.hurtT<=0){p.vy=-740;p.state='air';p.peakY=p.y;p.atkT=0;sfx('jump');puff(p.x,p.y,4,'#f4f1ea',90,6)}
+    else if((p.near=nearInteract(p))){if(input.upP&&p.hurtT<=0)interact(p.near)}
     else if(U&&onWallX(p.x)&&p.atkT<=0&&p.hurtT<=0){p.state='climb';p.vx=0;p.vy=0;p.y-=6;S.hintGrab=0}
     p.pump=Math.min(100,p.pump+38*dt);
   }else if(p.state==='air'){
@@ -638,7 +664,7 @@ function updateVillain(v,dt){
     const spd=Math.abs(v.vx)+Math.abs(v.vy);
     if(spd>420){
       for(const o of S.villains){
-        if(o===v||o.state==='fly'||o.state==='gone'||o.state==='down'||o.domino===v)continue;
+        if(o===v||o.state==='fly'||o.state==='gone'||o.state==='down'||o.state==='despair'||o.domino===v)continue;
         if(Math.abs(o.x-v.x)<42*o.s&&v.y>o.y-120*o.s&&v.y-60<o.y){o.domino=v;hitVillain(o,'domino',sgn(v.vx));v.vx*=.8}
       }
       for(const n of S.inno){
@@ -666,6 +692,10 @@ function updateVillain(v,dt){
   case 'down':
     v.t-=dt;if(v.t<=0){v.state='gone';puff(v.x,v.y-20,10,'#f4f1ea',160,10)}
     break;
+  case 'despair':
+    v.t-=dt;if(Math.random()<dt*5)S.parts.push({type:'puff',x:v.x+rand(-14,14),y:v.y-70,vx:0,vy:90,life:.5,max:.5,r:3,col:'#7fc8ff'});
+    if(v.t<=0){v.state='gone';puff(v.x,v.y-20,10,'#f4f1ea',160,10)}
+    break;
   case 'act':
     v.drainOn=true;
     AI[v.type](v,dt,p,d);
@@ -682,7 +712,10 @@ const AI={
   },
   chalker(v,dt,p,d){
     if(v.clap>0){v.clap-=dt;if(v.clap<=0){S.clouds.push({x:v.x+v.face*20,y:v.y-75,r:20,R:rand(120,150),life:4.2,max:4.2});sfx('chalk');say(v,'팡!!',1)}return}
-    if(walkTo(v,v.tx,d.speed*.8,dt))v.tx=clamp(v.x+rand(-300,300),WALL_X0+40,WALL_X1-40);
+    if(walkTo(v,v.tx,d.speed*.8,dt)){
+      const rs=S.inno.filter(n=>n.state==='rest');const tg=rs.length&&Math.random()<.75?pick(rs):null;
+      v.tx=tg?clamp(tg.x+rand(-30,30),WALL_X0+40,WALL_X1-40):clamp(v.x+rand(-300,300),WALL_X0+40,WALL_X1-40);
+    }
     v.timer-=dt;if(v.timer<=0){v.timer=rand(3,4.2);v.clap=.55}
   },
   crowder(v,dt,p,d){
@@ -699,12 +732,115 @@ const AI={
       v.x=clamp(v.x,WALL_X0+20,WALL_X1-20);v.y=clamp(v.y,WALL_TOP+105,FLOOR);
       if(!target||ty>=FLOOR-5){v.y+=200*dt;if(v.y>=FLOOR){v.y=FLOOR;v.onWall=false}}
       if(target===p&&Math.abs(p.x-v.x)<75&&Math.abs(p.y-v.y)<80){
-        p.pump-=16*dt;S.mental-=4*dt;v.timer-=dt;if(v.timer<=0){v.timer=2.5;say(v,pick(LINES.crowder.idle),1.6)}
+        p.pump-=16*dt;S.mental-=4*dt;
+        if(!v.argued){v.argued=1;v.argueT=.9;pop(p.x,p.y-150,'저기요 겹쳐요!!',24,'#fff',1.2)}
+        if(v.argueT>0){v.argueT-=dt;if(v.argueT<=0)say(v,pick(['안 겹쳐요~','안 겹치는데요?','저 이거 원래 하던 건데요']),2.2)}
+        else{v.timer-=dt;if(v.timer<=0){v.timer=2.8;say(v,pick(['안 겹친다니까요?','제 루트예요 이거','같이 하면 되죠~']),1.6)}}
       }else if(target&&target!==p&&Math.abs(target.x-v.x)<75&&Math.abs(target.y-v.y)<90){
         target.scared+=dt;
-        if(target.scared>2.2){target.scared=0;target.state='fall';target.vx=-sgn(v.x-target.x)*160;target.vy=-120;target.vr=2;
+        if(!target.saidO&&target.scared>.8){target.saidO=1;pop(target.x,target.y-130,'저기... 겹쳐요',20,'#fff',1.2);say(v,'안 겹쳐요~',1.8)}
+        if(target.scared>2.2){target.scared=0;target.saidO=0;target.state='fall';target.vx=-sgn(v.x-target.x)*160;target.vy=-120;target.vr=2;
           S.mental-=8;pop(target.x,target.y-130,'으악! 너무 붙잖아!',22,'#fff',1.2);pop(target.x,target.y-100,'멘탈 -8',22,'#ff3b30',1);sfx('hurt')}
       }
+    }
+  },
+  dumper(v,dt,p,d){
+    if(v.chase){
+      if(v.onWall){v.y+=420*dt;if(v.y>=FLOOR){v.y=FLOOR;v.onWall=false}return}
+      v.running=true;walkTo(v,DOOR_X+30,310,dt);
+      if(v.x>=DOOR_X+20){v.ko=true;v.state='gone';S.kos++;bumpCombo();const got=addScore(VT.dumper.score+500);
+        pop(DOOR_X+30,FLOOR-170,'가방 따라 퇴장!',34,'#46d18c',1.4);pop(DOOR_X+30,FLOOR-130,`+${got}`,26,'#46d18c',1.4);sfx('door')}
+      return;
+    }
+    if(v.items>0){
+      if(walkTo(v,v.tx,d.speed,dt)){
+        const k=['bag','bottle','shoe'][3-v.items]||'bag';
+        S.objs.push(makeItem(k,v.x+v.face*18,v));v.items--;v.dropped=true;sfx('thud');
+        if(v.items===2)say(v,pick(LINES.dumper.idle),1.8);
+        v.tx=clamp(v.x+rand(-200,200),WALL_X0+60,WALL_X1-60);
+      }
+      return;
+    }
+    if(v.wallX==null)v.wallX=clamp(v.x+rand(-120,120),WALL_X0+40,WALL_X1-40);
+    climbLoop(v,dt,v.wallX,45);
+    v.timer-=dt;if(v.timer<=0){v.timer=rand(4,6);say(v,pick(LINES.dumper.idle),1.6)}
+  },
+  filmer(v,dt,p,d){
+    v.yellCD-=dt;const tri=v.tripod;
+    if(v.ph!==''&&v.ph!=='setup'&&(!tri||tri.dead)){v.ph='';v.tripod=null}
+    switch(v.ph){
+    case '':case 'setup':
+      if(!v.prob){v.prob=pick(PROBLEMS);const side=Math.random()<.5?-1:1;v.triX=clamp(v.prob.x+side*rand(150,210),WALL_X0+30,MAT_X1-30)}
+      v.ph='setup';
+      if(walkTo(v,v.triX,d.speed,dt)){
+        v.tripod={kind:'tripod',x:v.x,y:FLOOR,w:14,h:80,owner:v,rec:true,fallen:false,rot:0,vr:0};S.objs.push(v.tripod);
+        sfx('lock');say(v,'각 좋다~ 녹화 시작',1.6);v.ph='climb';
+      }
+      break;
+    case 'climb':{
+      const top=climbLoop(v,dt,v.prob.x,36);
+      if(top){say(v,'완등!! 이거 인스타각',1.8);v.onWall=false;v.state='fly';v.vx=0;v.vy=0;v.vr=0;v.ph='check';break}
+      if(v.onWall&&tri.rec&&p.state==='ground'){
+        const a=Math.min(tri.x,v.x)-12,b=Math.max(tri.x,v.x)+12;
+        if(p.x>a&&p.x<b){v.gal=(v.gal||0)+dt;
+          if(v.gal>.3&&v.yellCD<=0){v.yellCD=3.5;v.gal=0;S.mental-=8;say(v,pick(['아 갈았잖아요!!!','아 지나가지 말라고요!!','처음부터 다시 찍어야 되잖아!']),2);
+            pop(p.x,p.y-140,'갈았다고 난리! 멘탈 -8',22,'#ff3b30',1.2);sfx('hurt');v.ph='restart'}}
+        else v.gal=0;
+      }
+      break;}
+    case 'restart':
+      if(v.onWall){v.y+=260*dt;if(v.y>=FLOOR){v.y=FLOOR;v.cdir=-1;v.ph='climb'}}else v.ph='climb';
+      break;
+    case 'check':
+      if(walkTo(v,tri.x,d.speed,dt)){
+        if(tri.rec){say(v,'잘 찍혔다~ 한 번 더',1.6);v.ph='climb'}
+        else if(Math.abs(p.x-v.x)<170){say(v,'너지?!?! 내 영상 물어내!!',2);v.ph='rage';v.punchCD=1}
+        else despairKO(v,'녹화 정지 참교육',800,'녹화가... 왜 꺼져있어...?');
+      }
+      break;
+    case 'mourn':
+      if(v.onWall){v.y+=400*dt;if(v.y>=FLOOR){v.y=FLOOR;v.onWall=false}break}
+      if(walkTo(v,tri.x,d.speed*1.3,dt)){
+        v.sitting=true;v.mournT=(v.mournT==null?3.2:v.mournT)-dt;
+        if(v.mournT<=0){v.mournT=null;v.sitting=false;tri.fallen=false;tri.rec=true;tri.rot=0;say(v,'다시 찍어야지...',1.6);v.ph='climb'}
+      }
+      break;
+    case 'rage':
+      v.punchCD-=dt;v.running=true;
+      if(Math.abs(p.x-v.x)>40)walkTo(v,p.x,230,dt);
+      else if(v.punchCD<=0&&p.inv<=0&&p.state==='ground'){v.punchCD=1.1;v.pointT=.3;S.mental-=8;p.inv=.5;S.shake=8;sfx('hit');pop(p.x,p.y-130,'멘탈 -8',22,'#ff3b30')}
+      if(v.pointT>0)v.pointT-=dt;
+      break;
+    }
+  },
+  locker(v,dt,p,d){
+    switch(v.ph){
+    case '':{const free=[0,1,2].filter(i=>!S.lockerUsed[i]);
+      if(!free.length){v.ph='climb';v.climbT=1e9;break}
+      v.slot=pick(free);S.lockerUsed[v.slot]=true;v.ph='go';break}
+    case 'go':
+      if(walkTo(v,1685+v.slot*32,d.speed,dt)){
+        v.lk={kind:'locker',slot:v.slot,x0:1670+v.slot*32,y0:461,cx:1685+v.slot*32,x:1685+v.slot*32,y:FLOOR,w:15,h:70,open:true,locked:false,owner:v};
+        S.objs.push(v.lk);say(v,'문 열어둬도 괜찮겠지~',2);sfx('lock');v.ph='climb';v.climbT=rand(13,17);
+      }
+      break;
+    case 'climb':
+      if(v.wallX==null)v.wallX=rand(WALL_X1-520,WALL_X1-60);
+      climbLoop(v,dt,v.wallX,40);
+      v.climbT-=dt;v.timer-=dt;if(v.timer<=0){v.timer=rand(4,6);say(v,pick(LINES.locker.idle),1.6)}
+      if(v.climbT<=0&&v.lk)v.ph='down';
+      break;
+    case 'down':
+      if(v.onWall){v.y+=240*dt;if(v.y>=FLOOR){v.y=FLOOR;v.onWall=false}break}
+      if(walkTo(v,v.lk.cx,d.speed,dt)){
+        if(v.lk.locked){v.ph='fiddle';v.fidT=2.6;say(v,'비번 뭐야?!?! 0000 아닌데?!',2.6);sfx('lock')}
+        else{say(v,'아 개운하다~ 한 판 더',1.6);v.ph='climb';v.climbT=rand(13,17)}
+      }
+      break;
+    case 'fiddle':
+      v.fidT-=dt;v.pointT=.2;if(Math.random()<dt*6)sfx('lock');
+      if(v.fidT<=0)despairKO(v,'자물쇠 참교육',800,'...폰이랑 지갑 저 안에 있는데');
+      break;
     }
   },
   sprayer(v,dt,p,d){
@@ -748,6 +884,117 @@ const AI={
   },
 };
 
+// ---------- objects & pranks ----------
+function climbLoop(v,dt,wx,spd){
+  if(!v.onWall){if(walkTo(v,wx,VT[v.type].speed,dt)){v.onWall=true;v.cdir=-1}return false}
+  v.vx=0;v.y+=(v.cdir||-1)*spd*dt;
+  if(v.y<=WALL_TOP+125){v.y=WALL_TOP+125;v.cdir=1;return true}
+  if(v.y>=FLOOR){v.y=FLOOR;v.cdir=-1}
+  return false;
+}
+function despairKO(v,label,bonus,line){
+  v.ko=true;v.state='despair';v.t=2.8;v.onWall=false;v.y=FLOOR;v.vx=0;v.sitting=true;say(v,line,2.8);S.kos++;bumpCombo();
+  const got=addScore(VT[v.type].score+bonus);
+  pop(v.x,v.y-165,label+'!',34,'#46d18c',1.7);pop(v.x,v.y-128,`+${got}`,26,'#46d18c',1.7);
+  sfx('sad');S.slow=.5;S.slowT=.6;S.camFocus={x:v.x,t:2.4};
+}
+function makeItem(k,x,owner){
+  return{kind:k,x,y:FLOOR,vx:0,vy:-150,rot:0,vr:0,fly:true,owner,hitV:new Set(),
+    w:{bag:16,bottle:6,shoe:12}[k],h:{bag:26,bottle:26,shoe:10}[k]};
+}
+function nearInteract(p){
+  for(const o of S.objs){
+    if(o.kind==='tripod'&&o.rec&&!o.fallen&&Math.abs(p.x-o.x)<42)return o;
+    if(o.kind==='locker'&&o.open&&!o.locked&&Math.abs(p.x-o.cx)<46)return o;
+  }
+  return null;
+}
+function interact(o){
+  if(o.kind==='tripod'){
+    o.rec=false;sfx('ding');pop(o.x,FLOOR-115,'띵♪ 녹화 정지',28,'#46d18c',1.3);addScore(100);
+    if(o.owner&&o.owner.onWall)say(o.owner,'(전혀 모름)',1.4);
+  }else if(o.kind==='locker'){
+    o.open=false;o.locked=true;sfx('lock');addScore(100);
+    pop(o.cx,o.y0-20,'철컥! 비번 설정 완료',24,'#46d18c',1.4);pop(o.cx,o.y0-52,'열쇠는 옆 락커에 쏙',18,'#f4f1ea',1.7);
+  }
+}
+function kickObj(o,dir){
+  if(o.kind==='tripod'){knockTripod(o,dir);return}
+  o.fly=true;o.vx=dir*rand(850,1100)*(o.kind==='bag'?.8:1);o.vy=-rand(380,560);o.vr=dir*rand(10,18);o.hitV=new Set();
+  S.stop=Math.max(S.stop,.04);S.shake=Math.max(S.shake,5);sfx('kick');pop(o.x,o.y-50,pick(['뻥!','툭!','휙!']),28,'#ffd23f');addScore(20);
+  const v=o.owner;if(v&&!v.ko&&!v.complained){v.complained=1;say(v,'어? 내 물건!!',1.6)}
+}
+function knockTripod(o,dir){
+  if(o.fallen)return;o.fallen=true;o.rec=false;o.rot=0;o.vr=dir*9;
+  sfx('crash');S.shake=Math.max(S.shake,9);S.stop=Math.max(S.stop,.07);pop(o.x,FLOOR-115,'툭... 와장창',30,'#ffd23f');addScore(100);
+  const v=o.owner;
+  if(v&&!v.ko&&v.state!=='despair'&&v.ph!=='rage'){say(v,'내 삼각대!!!',2);v.ph='mourn';v.mournT=null;if(v.onWall){v.onWall=false;v.state='fly';v.vx=0;v.vy=0;v.vr=0}}
+}
+function updateObjs(dt){
+  for(const o of S.objs){
+    const dead=o.owner&&(o.owner.ko||o.owner.state==='gone');
+    if(o.kind==='tripod'){
+      if(o.fallen&&Math.abs(o.rot)<1.45)o.rot=clamp(o.rot+o.vr*dt,-1.45,1.45);
+      if(o.owner&&o.owner.state==='gone'){o.dead=true;puff(o.x,FLOOR-30,8)}
+      continue;
+    }
+    if(o.kind==='locker'){
+      if(o.owner&&o.owner.state==='gone'){o.life=(o.life==null?4:o.life)-dt;if(o.life<=0){o.dead=true;S.lockerUsed[o.slot]=false}}
+      continue;
+    }
+    if(o.fly){
+      o.vy+=G*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.rot+=o.vr*dt;
+      if(Math.abs(o.vx)>380){
+        for(const v of S.villains){
+          if(o.hitV.has(v)||v.state==='fly'||v.state==='gone'||v.state==='down'||v.state==='despair')continue;
+          const hb=hurtbox(v);
+          if(o.x>hb.x0-8&&o.x<hb.x1+8&&o.y-10>hb.y0&&o.y-10<hb.y1+10){o.hitV.add(v);hitVillain(v,'domino',sgn(o.vx));pop(v.x,v.y-140,v===o.owner?'자기 물건에 맞음!':'명중!',26,'#ff9f43');o.vx*=-.3}
+        }
+      }
+      if(o.x>DOOR_X-6&&o.y>FLOOR-220){o.dead=true;pop(DOOR_X+30,FLOOR-150,'분실물 처리!',30,'#46d18c',1.2);addScore(100);sfx('door');puff(DOOR_X+30,FLOOR-40,8);continue}
+      if(o.x<12){o.x=12;o.vx=-o.vx*.5}
+      if(o.x>W-12){o.x=W-12;o.vx=-o.vx*.5}
+      if(o.y>=FLOOR){o.y=FLOOR;if(o.vy>220){o.vy=-o.vy*.4;o.vx*=.7;o.vr*=.6;sfx('thud')}else{o.vy=0;o.fly=false;o.vx=0;o.vr=0;o.rot=o.kind==='bag'?0:o.rot===0?0:Math.PI/2}}
+    }
+    if(!o.fly&&!dead&&o.x<MAT_X1&&!S.over)S.mental-=.3*dt;
+    if(dead){o.age=(o.age||0)+dt;if(o.age>20){o.dead=true;puff(o.x,o.y-10,5)}}
+  }
+  S.objs=S.objs.filter(o=>!o.dead);
+  for(const v of S.villains){
+    if(v.type==='dumper'&&v.dropped&&!v.ko&&!v.chase&&v.items===0&&v.state==='act'&&!S.objs.some(o=>o.owner===v)){v.chase=true;say(v,'내 가방!!! 어디 가!!',2)}
+  }
+}
+function drawObj(o){
+  const c=ctx;c.save();
+  if(o.kind==='locker'){
+    if(o.open){
+      c.fillStyle='#0c1218';c.fillRect(o.x0,o.y0,30,67);
+      c.fillStyle='#0ea5e9';c.fillRect(o.x0+5,o.y0+8,20,22);c.fillStyle='#f4f1ea';c.fillRect(o.x0+8,o.y0+34,14,10);
+      c.fillStyle='#111';c.fillRect(o.x0+10,o.y0+48,9,13);c.fillStyle='#7fd3ff';c.fillRect(o.x0+11,o.y0+49,7,10);
+      c.fillStyle='#5a7896';c.beginPath();c.moveTo(o.x0,o.y0);c.lineTo(o.x0-14,o.y0+6);c.lineTo(o.x0-14,o.y0+61);c.lineTo(o.x0,o.y0+67);c.closePath();c.fill();
+      c.fillStyle='#0ea5e9';c.beginPath();c.ellipse(o.cx+6,FLOOR-3,16,4,0,0,7);c.fill();
+      c.fillStyle='#facc15';c.beginPath();c.ellipse(o.cx-14,FLOOR-3,8,3.5,0,0,7);c.fill();
+    }else if(o.locked){
+      c.fillStyle='#ffd23f';c.fillRect(o.cx-6,o.y0+30,12,10);c.strokeStyle='#ffd23f';c.lineWidth=2.5;c.beginPath();c.arc(o.cx,o.y0+30,4.5,Math.PI,0);c.stroke();
+      c.font=`11px ${DISP}`;c.textAlign='center';c.fillText('****',o.cx,o.y0+56);
+    }
+  }else if(o.kind==='tripod'){
+    const v=o.owner;
+    if(o.rec&&!o.fallen&&v&&v.onWall){c.fillStyle='rgba(255,59,48,.08)';c.beginPath();c.moveTo(o.x,FLOOR-70);c.lineTo(v.x-45,v.y-130);c.lineTo(v.x+45,v.y+10);c.closePath();c.fill()}
+    c.translate(o.x,FLOOR);c.rotate(o.rot);
+    c.strokeStyle='#1b1b1b';c.lineWidth=3;c.lineCap='round';c.beginPath();c.moveTo(-15,0);c.lineTo(0,-58);c.lineTo(15,0);c.moveTo(0,-58);c.lineTo(2,0);c.stroke();
+    c.fillStyle='#111';c.fillRect(-8,-82,16,24);c.fillStyle=o.rec?'#2a2f3a':'#000';c.fillRect(-6,-80,12,20);
+    if(o.rec&&Math.sin(S.t*6)>0){c.fillStyle='#ff3b30';c.beginPath();c.arc(0,-89,3.5,0,7);c.fill()}
+    c.font=`10px ${DISP}`;c.textAlign='center';c.fillStyle=o.rec?'#ff3b30':'#9a948c';c.fillText(o.rec?'REC':'STOP',0,-95);
+  }else{
+    c.translate(o.x,o.y);c.rotate(o.rot);
+    if(o.kind==='bag'){c.fillStyle='#2f3e5c';roundRect(c,-16,-24,32,24,6);c.fill();c.fillStyle='#d64541';c.fillRect(-16,-14,32,4);c.strokeStyle='#1a2338';c.lineWidth=3;c.beginPath();c.arc(0,-24,8,Math.PI,0);c.stroke()}
+    else if(o.kind==='bottle'){c.fillStyle='rgba(120,190,255,.9)';c.fillRect(-5,-22,10,22);c.fillStyle='#1f6fd1';c.fillRect(-3,-27,6,5)}
+    else{c.fillStyle='#e0402f';c.beginPath();c.moveTo(-12,0);c.lineTo(-12,-8);c.quadraticCurveTo(0,-12,12,-4);c.lineTo(12,0);c.closePath();c.fill();c.fillStyle='#222';c.fillRect(-12,-2,24,2)}
+  }
+  c.restore();
+}
+
 // ---------- innocents ----------
 function updateInno(n,dt){
   n.t+=dt;
@@ -758,7 +1005,7 @@ function updateInno(n,dt){
     n.vy+=G*dt;n.x+=n.vx*dt;n.y+=n.vy*dt;n.rot+=n.vr*dt;n.x=clamp(n.x,WALL_X0+30,WALL_X1-30);
     // falling innocents crush sitters for free
     for(const v of S.villains){if(v.sitting&&v.state==='act'&&Math.abs(v.x-n.x)<40&&n.y>v.y-75&&n.vy>200){hitVillain(v,'shock',sgn(v.x-n.x)||1);pop(v.x,v.y-120,'거봐 위험하잖아',22,'#fff',1)}}
-    if(n.y>=FLOOR){n.y=FLOOR;n.vy=0;n.vx=0;n.vr=0;n.rot=0;n.state='rest';n.rest=n.knocked?3:rand(1.5,3);if(n.knocked)stars(n.x,n.y-40)}
+    if(n.y>=FLOOR){n.y=FLOOR;n.vy=0;n.vx=0;n.vr=0;n.rot=0;n.state='rest';n.rest=n.knocked?3.5:rand(3,6);if(n.knocked)stars(n.x,n.y-40)}
   }else if(n.state==='rest'){
     n.rest-=dt;if(n.rest<=0){n.state='climb';n.knocked=false;n.y=FLOOR-10;n.speed=rand(28,45);if(!onWallX(n.x))n.x=clamp(n.x,WALL_X0+40,WALL_X1-40)}
   }
@@ -770,7 +1017,7 @@ function update(dt){
   S.t+=dt;
   if(S.over){S.overT+=dt;}
   if(S.slowT>0){S.slowT-=dt;if(S.slowT<=0)S.slow=1}
-  if(S.stop>0){S.stop-=dt;input.jumpP=input.atkP=0;return}
+  if(S.stop>0){S.stop-=dt;input.jumpP=input.atkP=input.upP=0;return}
   const gdt=dt*S.slow;
   if(!S.over){
     updatePlayer(gdt);
@@ -790,12 +1037,14 @@ function update(dt){
   if(!S.over){
     for(const v of S.villains)if(v.state==='act'&&!v.ko)S.mental-=VT[v.type].drain*gdt;
   }
+  updateObjs(gdt);
   for(const n of S.inno)updateInno(n,gdt);
   for(const pr of PROBLEMS)if(pr.cd>0)pr.cd-=gdt;
   // clouds
   S.inChalk=false;
   for(const c of S.clouds){c.life-=gdt;c.r+=(c.R-c.r)*Math.min(1,gdt*5);c.x+=Math.sin(S.t+c.R)*6*gdt;
-    if(!S.over&&Math.hypot(S.p.x-c.x,S.p.y-60-c.y)<c.r*.85&&c.life>.5){S.mental-=7*gdt;S.inChalk=true}}
+    if(!S.over&&Math.hypot(S.p.x-c.x,S.p.y-60-c.y)<c.r*.85&&c.life>.5){S.mental-=7*gdt;S.inChalk=true}
+    for(const n of S.inno){n.coughCD=(n.coughCD||0)-gdt;if(n.state==='rest'&&n.coughCD<=0&&Math.abs(n.x-c.x)<c.r*.9&&c.life>.5){n.coughCD=2.2;pop(n.x,n.y-120,'콜록콜록',18,'#fff',.9)}}}
   S.clouds=S.clouds.filter(c=>c.life>0);
   for(const b of S.bubbles){b.t+=gdt;b.y-=14*gdt;b.x+=b.vx*gdt}
   S.bubbles=S.bubbles.filter(b=>b.t<b.life);
@@ -810,8 +1059,9 @@ function update(dt){
   if(S.comboT>0){S.comboT-=gdt;if(S.comboT<=0)S.combo=0}
   S.shake*=Math.pow(.004,dt);if(S.shake<.3)S.shake=0;
   S.flash=Math.max(0,S.flash-dt);
+  if(S.camFocus&&S.camFocus.t>0)S.camFocus.t-=dt;
   if(!S.over&&S.mental<=0){S.mental=0;gameOver('멘탈 붕괴','빌런들의 민폐를 버티지 못했다')}
-  input.jumpP=input.atkP=0;
+  input.jumpP=input.atkP=input.upP=0;
 }
 function gameOver(reason,sub){
   if(S.over)return;S.over=true;S.slow=.3;S.slowT=1.2;sfx('slam');
@@ -830,7 +1080,8 @@ function render(){
   ctx.fillStyle='#16130f';ctx.fillRect(0,0,cv.width,cv.height);
   if(!S||!bg)return;
   const p=S.p;
-  const targetCam=viewW>=W?(W-viewW)/2:clamp(p.x-viewW*.45,0,W-viewW);
+  const fx=S.camFocus&&S.camFocus.t>0?S.camFocus.x:p.x;
+  const targetCam=viewW>=W?(W-viewW)/2:clamp(fx-viewW*(fx===p.x?.45:.5),0,W-viewW);
   camX+=(targetCam-camX)*.15;if(Math.abs(targetCam-camX)>600)camX=targetCam;
   const sh=S.shake,shx=sh?rand(-sh,sh):0,shy=sh?rand(-sh,sh):0;
   const k=dpr*scale;
@@ -847,6 +1098,7 @@ function render(){
   }
   // shadows
   const shadow=(x,y,s)=>{const h=clamp((FLOOR-y)/400,0,1);ctx.fillStyle=`rgba(0,0,0,${.32*(1-h)})`;ctx.beginPath();ctx.ellipse(x,FLOOR+2,24*s*(1-h*.5),5*s,0,0,7);ctx.fill()};
+  for(const o of S.objs)drawObj(o);
   // innocents
   for(const n of S.inno){
     if(n.state!=='climb')shadow(n.x,n.y,1);
@@ -859,7 +1111,8 @@ function render(){
   for(const v of vs){
     if(!v.onWall)shadow(v.x,v.y,v.s);
     let pose='stand',rot=v.rot,yOff=0;
-    if(v.state==='fly')pose='fly';
+    if(v.state==='despair'||(v.ph==='mourn'&&v.sitting&&v.state==='act'))pose='despair';
+    else if(v.state==='fly')pose='fly';
     else if(v.state==='down'){pose='down';rot=-Math.PI/2;yOff=38*v.s}
     else if(v.state==='hurt')pose='hurt';
     else if(v.onWall)pose='climb';
@@ -881,7 +1134,8 @@ function render(){
       const hw=36*v.s;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(v.x-hw/2,top-46+bob,hw,5);ctx.fillStyle='#ff3b30';ctx.fillRect(v.x-hw/2,top-46+bob,hw*clamp(v.hp/v.max,0,1),5);
       if(v.tele>0){ctx.font=`40px ${DISP}`;ctx.fillStyle='#ffd23f';ctx.strokeStyle='#000';ctx.lineWidth=5;ctx.strokeText('!',v.x,top-56);ctx.fillText('!',v.x,top-56)}
     }
-    if(v.say&&v.state!=='fly'&&v.state!=='down')speech(v.x,v.y-(v.sitting?100:140)*v.s-(v.state==='act'?38:0),v.say.text);
+    if(v.state==='despair'){ctx.strokeStyle='rgba(127,200,255,.8)';ctx.lineWidth=2;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(v.x+i*9,v.y-100);ctx.lineTo(v.x+i*9,v.y-84);ctx.stroke()}}
+    if(v.say&&v.state!=='fly'&&v.state!=='down')speech(v.x,v.y-(v.sitting||v.state==='despair'?100:140)*v.s-(v.state==='act'?38:0),v.say.text);
   }
   // player
   {
@@ -902,7 +1156,9 @@ function render(){
       const a=clamp(p.pump/100,0,1);ctx.lineWidth=5;ctx.strokeStyle='rgba(0,0,0,.5)';ctx.beginPath();ctx.arc(p.x+34*p.face*-1,p.y-120,11,0,7);ctx.stroke();
       ctx.strokeStyle=a>.35?'#46d18c':'#ff3b30';ctx.beginPath();ctx.arc(p.x+34*p.face*-1,p.y-120,11,-Math.PI/2,-Math.PI/2+a*Math.PI*2);ctx.stroke();
     }
-    if(S.hintGrab>0&&S.wave>=1&&p.state==='ground'&&onWallX(p.x)){ctx.textAlign='center';ctx.font=`15px ${DISP}`;ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillText(isTouch?'스틱 ↑ 벽 잡기':'↑ 벽 잡기',p.x,p.y-135)}
+    if(p.state==='ground'&&p.near){const t=(isTouch?'스틱 ↑ ':'↑ ')+(p.near.kind==='tripod'?'몰래 녹화 정지':'자물쇠 잠그기');
+      ctx.textAlign='center';ctx.font=`19px ${DISP}`;ctx.lineWidth=5;ctx.strokeStyle='#120d08';ctx.strokeText(t,p.x,p.y-140);ctx.fillStyle='#46d18c';ctx.fillText(t,p.x,p.y-140)}
+    else if(S.hintGrab>0&&S.wave>=1&&p.state==='ground'&&onWallX(p.x)){ctx.textAlign='center';ctx.font=`15px ${DISP}`;ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillText(isTouch?'스틱 ↑ 벽 잡기':'↑ 벽 잡기',p.x,p.y-135)}
   }
   // particles
   for(const q of S.parts){
@@ -1036,7 +1292,7 @@ newGame();S.waveT=0.01;
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>buildBg());
 requestAnimationFrame(frame);
 // expose for testing
-window.__game={get S(){return S},input,begin};
+window.__game={get S(){return S},input,begin,spawn:t=>spawn(t)};
 })();
 </script>
 </body>
