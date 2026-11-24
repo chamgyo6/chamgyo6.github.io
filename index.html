@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>참교육 클라이밍 3D</title>
+<meta name="description" content="클라이밍장 빌런들을 참교육하라! 친구들과 랭킹 대결하는 3D 액션 게임">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://seo-kang-hyeok.github.io/seoakng/">
+<meta property="og:title" content="참교육 클라이밍 3D">
+<meta property="og:description" content="클라이밍장 빌런들을 참교육하라! 친구들과 랭킹 대결 🧗">
+<meta property="og:image" content="https://seo-kang-hyeok.github.io/seoakng/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://seo-kang-hyeok.github.io/seoakng/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Hahmlet:wght@900&family=Noto+Sans+KR:wght@500;700;900&display=swap">
@@ -2013,7 +2023,7 @@ async function submitScore(){
   }catch(e){if(e&&(e.code==='invalid_argument'||e.code==='not_granted'))LB.writeOff=true;renderLB()}
 }
 // ---- share a result as text + link ----
-const SHARE_URL=(window.claude&&window.claude.use)?'https://claude.ai/artifact/HYxAJj3SZmPxCRzicqtWq6':(location.protocol.startsWith('http')?location.origin+location.pathname:'');
+const SHARE_URL='https://seo-kang-hyeok.github.io/seoakng/';
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
   const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점 · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n개발자 인스타 @hyeok_73';
