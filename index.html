@@ -216,10 +216,39 @@ function noise(dur,freq,vol,t0=0){const t=AC.currentTime+t0,n=AC.createBufferSou
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);n.connect(f);f.connect(g);g.connect(master);n.start(t);n.stop(t+dur+.05)}
 function tone(f0,f1,dur,type,vol,t0=0){const t=AC.currentTime+t0,o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05)}
+// ================= BGM (게임 안에서 직접 합성 — 외부 파일 없음) =================
+// 4마디 반복: Am - F - C - G. 웨이브가 오를수록 빨라지고, 빌런이 많거나 보스면 멜로디가 붙음
+const BGM={g:null,next:0,step:0,iv:null};
+const midi=m=>440*Math.pow(2,(m-69)/12);
+const PROG=[[45,[57,60,64]],[41,[57,60,65]],[48,[55,60,64]],[43,[55,59,62]]];
+const PROG_BOSS=[[45,[57,60,64]],[45,[57,60,63]],[46,[58,62,65]],[44,[56,59,63]]];
+function bOsc(type,f0,f1,t,dur,vol){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(BGM.g);o.start(t);o.stop(t+dur+.02)}
+function bNoise(t,dur,vol,hp){const n=AC.createBufferSource();n.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=hp?'highpass':'bandpass';f.frequency.value=hp||1800;
+  const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);n.connect(f);f.connect(g);g.connect(BGM.g);n.start(t,Math.random()*.5);n.stop(t+dur+.02)}
+function bgmBeat(st,t,sp){
+  const boss=S&&S.villains.some(v=>v.type==='boss'&&!v.ko&&v.state!=='gone');
+  const heat=S?S.villains.filter(v=>v.revealed&&!v.ko&&v.state!=='gone').length:0;
+  const P=boss?PROG_BOSS:PROG,bar=Math.floor(st/16)%4,i=st%16,[root,ch]=P[bar];
+  if(i%4===0||boss&&i===14)bOsc('sine',150,42,t,.22,.9);                       // 킥
+  if(i===4||i===12){bNoise(t,.16,.55);bOsc('triangle',190,140,t,.08,.25)}      // 스네어
+  if(i%2===1)bNoise(t,.04,heat>=3||boss?.22:.13,7000);                         // 하이햇
+  if(i%2===0)bOsc('sawtooth',midi(root+(i%4===2?12:0)),midi(root+(i%4===2?12:0)),t,sp*1.6,.16); // 베이스
+  if(i===2||i===6||i===10||i===14)for(const n of ch)bOsc('square',midi(n),midi(n),t,sp*.9,.028); // 코드 끊어치기
+  if(heat>=4||boss){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[i%4]),midi(arp[i%4]),t,sp*.9,.07)} // 멜로디
+  if(st%64===0)bNoise(t,.9,.18,5000);                                          // 4마디마다 심벌
+}
+function bgmStart(){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect(master)}
+  BGM.g.gain.cancelScheduledValues(AC.currentTime);BGM.g.gain.setValueAtTime(.42,AC.currentTime);
+  BGM.step=0;BGM.next=AC.currentTime+.1;clearInterval(BGM.iv);
+  BGM.iv=setInterval(()=>{if(!AC)return;const bpm=Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0),sp=60/bpm/4;
+    if(BGM.next<AC.currentTime-.2)BGM.next=AC.currentTime+.05;
+    while(BGM.next<AC.currentTime+.15){if(!muted&&!document.hidden)try{bgmBeat(BGM.step,BGM.next,sp)}catch(e){}BGM.next+=sp;BGM.step++}},30)}
+function bgmStop(fade=1.2){clearInterval(BGM.iv);BGM.iv=null;if(BGM.g&&AC){const t=AC.currentTime;BGM.g.gain.cancelScheduledValues(t);BGM.g.gain.setValueAtTime(BGM.g.gain.value,t);BGM.g.gain.linearRampToValueAtTime(0,t+fade)}}
 // 폰 진동 (소리 끄면 같이 꺼짐)
 function buzz(ms){if(!isTouch||muted||!navigator.vibrate)return;try{navigator.vibrate(ms)}catch(e){}}
 function sfx(k){if(!AC||muted)return;try{switch(k){
-  case 'hit':noise(.1,2600,.55);tone(190,70,.11,'sine',.6);break;
+  case 'hit':{const r=.85+Math.random()*.3;noise(.1,2600*r,.55);tone(190*r,70,.11,'sine',.6);break}
   case 'kick':noise(.18,2000,.8);tone(150,45,.22,'sine',.9);break;
   case 'big':noise(.3,1600,1);tone(130,35,.35,'sine',1);tone(80,30,.3,'square',.12);break;
   case 'slam':noise(.6,800,1);tone(110,22,.7,'sine',1);tone(60,25,.5,'square',.15);break;
@@ -659,7 +688,15 @@ function disposeGame(){
   if(promptEl)promptEl.style.display='none';
 }
 function addScore(n){const m=S.p.fireT>0?2:1;S.score+=Math.round(n*m);return Math.round(n*m)}
-function bumpCombo(){S.combo++;S.comboT=2.6*(1+pk('combo'));S.maxCombo=Math.max(S.maxCombo,S.combo)}
+// 웨이브 마지막 빌런을 쓰러뜨리면 슬로모션 피니시
+function lastHit(v){if(!S||S.over||S.queue.length||S.villains.some(o=>o!==v&&o.state!=='gone'&&!o.ko))return;
+  S.slow=.12;S.slowT=.9;S.fovKick=Math.max(S.fovKick,1.3);S.flash=Math.max(S.flash,.25);S.koCam={v,t:1.1};
+  pop(headPos(v,1.4),pick(['피니시!!!','마무리 참교육!!!','완등 피니시!!!']),58,'#ff3b30',1.6);sfx('slam');buzz([50,30,120]);
+  if(BGM.g&&AC&&!muted)bNoise(AC.currentTime+.02,1.2,.3,4000)}
+// 콤보 달성 축하
+const COMBO_CHEER={10:'센터가 들썩!',20:'클린이들 환호!',30:'직원 기립박수!',50:'전설의 참교육러!',75:'센터 역사에 남는다!',100:'이 정도면 사장님 등판'};
+function bumpCombo(){S.combo++;S.comboT=2.6*(1+pk('combo'));S.maxCombo=Math.max(S.maxCombo,S.combo);
+  const c=COMBO_CHEER[S.combo];if(c&&S.p){const g=addScore(S.combo*20);pop(headPos(S.p,1.2),`${S.combo} COMBO! ${c} +${g}`,40,'#c084fc',1.6);cheer(2);sfx('clear');buzz([20,20,20,20,60])}}
 function say(e,text,d=1.8){if(!e.sayEl){e.sayEl=mkLbl('say')}e.sayEl.textContent=text;e.sayEl.style.display='';e.sayT=d}
 const headPos=(e,extra=0)=>v3(e.pos.x,e.pos.y+(e.m?1.95*e.m.s:1.95)+extra,e.pos.z);
 
@@ -874,7 +911,7 @@ function hitVillain(v,kind,dir){
   }
   const base=({wave:2,punch:1,kick:2,dive:3+2*pk('dive'),slam:99,domino:1,shock:1,throw:2+2*pk('grab')})[kind]||1;
   const wasFly=v.state==='fly';
-  v.hp-=base*(fire?2:1);v.flash=.1;v.lastKind=wasFly&&kind!=='domino'&&kind!=='slam'?'juggle':kind;v.sitting=false;
+  v.hp-=base*(fire?2:1);v.flash=.1;v.sqAt=S.t;v.lastKind=wasFly&&kind!=='domino'&&kind!=='slam'?'juggle':kind;v.sitting=false;
   bumpCombo();addScore(10*base*(1+S.combo*.1));if(kind!=='wave')addUlt(8);
   const hp=v.pos.clone();hp.y+=1.1*v.s;
   S.stop=Math.max(S.stop,kind==='punch'?.05:kind==='slam'?.16:.09);
@@ -909,6 +946,7 @@ function knockOut(v,kind,dir){
   if(v.type==='crowder')pop(headPos(v,1.2),'...겹치네요',24,'#fff',1.4);
   cheer(style||v.type==='boss'?2:1);
   S.fovKick=Math.max(S.fovKick,.8);S.koCam={v,t:.7};if(v.type!=='boss'){S.slow=Math.min(S.slow,.35);S.slowT=Math.max(S.slowT,.3)}
+  lastHit(v);
   if(v.type==='boss'){S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!','텃세 대마왕 퇴치',2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
 }
 function despairKO(v,label,bonus,line){
@@ -930,6 +968,7 @@ function hitInnocent(n,dir){
 const REFORM_LINES=['덕분에 건강해졌어요. 감사합니다!','어깨가 하나도 안 아파요...! 착하게 살게요','팔꿈치 통증이 사라졌어요 ㅠㅠ 매너 지킬게요','손가락이 다 나았어요! 감사합니다!','저 그동안 왜 그랬을까요... 죄송합니다','이제 매트에 안 앉을게요... 감사합니다'];
 function addUlt(n){if(!S)return;const was=S.ult;S.ult=Math.min(100,(S.ult||0)+n);if(was<100&&S.ult>=100){pop(headPos(S.p,.8),'체외충격파 준비! (공격 길게)',24,'#7fc8ff',1.6);sfx('charge')}}
 function reformKO(v,dir){
+  setTimeout(()=>lastHit(v),0);
   buzz(v.type==='boss'?[60,40,120]:45);
   v.ko=true;v.state='reform';v.reformPh='fall';v.t=0;v.onWall=false;v.sitting=false;v.mourning=false;v.vel.set(dir.x*3,4.5,dir.z*3);setSpin(v,dir,5);
   if(v.grp)v.grp=v.grp;S.kos++;bumpCombo();
@@ -1139,8 +1178,9 @@ function updateVillain(v,dt){
       highlight(3,`${v.name} 문 밖으로 퇴장!`);
       pop(dp,'문 밖으로 퇴장!',36,'#46d18c',1.4);pop(v3(dp.x,dp.y-.5,dp.z),`+${b}`,28,'#46d18c',1.4);puff(v3(RX1-.5,1,dp.z),18,0xf4f1ea,4,.15);sfx('door');S.shake=.18;cheer(2);break;
     }
-    const bounce=(ax,lo,hi)=>{if(v.pos[ax]<lo){v.pos[ax]=lo;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){S.shake=Math.max(S.shake,.1);sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6)}}
-      if(v.pos[ax]>hi){v.pos[ax]=hi;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6)}}};
+    const slam=()=>{if(spd>6.5&&S.t-(v.wallAt??-9)>.6){v.wallAt=S.t;bumpCombo();const g=addScore(80);pop(headPos(v,.5),`벽꽝! +${g}`,34,'#ff8a3d',1);S.stop=Math.max(S.stop,.08);S.shake=Math.max(S.shake,.18);buzz(35);sfx('kick');sparks(v.pos.clone().setY(v.pos.y+1),8)}};
+    const bounce=(ax,lo,hi)=>{if(v.pos[ax]<lo){v.pos[ax]=lo;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){S.shake=Math.max(S.shake,.1);sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6);slam()}}
+      if(v.pos[ax]>hi){v.pos[ax]=hi;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6);slam()}}};
     bounce('x',RX0+.3,RX1-.3);bounce('z',WALL_Z+.35,RZ1-.3);
     if(v.pos.y<=0){
       v.pos.y=0;
@@ -1649,7 +1689,7 @@ function update(dt){
   input.jumpP=input.atkP=input.actP=0;
 }
 function gameOver(reason,sub){
-  if(S.over)return;if(reason.startsWith('출입금지'))sub='직원: "저도 이러고 싶지 않아요 ㅠㅠ" · '+sub;S.over=true;S.slow=.3;S.slowT=1.2;sfx('slam');
+  if(S.over)return;if(reason.startsWith('출입금지'))sub='직원: "저도 이러고 싶지 않아요 ㅠㅠ" · '+sub;S.over=true;S.slow=.3;S.slowT=1.2;sfx('slam');bgmStop();
   const nb=S.score>best;if(nb){best=S.score;saveBest(best)}
   setTimeout(()=>{
     document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
@@ -1719,6 +1759,7 @@ function syncScene(){
     v.m.moving=true;v.tumbling=v.state==='fly'&&v.spin;
     if(!v.tumbling&&v.state!=='fly')v.m.root.quaternion.identity();
     poseEntity(v,pn,v.anim,0);
+    {const q=Math.max(0,1-(S.t-(v.sqAt??-9))/.16),k=v.m.s;if(q>0)v.m.root.scale.set(k*(1+.3*q),k*(1-.25*q),k*(1+.3*q));else if(v.sqAt!=null){v.m.root.scale.setScalar(k);v.sqAt=null}}
     v.m.phone.visible=v.type==='sitter'&&v.sitting||v.posePN==='film';
     setFlash(v.m,v.flash>0||(v.tele>0&&Math.sin(S.t*40)>0));
     const showTag=v.revealed&&(v.state==='act'||v.state==='enter'||v.state==='hurt'||v.state==='held');
@@ -1762,7 +1803,7 @@ function syncScene(){
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
   document.getElementById('scoreTxt').textContent=S.score.toLocaleString();
   document.getElementById('bestTxt').textContent='최고 '+Math.max(best,S.score).toLocaleString();
-  const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
+  const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=20?'#c084fc':S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
   {const wh=document.getElementById('white');wh.style.background=S.inStink&&!S.inChalk?'#a7d98a':'#f5f3ee';wh.style.opacity=S.inChalk?.6:S.inStink?.4:0}
   document.getElementById('flash').style.opacity=Math.min(.7,S.flash*2.5);
 }
@@ -2012,7 +2053,7 @@ function begin(mode,daily){
   if(daily!==undefined)lastDaily=daily;
   initAudio();if(AC&&AC.state==='suspended')AC.resume();
   if(mode)viewMode=mode;document.getElementById('viewBtn').textContent='시점: '+(viewMode==='3rd'?'3인칭':'쿼터뷰');
-  newGame();S.hintGrab=3;running=true;S.daily=lastDaily;
+  newGame();S.hintGrab=3;running=true;S.daily=lastDaily;bgmStart();
   if(S.daily){S.waveT=3.4;banner(`📅 ${DAY_LABEL} 챌린지`,`오늘의 규칙: ${TODAY_MOD.name} · ${TODAY_MOD.desc}`,3.2,'#46d18c')}
   LB.view=S.daily?'daily':'all';renderLB();document.getElementById('shareText').hidden=true;
   const p=S.p;camPos.set(p.pos.x,p.pos.y+3,p.pos.z+5);camLook.copy(p.pos);
@@ -2029,7 +2070,7 @@ addEventListener('keydown',e=>{if(e.code==='Enter'){if(!document.getElementById(
 gymGroup=buildGym();scene.add(gymGroup);
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{scene.remove(gymGroup);gymGroup=buildGym();scene.add(gymGroup)});
 requestAnimationFrame(frame);
-window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),toggleView,get view(){return viewMode}};
+window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
 })();
 </script>
 </body>
