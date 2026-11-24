@@ -44,6 +44,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #hud{position:fixed;left:0;right:0;top:0;z-index:5;pointer-events:none;
   padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 30px max(12px,env(safe-area-inset-left,0px));
   background:linear-gradient(rgba(14,11,8,.85),rgba(14,11,8,0));display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.hl>span{white-space:nowrap}
 .hl{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font:400 14px/1 var(--display)}
 .bar{width:min(200px,34vw);height:14px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden}
 .bar.ult b{background:#7fc8ff}.bar.ult.full{box-shadow:0 0 0 2px #7fc8ff,0 0 12px #7fc8ff;animation:ultp .8s ease-in-out infinite alternate}
@@ -215,6 +216,8 @@ function noise(dur,freq,vol,t0=0){const t=AC.currentTime+t0,n=AC.createBufferSou
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);n.connect(f);f.connect(g);g.connect(master);n.start(t);n.stop(t+dur+.05)}
 function tone(f0,f1,dur,type,vol,t0=0){const t=AC.currentTime+t0,o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05)}
+// 폰 진동 (소리 끄면 같이 꺼짐)
+function buzz(ms){if(!isTouch||muted||!navigator.vibrate)return;try{navigator.vibrate(ms)}catch(e){}}
 function sfx(k){if(!AC||muted)return;try{switch(k){
   case 'hit':noise(.1,2600,.55);tone(190,70,.11,'sine',.6);break;
   case 'kick':noise(.18,2000,.8);tone(150,45,.22,'sine',.9);break;
@@ -832,6 +835,7 @@ const alive=v=>v.state!=='gone'&&v.state!=='down'&&v.state!=='despair'&&v.state!
 function vHeight(v){return(v.sitting||v.state==='despair'?1.1:1.85)*v.s}
 function hitVillain(v,kind,dir){
   if(!alive(v))return;
+  if(v.type!=='locker'&&v.revealed)buzz(kind==='wave'?0:kind==='kick'||kind==='dive'?28:18);
   if(v.type==='locker'){if(DIRECT.has(kind)&&!(v.hintT>0)){v.hintT=2;v.flash=.08;sfx('whoosh');pop(headPos(v,.4),v.lk&&!v.lk.locked?'패지 말고 락커를 잠가버려!':'이미 잠겼다. 지켜보자 ㅋㅋ',26,'#ffd23f',1.2)}return}
   if(!v.revealed){
     if(DIRECT.has(kind))wrongHit(v,dir);
@@ -872,7 +876,7 @@ function knockOut(v,kind,dir){
   v.ko=true;v.onWall=false;v.state='fly';
   const hk=v.heavy?.85:1;
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
-  S.kos++;addUlt(15);S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
+  S.kos++;addUlt(15);buzz([30,25,45]);S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
   sfx('big');sfx('ko');ring(v.pos,2.2,0xffd23f);
   highlight(v.type==='boss'?5:(v.lastKind||kind)==='slam'?4:(v.lastKind||kind)==='throw'||(v.lastKind||kind)==='domino'?3:1,v.type==='boss'?'텃세 대마왕 참교육 완료!!!':`${({slam:'바디슬램',throw:'랜지 던지기',dive:'다이노 킥',domino:'도미노',juggle:'공중 콤보',wave:'체외충격파'})[v.lastKind||kind]||'참교육'}! ${v.name} 퇴치`);
   const style={slam:['바디슬램',300],dive:['다이노 킥',150],domino:['도미노',200],juggle:['공중 콤보',150],throw:['랜지 던지기',150],wave:['체외충격파',200]}[v.lastKind||kind];
@@ -905,6 +909,7 @@ function hitInnocent(n,dir){
 const REFORM_LINES=['덕분에 건강해졌어요. 감사합니다!','어깨가 하나도 안 아파요...! 착하게 살게요','팔꿈치 통증이 사라졌어요 ㅠㅠ 매너 지킬게요','손가락이 다 나았어요! 감사합니다!','저 그동안 왜 그랬을까요... 죄송합니다','이제 매트에 안 앉을게요... 감사합니다'];
 function addUlt(n){if(!S)return;const was=S.ult;S.ult=Math.min(100,(S.ult||0)+n);if(was<100&&S.ult>=100){pop(headPos(S.p,.8),'체외충격파 준비! (공격 길게)',24,'#7fc8ff',1.6);sfx('charge')}}
 function reformKO(v,dir){
+  buzz(v.type==='boss'?[60,40,120]:45);
   v.ko=true;v.state='reform';v.reformPh='fall';v.t=0;v.onWall=false;v.sitting=false;v.mourning=false;v.vel.set(dir.x*3,4.5,dir.z*3);setSpin(v,dir,5);
   if(v.grp)v.grp=v.grp;S.kos++;bumpCombo();
   const got=addScore(VT[v.type].score+300);pop(headPos(v,.9),'정화 참교육!',32,'#7fc8ff',1.5);pop(headPos(v,.4),`+${got}`,24,'#46d18c',1.5);
@@ -912,6 +917,7 @@ function reformKO(v,dir){
   if(v.type==='boss'){S.slow=.25;S.slowT=1.2;banner('정화 완료!!!','텃세 대마왕이 착해졌다',2.6,'#7fc8ff');setTimeout(()=>staffSay('사장님!!! 그 텃세 대마왕이 착해졌어요!!! ㅠㅠㅠ',2.8),500)}
 }
 function shockwave(p){
+  buzz([40,30,90]);
   p.swCD=1;S.ult=0;p.atkT=.25;p.atkKind=null;const r=3.6;const before=S.kos;
   for(const v of S.villains){if(!alive(v)||v.onWall||v.state==='held')continue;const d=xzDist(v.pos,p.pos);
     if(d<r){const dir=v3(v.pos.x-p.pos.x,0,v.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(faceVec(p.head));hitVillain(v,'wave',dir.normalize())}}
@@ -1419,7 +1425,7 @@ const AI={
     if(v.dash>0){
       v.dash-=dt;const f=faceVec(v.head);v.pos.x+=f.x*10*dt;v.pos.z+=f.z*10*dt;v.vel.set(f.x*10,0,f.z*10);if(Math.random()<.5)puff(v.pos.clone().setY(.1),1,0xf4f1ea,.8,.1);
       if(p.inv<=0&&p.state!=='climb'&&xzDist(p.pos,v.pos)<1.1&&p.pos.y<1.5){
-        p.inv=1;p.hurtT=.5;p.state='air';p.vel.set(f.x*8,6.5,f.z*8);p.peakY=0;p.dive=false;
+        buzz(70);p.inv=1;p.hurtT=.5;p.state='air';p.vel.set(f.x*8,6.5,f.z*8);p.peakY=0;p.dive=false;
         S.mental-=14;S.shake=.3;S.flash=.15;sfx('big');pop(headPos(p,.4),'어깨빵!!',36,'#ff3b30');pop(headPos(p),'멘탈 -14',24,'#ff3b30');
       }
       if(v.pos.x<RX0+.8||v.pos.x>RX1-.8||v.pos.z<WALL_Z+.6||v.pos.z>RZ1-.6){v.dash=0}
