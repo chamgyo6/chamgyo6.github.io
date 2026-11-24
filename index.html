@@ -94,6 +94,8 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 .perk button i{font-style:normal;font:700 11px/1 var(--body);color:var(--mute);letter-spacing:.08em}
 .perk button:hover,.perk button:focus-visible{border-color:var(--hazard);outline:none;transform:translateY(-2px)}
 .ttl{font:400 22px/1.2 var(--display);color:var(--ok)}
+.lbtabs{display:flex;gap:6px}.lbtabs button{flex:1;background:#2d2721;color:var(--mute);border:0;border-radius:6px;font:700 12px/1 var(--body);padding:8px;cursor:pointer}
+.lbtabs button.on{background:var(--hazard);color:#1a1300}
 .lb{background:var(--panel);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;box-sizing:border-box}
 .lb h2{margin:0;font:400 20px/1 var(--display);color:var(--hazard)}
 .lb ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
@@ -141,8 +143,9 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     </div>
     <label class="nick" for="nick1">닉네임 <input id="nick1" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
     <button class="btn" id="start3">참교육 시작<small>3인칭 · 등 뒤 카메라</small></button>
+    <button class="btn alt" id="startDaily">📅 오늘의 챌린지<small id="dailyMod">오늘의 규칙</small></button>
     <button class="linkbtn" id="startIso">쿼터뷰(2.5D)로 하기</button>
-    <section class="lb" hidden><h2>🏆 명예의 전당</h2><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
+    <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
   </div>
 </div>
 
@@ -162,9 +165,10 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <div class="big" id="overScore">0</div>
     <div class="ttl" id="overTitle"></div>
     <p class="lead" id="overSub"></p>
-    <section class="lb" hidden><h2>🏆 명예의 전당</h2><ol></ol><div class="lbnote"></div></section>
+    <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
-    <button class="btn" id="retryBtn">다시 참교육</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
+    <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
   </div>
 </div>
 
@@ -562,11 +566,11 @@ function makeCrowd(){
 function cheer(level){
   if(!S||S.over)return;const big=level>=2;
   sfx(big?'cheerBig':'cheer');
-  const gain=(big?8:3)*(1+pk('insa'));S.mental=Math.min(100,S.mental+gain);
+  const gain=(big?8:3)*(1+pk('insa'))*(modIs('cheer')?2:1);S.mental=Math.min(100,S.mental+gain);
   pop(headPos(S.p,.9),`환호! 멘탈 +${gain}`,22,'#46d18c',1.2);
   for(const c of S.crowd){c.cheerT=rand(1,1.5)*(big?1.8:1);c.booT=0;if(Math.random()<(big?.6:.3))say(c,pick(CHEER_LINES),1.5)}
   for(const n of S.inno)if(Math.random()<.35)pop(headPos(n,.2),pick(['나이스!','와!','👏']),18,'#fff',1);
-  staffReact(level);S.grat=(S.grat||0)+(big?2:1);if(S.grat>=(pk('vip')?2:4)){S.grat=0;setTimeout(giveReward,800)}
+  staffReact(level);S.grat=(S.grat||0)+(big?2:1);if(S.grat>=(pk('vip')||modIs('gift')?2:4)){S.grat=0;setTimeout(giveReward,800)}
 }
 function boo(){if(!S)return;sfx('boo');for(const c of S.crowd){c.booT=1.6;c.cheerT=0;if(Math.random()<.45)say(c,pick(['우우~','아니 왜 회원을 때려','실망이다...']),1.5)}}
 
@@ -618,6 +622,28 @@ function updateWalkers(dt){
   S.walkers=S.walkers.filter(w=>!w.gone);
 }
 
+// ================= daily challenge =================
+function kstDay(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,'')}
+const DAY=kstDay();
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rngFor=k=>mulberry32((+DAY)*1000+k);
+const DAILY_MODS=[
+  {id:'hp',name:'빌런 체력 +1',desc:'오늘 빌런들은 좀 질기다'},
+  {id:'reveal',name:'투명 사회',desc:'모든 빌런이 처음부터 발각 상태'},
+  {id:'gift',name:'직원 기분 최고',desc:'직원 선물이 두 배 자주 온다'},
+  {id:'chalk',name:'초크 폭풍',desc:'초크 구름이 훨씬 크다'},
+  {id:'cheer',name:'응원단 출동',desc:'환호 멘탈 회복 2배'},
+];
+const TODAY_MOD=DAILY_MODS[(rngFor(7)()*DAILY_MODS.length)|0];
+const modIs=id=>!!(S&&S.daily&&TODAY_MOD.id===id);
+const DAY_LABEL=`${+DAY.slice(4,6)}월 ${+DAY.slice(6)}일`;
+document.getElementById('dailyMod').textContent=`${DAY_LABEL} · 오늘의 규칙: ${TODAY_MOD.name}`;
+function dailyWave(n){
+  const r=rngFor(n),pool=['sitter','chalker','crowder','sprayer','dumper','filmer','locker','speaker','hogger'];
+  const k=n<=4?n+1:Math.min(9,3+Math.floor((n-5)/1.4));const list=[];for(let i=0;i<k;i++)list.push(pool[(r()*pool.length)|0]);
+  if(n%5===0)list.unshift('boss');return list;
+}
+
 // ================= perks & titles =================
 const PERKS=[
   {id:'grab',name:'강철 멱살',desc:'던지기 피해 +2, 더 멀리 날아간다'},
@@ -633,7 +659,7 @@ const PERKS=[
 function pk(id){return S&&S.perks?(S.perks[id]||0):0}
 function openPerks(){
   if(!S||S.over)return;S.paused=true;
-  const opts=PERKS.slice().sort(()=>Math.random()-.5).slice(0,3);
+  const rr=S.daily?rngFor(500+S.wave):Math.random;const opts=PERKS.map(x=>[rr(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,3);
   const list=document.getElementById('perkList');list.textContent='';
   document.getElementById('perkEyebrow').textContent=`WAVE ${S.wave} CLEAR · 보상 선택 (1/2/3)`;
   opts.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.id='perk'+i;
@@ -723,9 +749,10 @@ function updateStaff(dt){
 const markerGeo=new T.ConeGeometry(.13,.28,4),markerMat=new T.MeshBasicMaterial({color:0xff3b30});
 function spawn(type){
   const d=VT[type],m=makePerson(LOOKS[type],d.s||1);scene.add(m.root);scene.add(m.shadow);
-  const v={type,name:d.name,hp:d.hp,max:d.hp,pos:v3(RX1-.6,0,rand(DOOR.z0+.4,DOOR.z1-.4)),vel:v3(),head:-Math.PI/2,s:d.s||1,heavy:!!d.heavy,
+  const hp0=d.hp+(modIs('hp')?(type==='boss'?4:1):0);
+  const v={type,name:d.name,hp:hp0,max:hp0,pos:v3(RX1-.6,0,rand(DOOR.z0+.4,DOOR.z1-.4)),vel:v3(),head:-Math.PI/2,s:d.s||1,heavy:!!d.heavy,
     state:'enter',t:0,anim:rand(0,5),onWall:false,ko:false,flash:0,m,spinAxis:v3(1,0,0),spin:0,
-    tx:rand(WALL_X0+1.5,WALL_X1-1.5),tz:rand(WALL_Z+1,MAT_Z1-.6),timer:rand(1,3),ph:'',revealed:type==='boss',revealT:0,items:type==='dumper'?3:0,yellCD:0,cd2:3,cd3:6,dash:0,tele:0,lastKind:null,domino:null};
+    tx:rand(WALL_X0+1.5,WALL_X1-1.5),tz:rand(WALL_Z+1,MAT_Z1-.6),timer:rand(1,3),ph:'',revealed:type==='boss'||modIs('reveal'),revealT:0,items:type==='dumper'?3:0,yellCD:0,cd2:3,cd3:6,dash:0,tele:0,lastKind:null,domino:null};
   v.marker=new T.Mesh(markerGeo,markerMat);v.marker.rotation.x=Math.PI;scene.add(v.marker);
   v.tag=mkLbl('tag',`${d.name}<i><b></b></i>`);v.arrow=mkLbl('arrow');v.arrow.style.display='none';
   if(type==='boss'){v.tx=0;v.tz=0;say(v,'여기 내 구역인데?',2.5);sfx('warn')}
@@ -733,10 +760,11 @@ function spawn(type){
 }
 function startWave(){
   S.wave++;const n=S.wave;let list;
-  if(n<=WAVES.length)list=WAVES[n-1].slice();
-  else{const k=Math.min(9,3+Math.floor((n-5)/1.4));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','speaker','hogger']));if(n%5===0)list.unshift('boss')}
+  if(S.daily)list=dailyWave(n);
+  else if(n<=WAVES.length)list=WAVES[n-1].slice();
+  else if(!S.daily){const k=Math.min(9,3+Math.floor((n-5)/1.4));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','speaker','hogger']));if(n%5===0)list.unshift('boss')}
   S.queue=list;S.spawnT=.6;
-  banner(`WAVE ${n}`,n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'고인물 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
+  banner((S.daily?'📅 ':'')+`WAVE ${n}`,S.daily?(list.includes('boss')?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'고인물 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
 }
 
 // ================= combat =================
@@ -1211,6 +1239,7 @@ const AI={
 
 // ================= objects =================
 function makeCloud(pos,R,life){
+  if(modIs('chalk'))R*=1.6;
   const g=new T.Group();g.position.copy(pos);scene.add(g);
   const mat=new T.MeshBasicMaterial({color:0xfaf8f3,transparent:true,opacity:.35,depthWrite:false});
   for(let i=0;i<7;i++){const s=new T.Mesh(puffGeo,mat);s.position.set(rand(-.5,.5),rand(-.3,.4),rand(-.5,.5));s.userData.k=rand(.5,.8);g.add(s)}
@@ -1393,7 +1422,7 @@ function gameOver(reason,sub){
   setTimeout(()=>{
     document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
-    document.getElementById('overSub').textContent=`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
+    document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
     submitScore().then(r=>{if(r==='new'){const el=document.getElementById('overSub');el.textContent+=' · 🏆 랭킹 기록 갱신!'}});renderLB();
   },1300);
@@ -1490,7 +1519,7 @@ function syncScene(){
   const m=clamp(S.mental/100,0,1),mb=document.getElementById('mBar');mb.style.width=m*100+'%';mb.style.background=m>.5?'#46d18c':m>.25?'#ffd23f':'#ff3b30';
   document.querySelectorAll('#cards span').forEach((s,i)=>s.classList.toggle('on',i<S.warn));
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
-  document.getElementById('waveTxt').textContent=`WAVE ${S.wave} · 빌런 ${left}`;
+  document.getElementById('waveTxt').textContent=(S.daily?'📅 ':'')+`WAVE ${S.wave} · 빌런 ${left}`;
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
   document.getElementById('scoreTxt').textContent=S.score.toLocaleString();
   document.getElementById('bestTxt').textContent='최고 '+Math.max(best,S.score).toLocaleString();
@@ -1528,16 +1557,21 @@ document.getElementById('viewBtn').addEventListener('click',e=>{toggleView();e.c
 
 // ================= leaderboard =================
 // backends: 'claude' (artifact db on claude.ai), 'firebase' (config.js, anyone can submit), 'local' (this device only)
-const LB={backend:null,db:null,uid:null,top:[],mine:null,state:'loading',writeOff:false};
+// boards: 'all' (all-time best) and 'daily' (today's challenge, KST date)
+const LB={backend:null,db:null,uid:null,state:'loading',writeOff:false,view:'all',all:{top:[],mine:null},daily:{top:[],mine:null}};
+const brd=b=>b==='daily'?LB.daily:LB.all;
 function nickVal(){let n='';try{n=localStorage.getItem('chamgyo3d-nick')||''}catch(e){}return n}
 function cleanNick(n){return String(n||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,12)}
 ['nick1','nick2'].forEach(id=>{const el=document.getElementById(id);el.value=nickVal();
   el.addEventListener('input',()=>{const v=cleanNick(el.value);try{localStorage.setItem('chamgyo3d-nick',v)}catch(e){}['nick1','nick2'].forEach(o=>{if(o!==id)document.getElementById(o).value=v})})});
+document.querySelectorAll('.lbtabs button').forEach(b=>b.addEventListener('click',()=>{LB.view=b.dataset.v;renderLB()}));
 function renderLB(){
+  const B=brd(LB.view);
   for(const sec of document.querySelectorAll('.lb')){
     sec.hidden=LB.state==='off';const ol=sec.querySelector('ol'),note=sec.querySelector('.lbnote'),h=sec.querySelector('h2');ol.textContent='';
-    h.textContent=LB.backend==='local'?'🏆 이 기기 기록':'🏆 명예의 전당';
-    LB.top.forEach((r,i)=>{const li=document.createElement('li');if(r.id===LB.uid)li.className='me';
+    h.textContent=(LB.backend==='local'?'🏆 이 기기 기록':'🏆 명예의 전당')+(LB.view==='daily'?` · ${DAY_LABEL}`:'');
+    sec.querySelectorAll('.lbtabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===LB.view));
+    B.top.forEach((r,i)=>{const li=document.createElement('li');if(r.id===LB.uid)li.className='me';
       const b=document.createElement('b');b.textContent=i+1;const sp=document.createElement('span');sp.textContent=cleanNick(r.name)||'익명 클라이머';
       const st=document.createElement('small');st.textContent=titleFor(Number(r.best)||0);sp.appendChild(st);
       const em=document.createElement('em');em.textContent=(Number(r.best)||0).toLocaleString();const sm=document.createElement('small');sm.textContent='W'+(Number(r.wave)||0);em.appendChild(sm);
@@ -1546,50 +1580,54 @@ function renderLB(){
     if(LB.state==='loading')t='랭킹 불러오는 중...';
     else if(LB.state==='slow')t='랭킹 서버에 아직 연결이 안 돼요. 잠시 후 다시 보여요.';
     else if(LB.state==='error')t='랭킹을 불러오지 못했어요. 기록은 이 기기에 남아요.';
-    else if(!LB.top.length)t='아직 기록이 없어요. 첫 번째 참교육러가 되어보세요!';
+    else if(!B.top.length)t=LB.view==='daily'?'오늘 챌린지 기록이 아직 없어요. 첫 번째로 도전해보세요!':'아직 기록이 없어요. 첫 번째 참교육러가 되어보세요!';
     if(LB.state==='ok'){
       if(LB.backend==='local')t+=(t?' ':'')+'온라인 랭킹이 아직 꺼져 있어서 이 기기 기록만 보여요.';
       else if(!LB.uid)t+=(t?' ':'')+'로그인하면 내 기록을 올릴 수 있어요.';
       else if(LB.writeOff)t+=(t?' ':'')+(LB.backend==='claude'?'지금 권한으로는 보기만 가능해요.':'기록을 올리지 못했어요. 잠시 후 다시 해보세요.');
-      else if(LB.mine&&!LB.top.some(r=>r.id===LB.uid))t+=(t?' ':'')+`내 최고 기록 ${(Number(LB.mine.best)||0).toLocaleString()}점`;
+      else if(B.mine&&!B.top.some(r=>r.id===LB.uid))t+=(t?' ':'')+`내 최고 기록 ${(Number(B.mine.best)||0).toLocaleString()}점`;
     }
     note.textContent=t;note.hidden=!t;
   }
 }
-// --- local backend ---
-function localTop(){let a=[];try{a=JSON.parse(localStorage.getItem('chamgyo3d-local')||'[]')}catch(e){}return Array.isArray(a)?a:[]}
-function localAdd(r){const a=localTop();a.push(r);a.sort((x,y)=>y.best-x.best);const out=a.slice(0,10);try{localStorage.setItem('chamgyo3d-local',JSON.stringify(out))}catch(e){}return out}
+const sortTop=a=>a.sort((x,y)=>(Number(y.best)||0)-(Number(x.best)||0)).slice(0,10);
+// --- local ---
+const localKey=b=>b==='daily'?'chamgyo3d-local-d'+DAY:'chamgyo3d-local';
+function localTop(b){let a=[];try{a=JSON.parse(localStorage.getItem(localKey(b))||'[]')}catch(e){}return Array.isArray(a)?a:[]}
+function localAdd(b,r){const out=sortTop(localTop(b).concat([r]));try{localStorage.setItem(localKey(b),JSON.stringify(out))}catch(e){}return out}
 // --- firebase (REST, anonymous auth) ---
 const FB=window.CHAMGYO_FIREBASE||{};
 const FB_ON=!!(FB.apiKey&&FB.projectId);
 const FS=FB_ON?`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(FB.projectId)}/databases/(default)/documents`:'';
+const KEY=()=>'key='+encodeURIComponent(FB.apiKey);
 async function fbAuth(){
   let a=null;try{a=JSON.parse(localStorage.getItem('chamgyo3d-fbauth')||'null')}catch(e){}
   if(a&&a.exp>Date.now()+60000)return a;
-  if(a&&a.refresh){const r=await fetch(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(FB.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(a.refresh)});
+  if(a&&a.refresh){const r=await fetch(`https://securetoken.googleapis.com/v1/token?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(a.refresh)});
     if(r.ok){const j=await r.json();a={uid:j.user_id,token:j.id_token,refresh:j.refresh_token,exp:Date.now()+(+j.expires_in)*1000}}else a=null}
-  if(!a){const r=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(FB.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({returnSecureToken:true})});
+  if(!a){const r=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({returnSecureToken:true})});
     if(!r.ok)throw new Error('auth '+r.status);const j=await r.json();a={uid:j.localId,token:j.idToken,refresh:j.refreshToken,exp:Date.now()+(+j.expiresIn)*1000}}
   try{localStorage.setItem('chamgyo3d-fbauth',JSON.stringify(a))}catch(e){}
   return a;
 }
 const toF=v=>Number.isInteger(v)?{integerValue:String(v)}:{stringValue:String(v)};
 const fromF=f=>{const o={};for(const k in f||{}){const v=f[k];o[k]=v.integerValue!=null?+v.integerValue:v.doubleValue!=null?+v.doubleValue:(v.stringValue||'')}return o};
-async function fbTop(){
-  const r=await fetch(`${FS}:runQuery?key=${encodeURIComponent(FB.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({structuredQuery:{from:[{collectionId:'scores'}],orderBy:[{field:{fieldPath:'best'},direction:'DESCENDING'}],limit:10}})});
-  if(!r.ok)throw new Error('top '+r.status);const j=await r.json();
-  return j.filter(x=>x.document).map(x=>Object.assign({id:x.document.name.split('/').pop()},fromF(x.document.fields)));
+const fbPath=(b,uid)=>b==='daily'?`daily/${DAY}_${uid}`:`scores/${uid}`;
+async function fbQuery(q){const r=await fetch(`${FS}:runQuery?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:q})});if(!r.ok)throw new Error('query '+r.status);return (await r.json()).filter(x=>x.document)}
+async function fbTop(b){
+  if(b==='daily'){const d=await fbQuery({from:[{collectionId:'daily'}],where:{fieldFilter:{field:{fieldPath:'day'},op:'EQUAL',value:{stringValue:DAY}}},limit:300});
+    return sortTop(d.map(x=>{const id=x.document.name.split('/').pop();return Object.assign({id:id.slice(id.indexOf('_')+1)},fromF(x.document.fields))}))}
+  const d=await fbQuery({from:[{collectionId:'scores'}],orderBy:[{field:{fieldPath:'best'},direction:'DESCENDING'}],limit:10});
+  return d.map(x=>Object.assign({id:x.document.name.split('/').pop()},fromF(x.document.fields)));
 }
-async function fbMine(uid){const r=await fetch(`${FS}/scores/${encodeURIComponent(uid)}?key=${encodeURIComponent(FB.apiKey)}`);if(r.status===404)return null;if(!r.ok)throw new Error('mine '+r.status);return fromF((await r.json()).fields)}
-async function fbWrite(a,data){
+async function fbMine(b,uid){const r=await fetch(`${FS}/${fbPath(b,encodeURIComponent(uid))}?${KEY()}`);if(r.status===404)return null;if(!r.ok)throw new Error('mine '+r.status);return fromF((await r.json()).fields)}
+async function fbWrite(b,a,data){
   const qs=Object.keys(data).map(k=>'updateMask.fieldPaths='+k).join('&');
-  const r=await fetch(`${FS}/scores/${encodeURIComponent(a.uid)}?key=${encodeURIComponent(FB.apiKey)}&${qs}`,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+a.token},
+  const r=await fetch(`${FS}/${fbPath(b,encodeURIComponent(a.uid))}?${KEY()}&${qs}`,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+a.token},
     body:JSON.stringify({fields:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,toF(v)]))})});
   if(!r.ok)throw new Error('write '+r.status);
 }
-let fbPoll=null;
-async function fbRefresh(){try{LB.top=await fbTop();LB.state='ok'}catch(e){if(LB.state!=='ok')LB.state='error'}renderLB()}
+async function fbRefresh(){try{const [a,d]=await Promise.all([fbTop('all'),fbTop('daily')]);LB.all.top=a;LB.daily.top=d;LB.state='ok'}catch(e){if(LB.state!=='ok')LB.state='error'}renderLB()}
 async function initLB(){
   const C=window.claude;
   if(C&&C.use){
@@ -1597,42 +1635,58 @@ async function initLB(){
     if(db){
       LB.backend='claude';LB.db=db;try{LB.uid=user?await user.id():null;const cw=user?await user.can('data.write'):null;if(cw===false)LB.writeOff=true}catch(e){}
       const slow=setTimeout(()=>{if(LB.state==='loading'){LB.state='slow';renderLB()}},10000);
-      try{db.collection('scores').orderBy('best','desc').limit(10).onSnapshot(snap=>{LB.top=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(!snap.metadata.fromCache)clearTimeout(slow);LB.state='ok';renderLB()},
-          ()=>{clearTimeout(slow);LB.state='error';renderLB()});
-        if(LB.uid)db.doc('scores/'+LB.uid).onSnapshot(d=>{LB.mine=d.exists?d.data():null;renderLB()},()=>{});
-      }catch(e){LB.state='error';renderLB()}
+      const fail=()=>{clearTimeout(slow);LB.state='error';renderLB()};
+      try{
+        db.collection('scores').orderBy('best','desc').limit(10).onSnapshot(snap=>{LB.all.top=snap.docs.map(d=>Object.assign({id:d.id},d.data()));if(!snap.metadata.fromCache)clearTimeout(slow);LB.state='ok';renderLB()},fail);
+        db.collection('daily').where('day','==',DAY).onSnapshot(snap=>{LB.daily.top=sortTop(snap.docs.map(d=>Object.assign({id:d.id},d.data())));renderLB()},()=>{});
+        if(LB.uid){db.doc('scores/'+LB.uid).onSnapshot(d=>{LB.all.mine=d.exists?d.data():null;renderLB()},()=>{});
+          db.doc('daily/'+LB.uid).onSnapshot(d=>{const x=d.exists?d.data():null;LB.daily.mine=x&&x.day===DAY?x:null;renderLB()},()=>{})}
+      }catch(e){fail()}
       return;
     }
     if(!FB_ON){LB.state='off';renderLB();return}
   }
   if(FB_ON){
     LB.backend='firebase';
-    try{const a=await fbAuth();LB.uid=a.uid;LB.mine=await fbMine(a.uid)}catch(e){LB.writeOff=true}
+    try{const a=await fbAuth();LB.uid=a.uid;[LB.all.mine,LB.daily.mine]=await Promise.all([fbMine('all',a.uid),fbMine('daily',a.uid)])}catch(e){LB.writeOff=true}
     await fbRefresh();
-    fbPoll=setInterval(()=>{if(!document.hidden&&(!running||(S&&S.over)||!document.getElementById('title').hidden))fbRefresh()},20000);
+    setInterval(()=>{if(!document.hidden&&(!running||(S&&S.over)||!document.getElementById('title').hidden))fbRefresh()},20000);
     return;
   }
-  LB.backend='local';LB.uid='local-me';LB.top=localTop().map(r=>Object.assign({},r,{id:r.mine?'local-me':'x'}));LB.state='ok';renderLB();
+  LB.backend='local';LB.uid='local-me';
+  for(const b of ['all','daily'])brd(b).top=localTop(b).map(r=>Object.assign({},r,{id:'x'}));
+  LB.state='ok';renderLB();
 }
 async function submitScore(){
   if(!S||S.score<=0)return;
+  const b=S.daily?'daily':'all',B=brd(b);
   const name=cleanNick(nickVal())||'익명 클라이머';
-  const row={name,best:S.score,wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};
-  if(LB.backend==='local'){const prev=LB.top[0]?Number(LB.top[0].best):0;LB.top=localAdd(Object.assign({mine:true},row)).map(r=>Object.assign({},r,{id:r.at===row.at?'local-me':'x'}));renderLB();return S.score>prev?'new':null}
+  const row={name,best:S.score,wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
+  if(LB.backend==='local'){const prev=B.top[0]?Number(B.top[0].best):0;B.top=localAdd(b,row).map(r=>Object.assign({},r,{id:r.at===row.at?'local-me':'x'}));renderLB();return S.score>prev?'new':null}
   if(LB.backend==='firebase'){
-    try{const a=await fbAuth();LB.uid=a.uid;const better=!LB.mine||S.score>(Number(LB.mine.best)||0);
-      if(better){await fbWrite(a,row);LB.mine=row;LB.writeOff=false;await fbRefresh();return 'new'}
-      if(LB.mine.name!==name){await fbWrite(a,{name});LB.mine.name=name;await fbRefresh()}
+    try{const a=await fbAuth();LB.uid=a.uid;const better=!B.mine||S.score>(Number(B.mine.best)||0);
+      if(better){await fbWrite(b,a,row);B.mine=row;LB.writeOff=false;await fbRefresh();return 'new'}
+      if(B.mine.name!==name){await fbWrite(b,a,{name});B.mine.name=name;await fbRefresh()}
     }catch(e){LB.writeOff=true;renderLB()}
     return;
   }
   if(LB.backend!=='claude'||!LB.db||!LB.uid||LB.writeOff)return;
-  const ref=LB.db.doc('scores/'+LB.uid);
+  const ref=LB.db.doc((b==='daily'?'daily/':'scores/')+LB.uid);
   try{
-    if(!LB.mine||S.score>(Number(LB.mine.best)||0)){await ref.set(row);return 'new'}
-    if(LB.mine.name!==name)await ref.update({name});
+    if(!B.mine||S.score>(Number(B.mine.best)||0)){await ref.set(row);return 'new'}
+    if(B.mine.name!==name)await ref.update({name});
   }catch(e){if(e&&(e.code==='invalid_argument'||e.code==='not_granted'))LB.writeOff=true;renderLB()}
 }
+// ---- share a result as text + link ----
+const SHARE_URL=(window.claude&&window.claude.use)?'https://claude.ai/artifact/HYxAJj3SZmPxCRzicqtWq6':(location.protocol.startsWith('http')?location.origin+location.pathname:'');
+document.getElementById('shareBtn').addEventListener('click',async e=>{
+  if(!S)return;const btn=e.currentTarget;
+  const txt=(S.daily?`📅 ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점 · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'');
+  const ta=document.getElementById('shareText');
+  if(!window.claude&&navigator.share){try{await navigator.share({text:txt});return}catch(err){}}
+  try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
+  catch(err){ta.value=txt;ta.hidden=false;ta.focus();ta.select();btn.textContent='아래 글을 복사하세요'}
+});
 setTimeout(initLB,0);
 
 // ================= loop =================
@@ -1646,19 +1700,24 @@ function frame(now){
 }
 const muteBtn=document.getElementById('mute');
 muteBtn.addEventListener('click',()=>{muted=!muted;muteBtn.textContent=muted?'소리 OFF':'소리 ON';muteBtn.blur()});
-function begin(mode){
+let lastDaily=false;
+function begin(mode,daily){
+  if(daily!==undefined)lastDaily=daily;
   initAudio();if(AC&&AC.state==='suspended')AC.resume();
   if(mode)viewMode=mode;document.getElementById('viewBtn').textContent='시점: '+(viewMode==='3rd'?'3인칭':'쿼터뷰');
-  newGame();S.hintGrab=3;running=true;
+  newGame();S.hintGrab=3;running=true;S.daily=lastDaily;
+  if(S.daily){S.waveT=3.4;banner(`📅 ${DAY_LABEL} 챌린지`,`오늘의 규칙: ${TODAY_MOD.name} · ${TODAY_MOD.desc}`,3.2,'#46d18c')}
+  LB.view=S.daily?'daily':'all';renderLB();document.getElementById('shareText').hidden=true;
   const p=S.p;camPos.set(p.pos.x,p.pos.y+3,p.pos.z+5);camLook.copy(p.pos);
   document.getElementById('title').hidden=true;document.getElementById('over').hidden=true;
   document.getElementById('hud').hidden=false;document.getElementById('topbtns').hidden=false;
   if(isTouch)document.getElementById('touch').hidden=false;
 }
-document.getElementById('start3').addEventListener('click',()=>begin('3rd'));
-document.getElementById('startIso').addEventListener('click',()=>begin('iso'));
+document.getElementById('start3').addEventListener('click',()=>begin('3rd',false));
+document.getElementById('startDaily').addEventListener('click',()=>begin('3rd',true));
+document.getElementById('startIso').addEventListener('click',()=>begin('iso',false));
 document.getElementById('retryBtn').addEventListener('click',()=>begin());
-addEventListener('keydown',e=>{if(e.code==='Enter'){if(!document.getElementById('title').hidden)begin('3rd');else if(!document.getElementById('over').hidden)begin()}});
+addEventListener('keydown',e=>{if(e.code==='Enter'){if(!document.getElementById('title').hidden)begin('3rd',false);else if(!document.getElementById('over').hidden)begin()}});
 // title backdrop: gym with a couple of climbers
 gymGroup=buildGym();scene.add(gymGroup);
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{scene.remove(gymGroup);gymGroup=buildGym();scene.add(gymGroup)});
