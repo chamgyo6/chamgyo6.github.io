@@ -35,6 +35,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .arrow{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:22px solid var(--hit);filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
 .credit{display:block;text-align:center;font:700 13px/1.6 var(--body);color:var(--mute);text-decoration:none;padding:6px;word-break:keep-all}
 .credit b{color:var(--chalk)}.credit:hover b,.credit:focus-visible b{color:var(--hazard)}
+.kpbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#191600;padding:12px 16px;border-radius:8px;background:#fee500;box-shadow:0 4px 0 #b8a500}
+.supbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .igbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#fff;padding:12px 16px;border-radius:8px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af);box-shadow:0 4px 0 #5b1f7a}
 .linkbtn{background:none;border:0;color:var(--mute);font:700 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
 .prompt{font:400 19px/1 var(--display);color:var(--ok);-webkit-text-stroke:5px #120d08;paint-order:stroke fill}
@@ -163,7 +165,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <p class="lead" id="overSub"></p>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <label class="nick" for="nick2" style="width:100%">닉네임 <input id="nick2" maxlength="12" placeholder="랭킹에 올라갈 이름" autocomplete="off"></label>
-    <a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 만든 사람 @hyeok_73 팔로우하기</a>
+    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a><a class="kpbtn" href="https://qr.kakaopay.com/Ej8IIIz52" target="_blank" rel="noopener">☕ 만든 사람 초크값 보태주기</a></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
     <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
   </div>
