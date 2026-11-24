@@ -6,7 +6,7 @@
 <title>참교육 클라이밍 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Hahmlet:wght@900&family=Noto+Sans+KR:wght@500;700;900&display=swap">
 <style>
 /* Layout: full-bleed WebGL canvas; HUD, labels, menus and touch pad are DOM layers on top. Single dark "gym at dusk" look. */
 :root{
@@ -60,7 +60,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #game.dead{filter:grayscale(1) contrast(1.15) brightness(.8);transition:filter 1.4s ease-out}
 #deathTxt{position:fixed;left:0;right:0;top:42%;z-index:7;pointer-events:none;text-align:center;background:linear-gradient(90deg,transparent,rgba(0,0,0,.72) 20%,rgba(0,0,0,.72) 80%,transparent);padding:14px 0;opacity:0;transition:opacity .5s}
 #deathTxt.on{opacity:1}
-#deathTxt .dt{font:400 clamp(48px,13vw,96px)/1 var(--display);color:#d11f1f;letter-spacing:.08em;-webkit-text-stroke:2px #2a0505;animation:dstamp .6s cubic-bezier(.2,1.6,.4,1) both}
+#deathTxt .dt{font:900 clamp(50px,14vw,104px)/1.05 'Hahmlet','Nanum Myeongjo',serif;color:#d11f1f;letter-spacing:.06em;text-shadow:0 3px 0 #2a0505,0 0 18px rgba(0,0,0,.85);animation:dstamp .6s cubic-bezier(.2,1.6,.4,1) both}
 #deathTxt .ds{margin-top:8px;font:700 clamp(13px,3.6vw,17px)/1.3 var(--body);color:#eee}
 @keyframes dstamp{from{transform:scale(2.6);opacity:0}to{transform:scale(1);opacity:1}}
 #banner{position:fixed;left:0;right:0;top:30%;z-index:6;pointer-events:none;text-align:center;padding:0 16px}
@@ -2073,6 +2073,7 @@ function begin(mode,daily){
   if(daily!==undefined)lastDaily=daily;
   initAudio();if(AC&&AC.state==='suspended')AC.resume();
   if(mode)viewMode=mode;document.getElementById('viewBtn').textContent='시점: '+(viewMode==='3rd'?'3인칭':'쿼터뷰');
+  try{document.fonts&&document.fonts.load("900 60px Hahmlet",'출입 금지멘탈붕괴')}catch(e){}
   newGame();S.hintGrab=3;running=true;S.daily=lastDaily;bgmStart();
   if(S.daily){S.waveT=3.4;banner(`📅 ${DAY_LABEL} 챌린지`,`오늘의 규칙: ${TODAY_MOD.name} · ${TODAY_MOD.desc}`,3.2,'#46d18c')}
   LB.view=S.daily?'daily':'all';renderLB();document.getElementById('shareText').hidden=true;
