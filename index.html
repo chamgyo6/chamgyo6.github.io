@@ -88,11 +88,6 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
 #bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
 #btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
-.perk{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-.perk button{background:var(--panel);color:var(--chalk);border:2px solid #4a4038;border-radius:10px;padding:16px 14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;font:500 13px/1.45 var(--body)}
-.perk button b{font:400 21px/1.1 var(--display);color:var(--hazard)}
-.perk button i{font-style:normal;font:700 11px/1 var(--body);color:var(--mute);letter-spacing:.08em}
-.perk button:hover,.perk button:focus-visible{border-color:var(--hazard);outline:none;transform:translateY(-2px)}
 .ttl{font:400 22px/1.2 var(--display);color:var(--ok)}
 .lbtabs{display:flex;gap:6px}.lbtabs button{flex:1;background:#2d2721;color:var(--mute);border:0;border-radius:6px;font:700 12px/1 var(--body);padding:8px;cursor:pointer}
 .lbtabs button.on{background:var(--hazard);color:#1a1300}
@@ -146,15 +141,6 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <button class="btn alt" id="startDaily">📅 오늘의 챌린지<small id="dailyMod">오늘의 규칙</small></button>
     <button class="linkbtn" id="startIso">쿼터뷰(2.5D)로 하기</button>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
-  </div>
-</div>
-
-<div class="overlay" id="perkUI" hidden>
-  <div class="card">
-    <div class="eyebrow" id="perkEyebrow">WAVE CLEAR · 보상 선택</div>
-    <h1 style="font-size:clamp(34px,8vw,52px)">능력 하나를 <em>골라라</em></h1>
-    <div class="perk" id="perkList"></div>
-    <p class="lead" id="perkOwned"></p>
   </div>
 </div>
 
@@ -528,7 +514,7 @@ const LINES={
 };
 const BETA=['왼발 하이스텝!','그거 다이노로 가야돼요','제가 해봤는데요~','힘으로 하지 마시고요','힐훅 거세요 힐훅','코어! 코어!','그 홀드 아니에요','팔 펴세요 팔!','저는 플래시했는데','숨 쉬세요~','발 보세요 발!'];
 const WAVES=[['sitter','sitter'],['dumper','sitter','chalker'],['crowder','filmer','hogger'],['locker','sprayer','screamer','chalkthief'],['boss'],['thief','nobrush','hogger','sitter','screamer'],['thief','chalkthief','crowder','dumper','filmer']];
-const WAVE_HINT=['회원들 사이에 빌런이 숨어 있다. 빌런짓으로 마커가 뜬 놈만 응징!','짐 폭탄의 물건을 출구로 차버리면 주인이 따라 나간다','촬영충 삼각대 E = 녹화 정지 · 문제 독점러는 떨어져도 계속 다시 붙는다 (눈앞 완등 = 멘붕)','락커 방치범 → 자물쇠(E) · 남의 초크백 앞에서 E = 주인에게 반납 · 비명러는 벽에서 걷어차라','보스 등장! 돌진 전 "!"가 뜨면 옆으로 피해라','락커 털이범은 털고 나면 출구로 튄다! 놓치지 마라 · 땀범벅 홀드는 벽에서 E로 브러싱'];
+const WAVE_HINT=['회원들 사이에 빌런이 숨어 있다. 빌런짓으로 마커가 뜬 놈만 응징!','짐 폭탄의 물건을 출구로 차버리면 주인이 따라 나간다','촬영충 삼각대 E = 녹화 정지 · 문제 독점러는 떨어져도 계속 다시 붙는다 (눈앞 완등 = 멘붕)','락커 방치범은 패지 말고 E로 잠가버려 · 남의 초크백 앞에서 E = 주인에게 반납 · 비명러는 벽에서 걷어차라','보스 등장! 돌진 전 "!"가 뜨면 옆으로 피해라','락커 털이범은 털고 나면 출구로 튄다! 놓치지 마라 · 땀범벅 홀드는 벽에서 E로 브러싱'];
 const ONO={punch:['퍽!','팍!','빡!'],kick:['콰직!','뻐억!','쾅!'],dive:['드롭킥!!'],slam:['바디슬램!!'],domino:['도미노!'],shock:['쿵!'],throw:['던지기!!','내동댕이!!']};
 
 let S=null,best=loadBest(),running=false,viewMode='3rd';
@@ -545,7 +531,7 @@ function newGame(){
     inno:[]};
   PROBLEMS.forEach(p=>p.cd=0);
   S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.grat=0;S.smudges=[];S.perks={};S.paused=false;S.perkT=0;
-  PROBLEMS.forEach(pr=>pr.hog=null);document.getElementById('perkUI').hidden=true;
+  PROBLEMS.forEach(pr=>pr.hog=null);
   [-9,-2,4.5].forEach((x,i)=>{const m=makePerson(INNO_LOOKS[i]);scene.add(m.root);scene.add(m.shadow);
     S.inno.push({pos:v3(x,.4+i*.7,CLIMB_Z),vel:v3(),state:'climb',dir:1,speed:rand(.45,.65),t:rand(0,5),m,scared:0,rest:0,head:Math.PI,spin:0,knocked:false})});
   camYaw=0;camPitch=.4;
@@ -655,39 +641,9 @@ function dailyWave(n){
   if(n%5===0)list.unshift('boss');return list;
 }
 
-// ================= perks & titles =================
-const PERKS=[
-  {id:'grab',name:'강철 멱살',desc:'던지기 피해 +2, 더 멀리 날아간다'},
-  {id:'chalk',name:'초크 장인',desc:'벽에서 펌프 소모 절반'},
-  {id:'insa',name:'인싸력',desc:'환호 멘탈 회복 2배'},
-  {id:'feet',name:'번개 발',desc:'이동 속도 +15%'},
-  {id:'dive',name:'드롭킥 장인',desc:'드롭킥 피해 +2'},
-  {id:'mind',name:'강철 멘탈',desc:'빌런 민폐 피해 30% 감소'},
-  {id:'eye',name:'매의 눈',desc:'빌런이 발각될 때마다 멘탈 +4'},
-  {id:'vip',name:'직원 VIP',desc:'직원 선물이 두 배 자주 온다'},
-  {id:'combo',name:'콤보 장인',desc:'콤보가 두 배 오래 이어진다'},
-];
+// ================= titles =================
+// (perk picker removed: players found choosing between waves fiddly; pk() stays 0)
 function pk(id){return S&&S.perks?(S.perks[id]||0):0}
-function openPerks(){
-  if(!S||S.over)return;S.paused=true;
-  const rr=S.daily?rngFor(500+S.wave):Math.random;const opts=PERKS.map(x=>[rr(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,3);
-  const list=document.getElementById('perkList');list.textContent='';
-  document.getElementById('perkEyebrow').textContent=`WAVE ${S.wave} CLEAR · 보상 선택 (1/2/3)`;
-  opts.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.id='perk'+i;
-    const ii=document.createElement('i');ii.textContent=(i+1)+(pk(o.id)?` · 보유 ${pk(o.id)}`:'');const bb=document.createElement('b');bb.textContent=o.name;const sp=document.createElement('span');sp.textContent=o.desc;
-    b.append(ii,bb,sp);b.addEventListener('click',()=>choosePerk(o));list.appendChild(b)});
-  S.perkOpts=opts;
-  const owned=Object.entries(S.perks).map(([k,n])=>PERKS.find(x=>x.id===k).name+(n>1?' ×'+n:''));
-  document.getElementById('perkOwned').textContent=owned.length?'보유 능력: '+owned.join(', '):'고른 능력은 이번 판 끝까지 유지돼요. 같은 능력은 겹쳐서 세져요.';
-  document.getElementById('perkUI').hidden=false;document.getElementById('touch').hidden=true;
-  setTimeout(()=>{const b=document.getElementById('perk0');b&&b.focus()},50);
-}
-function choosePerk(o){
-  if(!S||!S.paused)return;S.perks[o.id]=(S.perks[o.id]||0)+1;S.paused=false;S.perkOpts=null;
-  document.getElementById('perkUI').hidden=true;if(isTouch)document.getElementById('touch').hidden=false;
-  sfx('top');banner(o.name+'!',o.desc,1.6,'#46d18c');S.waveT=1.4;
-}
-addEventListener('keydown',e=>{if(S&&S.paused&&S.perkOpts){const i=['Digit1','Digit2','Digit3'].indexOf(e.code);if(i>=0&&S.perkOpts[i]){e.preventDefault();choosePerk(S.perkOpts[i])}}});
 const TITLES=[[0,'매너 인턴'],[1500,'매너 지킴이'],[4000,'매너 보안관'],[8000,'참교육 전문가'],[14000,'클라이밍장 수호신'],[25000,'전설의 참교육러']];
 function titleFor(sc){let t=TITLES[0][1];for(const [m,n] of TITLES)if(sc>=m)t=n;return t}
 
@@ -785,6 +741,7 @@ const alive=v=>v.state!=='gone'&&v.state!=='down'&&v.state!=='despair';
 function vHeight(v){return(v.sitting||v.state==='despair'?1.1:1.85)*v.s}
 function hitVillain(v,kind,dir){
   if(!alive(v))return;
+  if(v.type==='locker'){if(DIRECT.has(kind)&&!(v.hintT>0)){v.hintT=2;v.flash=.08;sfx('whoosh');pop(headPos(v,.4),v.lk&&!v.lk.locked?'패지 말고 락커를 잠가버려!':'이미 잠겼다. 지켜보자 ㅋㅋ',26,'#ffd23f',1.2)}return}
   if(!v.revealed){
     if(DIRECT.has(kind))wrongHit(v,dir);
     else if(v.state!=='fly'){if(v.onWall)leaveWall(v);else{v.state='hurt';v.t=.4;v.vel.set(dir.x*2,0,dir.z*2);v.sitting=false}}
@@ -855,14 +812,14 @@ function faceVec(h){return v3(Math.sin(h),0,Math.cos(h))}
 // targeting: nearest villain in front (also drives the floor ring and the lunge)
 function getTarget(p,range=3.4){
   let best=null,bd=range;
-  for(const v of S.villains){if(!alive(v)||!v.revealed||v.state==='held'||v.state==='enter'&&v.pos.x>RX1-.3)continue;if(v.onWall!==(p.state==='climb')&&!(v.onWall&&v.pos.y<.8))continue;
+  for(const v of S.villains){if(!alive(v)||!v.revealed||v.type==='locker'||v.state==='held'||v.state==='enter'&&v.pos.x>RX1-.3)continue;if(v.onWall!==(p.state==='climb')&&!(v.onWall&&v.pos.y<.8))continue;
     const d=xzDist(v.pos,p.pos);if(d<bd){const a=Math.atan2(v.pos.x-p.pos.x,v.pos.z-p.pos.z);if(Math.abs(angDiff(p.head,a))<1.25){bd=d;best=v}}}
   return best;
 }
 function autoAim(p){const t=getTarget(p);if(t&&p.state!=='climb')p.head=Math.atan2(t.pos.x-p.pos.x,t.pos.z-p.pos.z);return t}
 function grabbable(p){
   let best=null,bd=1.45;
-  for(const v of S.villains){if(!(v.state==='act'||v.state==='hurt'||v.state==='enter'&&v.pos.x<RX1-1)||v.onWall||v.ko||!v.revealed)continue;
+  for(const v of S.villains){if(!(v.state==='act'||v.state==='hurt'||v.state==='enter'&&v.pos.x<RX1-1)||v.onWall||v.ko||!v.revealed||v.type==='locker')continue;
     const d=xzDist(v.pos,p.pos);if(d<bd&&Math.abs(angDiff(p.head,Math.atan2(v.pos.x-p.pos.x,v.pos.z-p.pos.z)))<1.6){bd=d;best=v}}
   return best;
 }
@@ -1011,7 +968,7 @@ function climbLoop(v,dt,wx,spd){
 function leaveWall(v){v.onWall=false;v.state='fly';v.vel.set(0,0,1.5);v.spin=0}
 const matSpot=()=>[rand(WALL_X0+1,WALL_X1-1),rand(WALL_Z+1,MAT_Z1-.5)];
 function updateVillain(v,dt){
-  const p=S.p,d=VT[v.type];v.anim+=dt;v.flash-=dt;if(v.revealT>0)v.revealT-=dt;
+  const p=S.p,d=VT[v.type];v.anim+=dt;v.flash-=dt;if(v.hintT>0)v.hintT-=dt;if(v.revealT>0)v.revealT-=dt;
   if(v.sayT>0){v.sayT-=dt;if(v.sayT<=0&&v.sayEl)v.sayEl.style.display='none'}
   switch(v.state){
   case 'enter':
@@ -1250,9 +1207,10 @@ const AI={
       if(v.climbT<=0&&v.lk)v.ph='down';
       break;
     case 'down':
-      if(v.onWall){v.pos.y-=3*dt;if(v.pos.y<=0){v.pos.y=0;v.onWall=false;v.pos.z=WALL_Z+.6}break}
-      if(walkTo(v,RX1-1.1,LOCKER_Z[v.slot],d.speed,dt)){v.head=Math.PI/2;
-        if(v.lk.locked){v.ph='fiddle';v.fidT=2.6;say(v,'비번 뭐야?!?! 0000 아닌데?!',2.6);sfx('lock')}
+      if(v.onWall){v.pos.y-=(v.hurry?7:3)*dt;if(v.pos.y<=0){v.pos.y=0;v.onWall=false;v.pos.z=WALL_Z+.6}break}
+      v.running=!!v.hurry;
+      if(walkTo(v,RX1-1.1,LOCKER_Z[v.slot],d.speed*(v.hurry?2.3:1),dt)){v.head=Math.PI/2;
+        if(v.lk.locked){v.ph='fiddle';v.fidT=2;v.running=false;say(v,'비번 뭐야?!?! 0000 아닌데?!',2.6);sfx('lock')}
         else{say(v,'아 개운하다~ 한 판 더',1.6);v.ph='climb';v.climbT=rand(13,17)}}
       break;
     case 'fiddle':v.fidT-=dt;v.pointT=.2;if(Math.random()<dt*6)sfx('lock');if(v.fidT<=0)despairKO(v,'자물쇠 참교육',800,'...폰이랑 지갑 저 안에 있는데');break;
@@ -1338,6 +1296,7 @@ function interact(o){
     return}
   if(o.kind==='tripod'){o.rec=false;sfx('ding');pop(v3(o.pos.x,1.9,o.pos.z),'띵♪ 녹화 정지',28,'#46d18c',1.3);addScore(100);if(o.owner&&o.owner.onWall)say(o.owner,'(전혀 모름)',1.4)}
   else if(o.kind==='locker'){o.open=false;o.locked=true;sfx('lock');addScore(100);
+    {const v=o.owner;if(v&&!v.ko&&alive(v)&&v.ph!=='fiddle'){v.ph='down';v.climbT=0;v.hurry=true;setTimeout(()=>{if(alive(v))say(v,'...? 뭔가 쎄한데',1.4)},500)}}
     pop(v3(o.pos.x,2.4,o.pos.z),'철컥! 비번 설정 완료',24,'#46d18c',1.4);pop(v3(o.pos.x,2.9,o.pos.z),'열쇠는 옆 락커에 쏙',18,'#f4f1ea',1.7)}
 }
 const p0=()=>S.p.pos;
@@ -1417,7 +1376,6 @@ function update(dt){
   S.t+=dt;
   if(S.slowT>0){S.slowT-=dt;if(S.slowT<=0)S.slow=1}
   if(S.paused){input.jumpP=input.atkP=input.actP=0;return}
-  if(S.perkT>0){S.perkT-=dt;if(S.perkT<=0)openPerks()}
   if(S.stop>0){S.stop-=dt;input.jumpP=input.atkP=input.actP=0;return}
   const gdt=dt*S.slow;
   if(!S.over){
@@ -1425,7 +1383,7 @@ function update(dt){
     if(S.waveT>0){S.waveT-=gdt;if(S.waveT<=0)startWave()}
     else{
       if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(1.1,1.8)}}
-      else if(!S.villains.some(v=>v.state!=='gone')&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+20);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +20',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*S.wave);S.waveT=999;S.perkT=2.6}
+      else if(!S.villains.some(v=>v.state!=='gone')&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+20);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +20',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*S.wave);S.waveT=3}
     }
     if(S.clearT>0)S.clearT-=gdt;
   }
