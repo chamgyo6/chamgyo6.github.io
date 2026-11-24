@@ -549,7 +549,7 @@ const VT={
   dumper:{name:'짐 폭탄',hp:3,speed:2,score:150,drain:.4},
   filmer:{name:'촬영충',hp:4,speed:1.9,score:250,drain:.6},
   locker:{name:'락커 방치범',hp:3,speed:1.9,score:200,drain:.5},
-  boss:{name:'센터 고인물',hp:26,speed:1.7,score:1000,drain:1.5,heavy:true,s:1.4},
+  boss:{name:'텃세 대마왕',hp:26,speed:1.7,score:1000,drain:1.5,heavy:true,s:1.4},
 };
 const LINES={
   sitter:{idle:['잠깐 쉬는 건데요?','여기 자리 좋네~','(폰 보는 중)','낙하 구역? 그게 뭔데','5분만요~'],hurt:['아니 왜요?!','악! 내 폰!','쉬는 것도 안 돼요?']},
@@ -568,7 +568,7 @@ const LINES={
   dumper:{idle:['여기 둘게요~','잠깐만 놔둘게요','매트 넓은데 뭐 어때'],hurt:['내 물건 건들지 마!','아 왜요!']},
   filmer:{idle:['각 좋다~','이거 인스타 올려야지'],hurt:['찍지 마요!','내 영상!!']},
   locker:{idle:['금방 올 거라~','문 열어둬도 괜찮겠지~'],hurt:['내 락커!','아 뭐야!']},
-  boss:{idle:['내가 여기 10년 다녔어','비켜봐~ 내 자리야','요즘 애들은 매너가...'],hurt:['어딜 감히!','크윽...!']},
+  boss:{idle:['내가 여기 10년 다녔어','신입은 저쪽 벽 써','이 문제 내 거야, 손대지 마','여긴 원래 우리 자리야','인사도 안 하네 요즘 것들'],hurt:['어딜 감히 신입이!','크윽... 내 구역에서...!']},
 };
 const BETA=['왼발 하이스텝!','그거 다이노로 가야돼요','제가 해봤는데요~','힘으로 하지 마시고요','힐훅 거세요 힐훅','코어! 코어!','그 홀드 아니에요','팔 펴세요 팔!','저는 플래시했는데','숨 쉬세요~','발 보세요 발!'];
 const WAVES=[['sitter','sitter'],['dumper','chalker','chatter'],['crowder','filmer','hogger','matwalker'],['locker','photogroup','chalkthief'],['boss'],['thief','spoiler','screamer','matwalker'],['chalkhand','chalkthief','sprayer','matwalker'],['thief','chatter','photogroup','crowder']];
@@ -780,7 +780,7 @@ function spawn(type,opt){
     tx:rand(WALL_X0+1.5,WALL_X1-1.5),tz:rand(WALL_Z+1,MAT_Z1-.6),timer:rand(1,3),ph:'',revealed:type==='boss'||modIs('reveal'),revealT:0,items:type==='dumper'?3:0,yellCD:0,cd2:3,cd3:6,dash:0,tele:0,lastKind:null,domino:null};
   v.marker=new T.Mesh(markerGeo,markerMat);v.marker.rotation.x=Math.PI;scene.add(v.marker);
   v.tag=mkLbl('tag',`${d.name}<i><b></b></i>`);v.arrow=mkLbl('arrow');v.arrow.style.display='none';
-  if(type==='boss'){v.tx=0;v.tz=0;say(v,'여기 내 구역인데?',2.5);sfx('warn')}
+  if(type==='boss'){v.tx=0;v.tz=0;say(v,'여기 내 구역인데? 신입이 어디서...',2.5);sfx('warn')}
   v.gi=gi;if(opt)v.pos.z+=gi*.5-.5;
   S.villains.push(v);
   if(GROUPS.has(type)&&!opt){const grp=[v];for(let i=1;i<3;i++)grp.push(spawn(type,{gi:i}));grp.forEach(o=>o.grp=grp)}
@@ -792,7 +792,7 @@ function startWave(){
   else if(n<=WAVES.length)list=WAVES[n-1].slice();
   else if(!S.daily){const k=Math.min(9,3+Math.floor((n-5)/1.4));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','chalkthief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker']));if(n%5===0)list.unshift('boss')}
   S.queue=list;S.spawnT=.6;
-  banner((S.daily?'📅 ':'')+`WAVE ${n}`,S.daily?(list.includes('boss')?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'고인물 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
+  banner((S.daily?'📅 ':'')+`WAVE ${n}`,S.daily?(list.includes('boss')?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?'텃세 대마왕 재등장. 이번엔 부하도 많다':`빌런 ${list.length}명 출몰`),2.6);
 }
 
 // ================= combat =================
@@ -850,7 +850,7 @@ function knockOut(v,kind,dir){
   if(v.type==='crowder')pop(headPos(v,1.2),'...겹치네요',24,'#fff',1.4);
   cheer(style||v.type==='boss'?2:1);
   S.fovKick=Math.max(S.fovKick,.8);S.koCam={v,t:.7};if(v.type!=='boss'){S.slow=Math.min(S.slow,.35);S.slowT=Math.max(S.slowT,.3)}
-  if(v.type==='boss'){S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!','센터 고인물 퇴치',2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
+  if(v.type==='boss'){S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!','텃세 대마왕 퇴치',2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
 }
 function despairKO(v,label,bonus,line){
   v.revealed=true;v.ko=true;v.state='despair';v.t=2.8;v.onWall=false;v.pos.y=0;v.vel.set(0,0,0);v.sitting=true;say(v,line,2.8);S.kos++;bumpCombo();
@@ -1340,11 +1340,11 @@ const AI={
     }
     if(v.tele>0){v.tele-=dt;faceTo(v,p.pos.x,p.pos.z,dt*.3);if(v.tele<=0){v.dash=.55;sfx('whoosh')}return}
     v.vel.set(0,0,0);
-    if(p.state==='climb'&&xzDist(p.pos,v.pos)<3.5&&v.shakeCD<=0){v.shakeCD=6;p.pump-=35;S.shake=.25;say(v,'벽 좀 쓸게~',1.5);pop(headPos(p),'벽 흔들기!',28,'#ff9f43');sfx('thud');return}
+    if(p.state==='climb'&&xzDist(p.pos,v.pos)<3.5&&v.shakeCD<=0){v.shakeCD=6;p.pump-=35;S.shake=.25;say(v,'그 벽 내가 쓸 거야~',1.5);pop(headPos(p),'벽 흔들기!',28,'#ff9f43');sfx('thud');return}
     if(v.cd3<=0){v.cd3=7.5;S.clouds.push(makeCloud(v3(v.pos.x,1.4,v.pos.z),3.4,4.5));sfx('chalk');say(v,'초크 폭탄~!',1.4);return}
-    if(v.sumCD<=0&&S.villains.filter(o=>o.state!=='gone').length<5){v.sumCD=10;say(v,'얘들아 와봐~',1.6);spawn(pick(['sitter','sprayer','chalker']));return}
+    if(v.sumCD<=0&&S.villains.filter(o=>o.state!=='gone').length<5){v.sumCD=10;say(v,'얘들아 신입 교육 좀 시켜~',1.6);spawn(pick(['sitter','sprayer','chalker']));return}
     const dist=xzDist(p.pos,v.pos);
-    if(dist<5&&v.cd2<=0&&p.state!=='climb'){v.cd2=rand(2.6,3.6);faceTo(v,p.pos.x,p.pos.z);v.tele=.62;say(v,'비켜봐~',1);return}
+    if(dist<5&&v.cd2<=0&&p.state!=='climb'){v.cd2=rand(2.6,3.6);faceTo(v,p.pos.x,p.pos.z);v.tele=.62;say(v,'비켜, 신입~',1);return}
     if(dist>1.4)walkTo(v,p.pos.x,p.pos.z,d.speed,dt);else faceTo(v,p.pos.x,p.pos.z,dt);
     if(v.timer<=0){v.timer=rand(4,6);say(v,pick(LINES.boss.idle),2)}
   },
