@@ -1,29 +1,49 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 기록 한 줄 공통 검사: 필드 종류·형식·크기 제한, 이름은 names/{이름}에 내 uid로 등록돼 있어야 함(사칭 방지)
+    function validRow(d) {
+      return d.name is string && d.name.size() >= 2 && d.name.size() <= 12
+        && !d.name.matches('.*/.*')
+        && exists(/databases/$(database)/documents/names/$(d.name))
+        && get(/databases/$(database)/documents/names/$(d.name)).data.uid == request.auth.uid
+        && d.best is int && d.best >= 0 && d.best <= 2000000
+        && d.wave is int && d.wave >= 0 && d.wave <= 500
+        && d.kos is int && d.kos >= 0 && d.kos <= 20000
+        && d.combo is int && d.combo >= 0 && d.combo <= 20000
+        && d.at is int
+        && d.title is string && d.title.size() <= 20;
+    }
+
+    // 닉네임 소유권: 문서 id = 닉네임, 처음 등록한 사람 것. 바꾸거나 지울 수 없음
+    match /names/{n} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && n.size() >= 2 && n.size() <= 12
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     // 랭킹: 누구나 읽고, 각자 자기 기록(익명 로그인 uid)만 쓰며, 최고 기록은 내려갈 수 없음
     match /scores/{uid} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['name', 'best', 'wave', 'kos', 'combo', 'at', 'title'])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 12
-        && request.resource.data.best is int
-        && request.resource.data.best >= 0 && request.resource.data.best <= 2000000
+        && validRow(request.resource.data)
         && (resource == null || request.resource.data.best >= resource.data.best);
       allow delete: if false;
     }
+
     // 오늘의 챌린지: 문서 id = 날짜(KST, yyyymmdd) + '_' + uid
     match /daily/{docId} {
       allow read: if true;
       allow create, update: if request.auth != null
-        && request.resource.data.day is string && request.resource.data.day.size() == 8
+        && request.resource.data.day is string && request.resource.data.day.matches('20[0-9]{6}')
         && docId == request.resource.data.day + '_' + request.auth.uid
         && request.resource.data.keys().hasOnly(['name', 'best', 'wave', 'kos', 'combo', 'at', 'title', 'day'])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 12
-        && request.resource.data.best is int
-        && request.resource.data.best >= 0 && request.resource.data.best <= 2000000
+        && validRow(request.resource.data)
         && (resource == null || request.resource.data.best >= resource.data.best);
       allow delete: if false;
     }

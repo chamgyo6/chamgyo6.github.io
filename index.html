@@ -1768,7 +1768,7 @@ document.getElementById('viewBtn').addEventListener('click',e=>{toggleView();e.c
 const LB={backend:null,db:null,uid:null,state:'loading',writeOff:false,view:'all',all:{top:[],mine:null},daily:{top:[],mine:null}};
 const brd=b=>b==='daily'?LB.daily:LB.all;
 function nickVal(){let n='';try{n=localStorage.getItem('chamgyo3d-nick')||''}catch(e){}return n}
-function cleanNick(n){return String(n||'').replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,12)}
+function cleanNick(n){return String(n||'').replace(/[\u0000-\u001f\u007f\/]/g,'').trim().slice(0,12)}
 function showNick(){const v=nickVal();['nick1','nick2'].forEach(id=>{document.getElementById(id).value=v?('🔒 '+v):''})}
 showNick();
 // 이미 랭킹에 있는(다른 사람의) 이름인지 확인 — Firebase일 때만
@@ -1779,14 +1779,26 @@ async function nameTaken(n){
     return d.some(x=>x.document.name.split('/').pop()!==a.uid);
   }catch(e){return false}
 }
+// 이름 소유권: names/{이름} 문서에 내 uid를 등록 — 서버 규칙이 이 문서로 사칭을 막음
+async function claimName(n){
+  if(LB.backend!=='firebase')return 'mine';
+  try{const a=await fbAuth(),H={Authorization:'Bearer '+a.token};
+    let r=await fetch(`${FS}/names/${encodeURIComponent(n)}?${KEY()}`,{headers:H});
+    if(r.ok){const j=await r.json();return (j.fields&&j.fields.uid&&j.fields.uid.stringValue)===a.uid?'mine':'taken'}
+    if(r.status!==404)return 'unknown';
+    r=await fetch(`${FS}/names?documentId=${encodeURIComponent(n)}&${KEY()}`,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify({fields:{uid:{stringValue:a.uid}}})});
+    return r.ok?'mine':r.status===409?'taken':'unknown';
+  }catch(e){return 'unknown'}
+}
 let pendingStart=null;
 function needName(fn){if(cleanNick(nickVal()).length>=2){fn();return}pendingStart=fn;
   const ui=document.getElementById('nameUI');ui.hidden=false;document.getElementById('nameMsg').textContent='';setTimeout(()=>document.getElementById('nameIn').focus(),50)}
 document.getElementById('nameOk').addEventListener('click',async()=>{
   const btn=document.getElementById('nameOk'),msg=document.getElementById('nameMsg'),n=cleanNick(document.getElementById('nameIn').value);
   if(n.length<2){msg.textContent='2글자 이상 써주세요';return}
+  if(/^\.+$|^__.*__$/.test(n)){msg.textContent='쓸 수 없는 이름이에요';return}
   btn.disabled=true;msg.style.color='var(--mute)';msg.textContent='이름 확인 중...';
-  const taken=await nameTaken(n);btn.disabled=false;msg.style.color='var(--hit)';
+  const taken=await nameTaken(n)||(await claimName(n))==='taken';btn.disabled=false;msg.style.color='var(--hit)';
   if(taken){msg.textContent='이미 랭킹에 있는 이름이에요. 다른 이름으로 해주세요';return}
   try{localStorage.setItem('chamgyo3d-nick',n)}catch(e){}showNick();
   document.getElementById('nameUI').hidden=true;const f=pendingStart;pendingStart=null;if(f)f();
@@ -1892,7 +1904,7 @@ async function submitScore(){
   const row={name,best:S.score,wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
   if(LB.backend==='local'){const prev=B.top[0]?Number(B.top[0].best):0;B.top=localAdd(b,row).map(r=>Object.assign({},r,{id:r.at===row.at?'local-me':'x'}));renderLB();return S.score>prev?'new':null}
   if(LB.backend==='firebase'){
-    try{const a=await fbAuth();LB.uid=a.uid;const better=!B.mine||S.score>(Number(B.mine.best)||0);
+    try{const a=await fbAuth();LB.uid=a.uid;await claimName(name);const better=!B.mine||S.score>(Number(B.mine.best)||0);
       if(better){await fbWrite(b,a,row);B.mine=row;LB.writeOff=false;await fbRefresh();return 'new'}
       if(B.mine.name!==name){await fbWrite(b,a,{name});B.mine.name=name;await fbRefresh()}
     }catch(e){LB.writeOff=true;renderLB()}
