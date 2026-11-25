@@ -111,6 +111,10 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #btns{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 20px);width:190px;height:170px;pointer-events:none}
 #btns button{position:absolute;border-radius:50%;border:0;font:400 18px/1 var(--display);touch-action:none;pointer-events:auto;color:#1a1300}
 #bAtk{right:0;bottom:0;width:84px;height:84px;background:var(--hazard);box-shadow:0 5px 0 #a8860f;font-size:20px!important}
+#bAtk.ult{background:#7fc8ff;box-shadow:0 5px 0 #3d7fae,0 0 0 4px rgba(127,200,255,.45);animation:ultpulse .9s ease-in-out infinite}
+#bAtk.ult::after{content:'길게!';position:absolute;left:0;right:0;top:-22px;font:700 13px/1 var(--body);color:#bfe6ff;text-shadow:0 1px 2px #000}
+#bAtk.charging{background:conic-gradient(#fff calc(var(--ch,0)*1turn),#7fc8ff 0);animation:none}
+@keyframes ultpulse{50%{box-shadow:0 5px 0 #3d7fae,0 0 0 10px rgba(127,200,255,.15)}}
 #bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
 #bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
 #btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
@@ -1878,6 +1882,7 @@ function syncScene(){
   const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=20?'#c084fc':S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
   {const wh=document.getElementById('white');wh.style.background=S.inStink&&!S.inChalk?'#a7d98a':'#f5f3ee';wh.style.opacity=S.inChalk?.6:S.inStink?.4:0}
   document.getElementById('flash').style.opacity=Math.min(.7,S.flash*2.5);
+  if(isTouch){const ba=document.getElementById('bAtk'),p=S.p,ready=S.ult>=100&&!S.over;ba.classList.toggle('ult',ready&&!p.charging);ba.classList.toggle('charging',ready&&!!p.charging);if(p.charging)ba.style.setProperty('--ch',Math.min(1,(p.atkHold||0)/.55).toFixed(2))}
   {const sp=document.getElementById('speed');const o=Math.max(0,S.speedT||0)*2.4;sp.style.opacity=Math.min(.75,o);if(o>0)sp.style.transform=`rotate(${(S.t*400)%360}deg) scale(${1+Math.min(1,o)*.08})`}
 }
 function updateCamera(dt){
