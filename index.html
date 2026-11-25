@@ -851,7 +851,7 @@ function bossReward(v){if(!S||S.over)return;S.bossKills=(S.bossKills||0)+1;
   else if(v.variant!=='stink')setTimeout(()=>{if(S&&!S.over)pop(headPos(v,1.2),pick(['사실... 저 3개월차예요...','10년은 뻥이고... 3개월...','고인물 아니에요... 클린이예요...']),30,'#ffffff',2.2)},700);
   else setTimeout(()=>{if(S&&!S.over)pop(headPos(v,1.2),'할머니 가루 뿌리고 올게요...',28,'#8fd16a',2.2)},700);
   if(v.variant==='close'){S.closeT=0;setTimeout(()=>{if(S&&!S.over){staffSay('드디어 퇴근이다 ㅠㅠㅠ',2.4);S.flash=.3}},1200)}
-  setTimeout(()=>{if(!S||S.over)return;S.mental=100;S.ult=100;S.p.fireT=Math.max(S.p.fireT,8);const g=addScore(2000*Math.max(1,Math.floor(S.wave/5)));
+  setTimeout(()=>{if(!S||S.over)return;S.mental=100;S.ult=100;S.p.fireT=Math.max(S.p.fireT,8);const g=addScore(2000*Math.max(1,Math.floor(scaleW()/5)));
     banner('🏆 보스 격파 보상!',`멘탈 풀충전 · 필살기 가득 · 8초 피버 (점수 2배) · +${g.toLocaleString()}`,2.6,'#ffd23f');
     pop(headPos(S.p,1.5),`🏆 보스 보상! 멘탈·필살기 풀충전 · 피버 +${g.toLocaleString()}`,30,'#ffd23f',2.6);S.waveT=Math.max(S.waveT,2.8);
     for(let i=0;i<5;i++)setTimeout(()=>{if(S)sparks(v3(S.p.pos.x+rand(-3,3),rand(2,4),S.p.pos.z+rand(-3,1)),18)},i*160);
@@ -1014,7 +1014,13 @@ function dailyWave(n){
 // ================= titles =================
 // (perk picker removed: players found choosing between waves fiddly; pk() stays 0)
 function pk(id){return S&&S.perks?(S.perks[id]||0):0}
-const TITLES=[[0,'매너 인턴'],[1500,'매너 지킴이'],[4000,'매너 보안관'],[8000,'참교육 전문가'],[14000,'클라이밍장 수호신'],[25000,'전설의 참교육러']];
+// 웨이브 곡선 (20웨이브까지는 예전 그대로, 그 뒤로는 천천히 + 상한 → 100웨이브 이상도 가능)
+const hpBonus=w=>w<=20?Math.floor(Math.max(0,w-1)/3):Math.min(12,6+Math.floor((w-20)/8));
+const bossBonus=w=>{const c=Math.max(0,Math.floor(w/5)-1);return c<=3?6*c:Math.min(64,18+3*(c-3))};
+const drainMul=w=>w<=20?1+.12*(w-1):Math.min(5,3.28+.03*(w-20));
+const waveCount=n=>n<=20?Math.min(11,4+Math.floor((n-5)/1.1)):Math.min(13,11+Math.floor((n-20)/15));
+const scaleW=()=>Math.min(S.wave,30);
+const TITLES=[[0,'매너 인턴'],[1500,'매너 지킴이'],[4000,'매너 보안관'],[8000,'참교육 전문가'],[14000,'클라이밍장 수호신'],[25000,'전설의 참교육러'],[60000,'센터의 전설'],[150000,'참교육 명예의 전당'],[400000,'살아있는 전설'],[900000,'클라이밍계 참교육 신']];
 function titleFor(sc){let t=TITLES[0][1];for(const [m,n] of TITLES)if(sc>=m)t=n;return t}
 
 // ================= chalk bags, sweaty holds, crowd murmurs =================
@@ -1084,10 +1090,11 @@ function updateStaff(dt){
 // ================= spawning =================
 const markerGeo=new T.ConeGeometry(.13,.28,4),markerMat=new T.MeshBasicMaterial({color:0xff3b30});
 function spawn(type,opt){
+  let force=null;if(typeof type==='string'&&type.startsWith('boss:')){force=type.slice(5);type='boss'}
   const gi=opt?opt.gi:0,look=LOOK_VARS[type]?LOOK_VARS[type][gi%3]:LOOKS[type];
-  const bossIdx=Math.floor(((S&&S.wave)||5)/5)%3,stink=type==='boss'&&bossIdx===2,close=type==='boss'&&bossIdx===0;
+  const bossIdx=force?({base:1,stink:2,close:0})[force]:Math.floor(((S&&S.wave)||5)/5)%3,stink=type==='boss'&&bossIdx===2,close=type==='boss'&&bossIdx===0;
   const d=VT[type],m=makePerson(stink?LOOKS.stinkboss:close?LOOKS.closeboss:look,d.s||1);scene.add(m.root);scene.add(m.shadow);
-  const w=S?S.wave:1;const hp0=d.hp+(modIs('hp')?(type==='boss'?4:1):0)+(type==='boss'?6*Math.max(0,Math.floor(w/5)-1):Math.floor(Math.max(0,w-1)/3));
+  const w=S?S.wave:1;const hp0=d.hp+(modIs('hp')?(type==='boss'?4:1):0)+(type==='boss'?bossBonus(w):hpBonus(w));
   const v={type,name:d.name,hp:hp0,max:hp0,pos:v3(RX1-.6,0,rand(DOOR.z0+.4,DOOR.z1-.4)),vel:v3(),head:-Math.PI/2,s:d.s||1,heavy:!!d.heavy,
     state:'enter',t:0,anim:rand(0,5),onWall:false,ko:false,flash:0,m,spinAxis:v3(1,0,0),spin:0,
     tx:rand(WALL_X0+1.5,WALL_X1-1.5),tz:rand(WALL_Z+1,MAT_Z1-.6),timer:rand(1,3),ph:'',revealed:type==='boss'||modIs('reveal'),revealT:0,items:type==='dumper'?3:0,yellCD:0,cd2:3,cd3:6,dash:0,tele:0,lastKind:null,domino:null};
@@ -1104,15 +1111,18 @@ function spawn(type,opt){
   if(GROUPS.has(type)&&!opt){const grp=[v];for(let i=1;i<3;i++)grp.push(spawn(type,{gi:i}));grp.forEach(o=>o.grp=grp)}
   return v;
 }
+const THEMES=[['초크 데이','chalker','chalkhand','chalker'],['새치기 대란','cutter','crowder','cutter'],['화장실 대란','toiletshoe','barefoot','toiletshoe'],['촬영의 날','filmer','photogroup','filmer'],['수다 데이','chatter','sprayer','chatter'],['매트 점령','sitter','matwalker','dumper']];
 function startWave(){
+  S.theme=null;
   S.waveM0=S.mental;S.waveMin=S.mental;S.waveW0=S.warn;
   if(!S.over)saveRun(S.wave+1);
   S.wave++;const n=S.wave;let list;
   if(S.daily)list=dailyWave(n);
   else if(n<=WAVES.length)list=WAVES[n-1].slice();
-  else if(!S.daily){const k=Math.min(11,4+Math.floor((n-5)/1.1));list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot','cutter','earphone','toiletshoe']));if(n%5===0)list.unshift('boss')}
+  else if(!S.daily){const k=waveCount(n);list=[];for(let i=0;i<k;i++)list.push(pick(['sitter','sitter','chalker','crowder','sprayer','dumper','filmer','locker','hogger','thief','screamer','spoiler','chalkhand','chatter','photogroup','matwalker','matwalker','barefoot','cutter','earphone','toiletshoe']));const th=n>=17&&n%10===7?THEMES[Math.floor((n-17)/10)%THEMES.length]:null;if(th){S.theme=th[0];list=list.map((x,i)=>th[1+i%(th.length-1)])}else S.theme=null;
+    if(n%5===0)list.unshift('boss');if(n%50===0){const vs=['boss:base','boss:stink','boss:close'];list=list.filter(x=>x!=='boss');list.unshift(...(n%100===0?vs:['boss:base','boss:stink']))}}
   S.queue=list;S.spawnT=.35;
-  banner((S.daily?'⚡ ':'')+`WAVE ${n}`,S.daily?(list.includes('boss')?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:(list.includes('boss')?(Math.floor(n/5)%3===2?'👟 발냄새 대마왕 등장!! 초록 구름 속엔 들어가지 마':Math.floor(n/5)%3===0?'🌙 마감 대마왕 등장!! 불 다 꺼지기 전에 퇴근시켜라':'텃세 대마왕 재등장. 이번엔 부하도 많다'):`빌런 ${list.length}명 출몰`),2.6);
+  banner((S.daily?'⚡ ':'')+`WAVE ${n}`,S.daily?(list.some(x=>String(x).startsWith('boss'))?'오늘의 보스 등장!':`오늘의 라인업 · 빌런 ${list.length}명`):n<=WAVE_HINT.length?WAVE_HINT[n-1]:n%50===0?'⚠ 보스 러시!! 대마왕들이 한꺼번에 왔다':S.theme?`🎪 테마 웨이브: ${S.theme}`:(list.includes('boss')?(Math.floor(n/5)%3===2?'👟 발냄새 대마왕 등장!! 초록 구름 속엔 들어가지 마':Math.floor(n/5)%3===0?'🌙 마감 대마왕 등장!! 불 다 꺼지기 전에 퇴근시켜라':'텃세 대마왕 재등장. 이번엔 부하도 많다'):`빌런 ${list.length}명 출몰`),2.6);
 }
 
 // ================= combat =================
@@ -1939,10 +1949,11 @@ function update(dt){
     if(S.waveT>0){S.waveT-=gdt;if(S.waveT<=0)startWave()}
     else{
       if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(.55,.95)*Math.max(.45,1-.05*(S.wave-1))}}
-      else if(!S.villains.some(v=>v.state!=='gone'&&!v.ko)&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*S.wave);S.waveT=1.6;
+      else if(!S.villains.some(v=>v.state!=='gone'&&!v.ko)&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*scaleW());S.waveT=1.6;
+        if(S.wave%10===0){const g=addScore(1000*Math.min(S.wave/10,3));setTimeout(()=>{if(S&&!S.over){pop(headPos(S.p,1.9),S.wave%100===0?`🏆 WAVE ${S.wave} 돌파!! 센터의 전설`:`🏅 WAVE ${S.wave} 돌파!! +${g.toLocaleString()}`,S.wave%100===0?46:38,'#ffd23f',2.4);cheer(2);S.speedT=.6;buzz([30,30,30,30,90])}},1400)}
         {const lost=(S.waveM0??100)-(S.waveMin??0),clean=S.warn===(S.waveW0??0);
          const r=clean&&lost<3?['온사이트 클리어!!','한 번도 안 털림',600]:clean&&lost<15?['플래시 클리어!','거의 안 털림',300]:['레드포인트 클리어','털려도 결국 완등',0];
-         setTimeout(()=>{if(!S||S.over)return;const g=r[2]?addScore(r[2]*S.wave):0;pop(headPos(S.p,1.5),`${r[0]}${g?' +'+g:''}`,r[2]?44:30,r[2]?'#ffd23f':'#cfc8bd',1.8);if(r[2]){S.speedT=.4;sfx('clear');buzz([20,20,60])}},700)}}
+         setTimeout(()=>{if(!S||S.over)return;const g=r[2]?addScore(r[2]*scaleW()):0;pop(headPos(S.p,1.5),`${r[0]}${g?' +'+g:''}`,r[2]?44:30,r[2]?'#ffd23f':'#cfc8bd',1.8);if(r[2]){S.speedT=.4;sfx('clear');buzz([20,20,60])}},700)}}
     }
     if(S.clearT>0)S.clearT-=gdt;
   }
@@ -1954,7 +1965,7 @@ function update(dt){
     const was=v.annoyT||0;v.annoyT=was+gdt;
     if(was<8&&v.annoyT>=8)pop(headPos(v,.9),'민폐 심해짐!',26,'#ff9f43',1.2);
     if(was<16&&v.annoyT>=16){pop(headPos(v,.9),'민폐 폭주!!',30,'#ff3b30',1.3);crowdMurmur(['아 언제까지 저래...','누가 좀 말려봐','직원 어디 갔어'],.3)}
-    S.mental-=VT[v.type].drain*1.5*(1+v.annoyT/10)*(1+.12*(S.wave-1))*gdt*Math.pow(.7,pk('mind'));
+    S.mental-=VT[v.type].drain*1.5*(1+v.annoyT/10)*drainMul(S.wave)*gdt*Math.pow(.7,pk('mind'));
   }
   updateObjs(gdt);
   for(const n of S.inno)updateInno(n,gdt);
@@ -2298,7 +2309,7 @@ async function submitScore(){
   if(!S||S.score<=0)return;
   const b=S.daily?'daily':'all',B=brd(b);
   const name=cleanNick(nickVal())||'익명 클라이머';
-  const row={name,best:S.score,wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
+  const row={name,best:Math.min(S.score,2000000),wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
   if(LB.backend==='local'){const prev=B.top[0]?Number(B.top[0].best):0;B.top=localAdd(b,row).map(r=>Object.assign({},r,{id:r.at===row.at?'local-me':'x'}));renderLB();return S.score>prev?'new':null}
   if(LB.backend==='firebase'){
     try{const a=await fbAuth();LB.uid=a.uid;await claimName(name);const better=!B.mine||S.score>(Number(B.mine.best)||0);
