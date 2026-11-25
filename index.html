@@ -1023,7 +1023,7 @@ function wrongHit(e,dir){
   else{e.state='hurt';e.t=.5;e.vel.set(dir.x*2.5,0,dir.z*2.5);e.sitting=false}
   say(e,pick(['아니 왜 때려요?!','저 아무것도 안 했는데요?!','뭐야 이 사람!']),1.6);
   if(S.warnCD>0)return;S.warnCD=1.5;
-  S.warn++;boo();sfx('warn');S.flash=.12;if(S.ev&&S.ev.k==='patrol'){S.mental=Math.max(0,S.mental-10);pop(headPos(S.p,1.6),'👀 사장님: "방금 뭐예요?"',24,'#ff5a3c',1.4)}
+  S.warn++;boo();sfx('warn');S.flash=.12;if(S.ev&&S.ev.k==='patrol'){S.mental=Math.max(0,S.mental-10);pop(headPos(S.p,1.6),'👀 사장님: "방금 뭐예요?"',24,'#ff5a3c',1.4);staffSay('방금 뭐예요??',1.6)}
   pop(headPos(e,.5),'멀쩡한 회원!!',34,'#ff3b30',1.3);
   banner(`경고 ${S.warn} / 3`,S.warn>=3?'출입금지...':'직원: "그분은 일반 회원이에요 ㅠㅠ"',1.8,'#ff3b30');staffPanic();
   if(S.warn>=3)gameOver('출입금지 당했다','멀쩡한 회원을 3번 때림');
@@ -1149,6 +1149,13 @@ function updatePickups(dt){
 }
 function updateStaff(dt){
   const st=S.staff;st.t+=dt;if(st.moodT>0){st.moodT-=dt;if(st.moodT<=0)st.mood='idle'}
+  // 사장님 순찰 이벤트: 직원 자리의 사람이 '사장님'으로 바뀌어 센터를 돌아다님, 끝나면 카운터로 복귀
+  {const patrol=!!(S.ev&&S.ev.k==='patrol'&&!S.over);let tx=null,tz=null;
+   if(patrol){if(!st.patrol){st.patrol=true;st.tag.textContent='사장님';st.wp=null;st.chatT=2.5;staffSay('어디 한번 볼까~',1.6)}
+     if(!st.wp||xzDist(st.pos,st.wp)<.4){st.wp=v3(rand(WALL_X0+2,WALL_X1-2),0,rand(MAT_Z1+1.2,5))}tx=st.wp.x;tz=st.wp.z;
+     st.chatT-=dt;if(st.chatT<=0){st.chatT=rand(3.5,5.5);staffSay(pick(['흠...','매트 위 음식 금지인 거 아시죠?','다들 매너 좋네~','브러싱 잘하고 계시죠?','오늘 사람 많네']),1.6)}}
+   else if(st.patrol){tx=RX1-1.15;tz=.5;if(Math.hypot(st.pos.x-tx,st.pos.z-tz)<.3){st.patrol=false;st.pos.set(tx,0,tz);st.head=-Math.PI/2;st.tag.textContent='직원';tx=null}}
+   st.walking=false;if(tx!=null){const dx=tx-st.pos.x,dz=tz-st.pos.z,d=Math.hypot(dx,dz);if(d>.05){const sp=(patrol?1.6:3)*dt;st.pos.x+=dx/d*Math.min(sp,d);st.pos.z+=dz/d*Math.min(sp,d);st.head=Math.atan2(dx,dz);st.walking=true}}}
   if(st.sayT>0){st.sayT-=dt;if(st.sayT<=0&&st.sayEl)st.sayEl.style.display='none'}
   if(st.mood==='cry'&&Math.random()<dt*16){const h=headPos(st,-.12);const m=new T.Mesh(puffGeo,new T.MeshBasicMaterial({color:0x7fc8ff,transparent:true,opacity:.9,depthWrite:false}));
     m.position.set(h.x-.13,h.y,h.z+(Math.random()<.5?-.06:.06));m.scale.setScalar(.04);scene.add(m);parts.push({m,type:'puff',v:v3(rand(-1.6,-.6),rand(.6,1.6),rand(-.5,.5)),life:.55,max:.55,grow:.02})}
@@ -1293,7 +1300,7 @@ function hitInnocent(n,dir){
   if(n.state==='fall')return;
   n.state='fall';n.vel.set(dir.x*3,3,Math.max(dir.z,0)*3+2);n.spin=6;n.knocked=true;
   if(S.warnCD>0)return;S.warnCD=1.5;
-  S.warn++;S.shake=.15;S.flash=.12;sfx('warn');sfx('hurt');boo();if(S.ev&&S.ev.k==='patrol'){S.mental=Math.max(0,S.mental-10);pop(headPos(S.p,1.6),'👀 사장님: "방금 뭐예요?"',24,'#ff5a3c',1.4)}
+  S.warn++;S.shake=.15;S.flash=.12;sfx('warn');sfx('hurt');boo();if(S.ev&&S.ev.k==='patrol'){S.mental=Math.max(0,S.mental-10);pop(headPos(S.p,1.6),'👀 사장님: "방금 뭐예요?"',24,'#ff5a3c',1.4);staffSay('방금 뭐예요??',1.6)}
   pop(headPos(n,.3),'선량한 회원!!',34,'#ff3b30',1.3);
   banner(`경고 ${S.warn} / 3`,S.warn>=3?'출입금지...':'직원: "등반 중인 분은 안 돼요 ㅠㅠ"',1.8,'#ff3b30');staffPanic();
   if(S.warn>=3)gameOver('출입금지 당했다','선량한 회원을 3번 때림');
@@ -2126,7 +2133,7 @@ function syncScene(){
   // innocents
   for(const n of S.inno){const nm=n.state==='climb'?'climb':n.state==='fall'?'fly':n.state==='walk'?'walk':n.knocked?'down':'stand';
     n.tumbling=n.state==='fall';poseEntity(n,nm,n.t,0)}
-  {const st=S.staff;poseEntity(st,st.mood==='cry'?'cry':st.mood==='clap'?'clap':st.mood==='panic'?'boo':'stand',st.t,0);
+  {const st=S.staff;poseEntity(st,st.mood==='cry'?'cry':st.mood==='clap'?'clap':st.mood==='panic'?'boo':st.walking?'walk':'stand',st.t,0);
    placeLbl(st.tag,st.pos.x,2.3,st.pos.z);if(st.sayEl&&st.sayT>0)placeLbl(st.sayEl,st.pos.x,2.75,st.pos.z)}
   for(const q of S.pickups)placeLbl(q.lbl,q.pos.x,q.pos.y+.6,q.pos.z);
   for(const w of S.walkers){w.tumbling=w.state==='fly';const nm=w.state==='walk'?'walk':w.state==='fly'?'fly':w.state==='hurt'?'hurt':w.film?'film':'stand';
