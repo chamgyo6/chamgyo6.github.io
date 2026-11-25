@@ -424,9 +424,18 @@ const GYMS={
 // 크루·인스타 홍보 등록부 (개발자가 확인 후 직접 추가 — 사용자가 올리는 방식 아님)
 // {name, handle(인스타 아이디만), line(한 줄 소개), color, ad:true면 '광고' 표시}
 const PROMOS=[];
-const PROMO_DEMO=[{name:'예시 볼더링 크루',handle:'your_crew_here',line:'매주 수요일 크루 세션 · 클린이 환영',color:'#7c3aed',ad:false},
-  {name:'예시 암벽화 수선집',handle:'your_shop_here',line:'창갈이 할인 이벤트 중',color:'#0ea5e9',ad:true}];
+const PROMO_DEMO=[{name:'예시 볼더링 크루',handle:'your_crew_here',initials:'예시',line:'매주 수요일 크루 세션 · 클린이 환영',color:'#7c3aed',ad:false},
+  {name:'예시 암벽화 수선집',handle:'your_shop_here',initials:'수선',line:'창갈이 할인 이벤트 중',color:'#0ea5e9',ad:true}];
 const PROMO_LIST=(()=>{let l=PROMOS;try{if(new URLSearchParams(location.search).get('promo')==='demo')l=PROMO_DEMO}catch(e){}return l.filter(x=>/^[A-Za-z0-9._]{1,30}$/.test(x.handle))})();
+// 로고 캔버스: p.logo(저장소 안 이미지 경로)가 있으면 그 그림, 없으면 크루 색 동그라미 + 이니셜
+const LOGO_CACHE={};
+function promoLogo(p,onReady){const key=p.handle;if(LOGO_CACHE[key])return LOGO_CACHE[key];
+  const c=document.createElement('canvas');c.width=c.height=256;const q=c.getContext('2d');
+  const badge=()=>{q.clearRect(0,0,256,256);q.fillStyle=p.color||'#7c3aed';q.beginPath();q.arc(128,128,120,0,7);q.fill();q.lineWidth=12;q.strokeStyle='#fff';q.stroke();
+    q.fillStyle='#fff';q.textAlign='center';q.textBaseline='middle';q.font="92px 'Black Han Sans',sans-serif";q.fillText(p.initials||p.name.slice(0,2),128,138)};
+  badge();
+  if(p.logo&&/^promos\/[A-Za-z0-9._-]+\.(png|jpg|webp)$/.test(p.logo)){const im=new Image();im.onload=()=>{q.clearRect(0,0,256,256);const k=Math.min(240/im.width,240/im.height);q.drawImage(im,128-im.width*k/2,128-im.height*k/2,im.width*k,im.height*k);onReady&&onReady()};im.src=p.logo}
+  LOGO_CACHE[key]=c;return c}
 const GYM_KEY=(()=>{try{return (new URLSearchParams(location.search).get('gym')||'').toLowerCase()}catch(e){return ''}})();
 const GYM=Object.prototype.hasOwnProperty.call(GYMS,GYM_KEY)?GYMS[GYM_KEY]:null;
 function textTex(lines,w,h,opt={}){
@@ -514,8 +523,8 @@ function addDecor(g){
   // 바닥 입간판(X배너): 벽 양 끝, 홍보 없으면 광고 문의
   {const mkStand=(x,z,p)=>{const c=document.createElement('canvas');c.width=300;c.height=600;const q=c.getContext('2d');
      q.fillStyle=p?(p.color||'#7c3aed'):'#16130f';q.fillRect(0,0,300,600);q.textAlign='center';
-     if(p){q.fillStyle='#fff';q.font="700 30px 'Noto Sans KR',sans-serif";q.fillText(p.ad?'광고':'추천 크루',150,60);q.font="64px 'Black Han Sans',sans-serif";
-       const words=p.name.split(' ');words.forEach((w,i)=>q.fillText(w,150,170+i*76));q.font="700 30px 'Noto Sans KR',sans-serif";q.fillText('@'+p.handle,150,520)}
+     if(p){q.fillStyle='#fff';q.font="700 30px 'Noto Sans KR',sans-serif";q.fillText(p.ad?'광고':'추천 크루',150,56);q.drawImage(promoLogo(p),60,80,180,180);q.font="52px 'Black Han Sans',sans-serif";
+       const words=p.name.split(' ');words.forEach((w,i)=>q.fillText(w,150,320+i*62));q.font="700 30px 'Noto Sans KR',sans-serif";q.fillText('@'+p.handle,150,520)}
      else{q.strokeStyle='#ffd23f';q.lineWidth=8;q.strokeRect(10,10,280,580);q.fillStyle='#ffd23f';q.font="62px 'Black Han Sans',sans-serif";['이 자리','광고','문의'].forEach((w,i)=>q.fillText(w,150,170+i*80));
        q.fillStyle='#f4f1ea';q.font="700 28px 'Noto Sans KR',sans-serif";q.fillText('크루·인스타 홍보',150,470);q.fillText('@hyeok_73',150,520)}
      const pl=new T.Mesh(new T.PlaneGeometry(.9,1.8),new T.MeshBasicMaterial({map:new T.CanvasTexture(c)}));pl.position.set(x,1.05,z);g.add(pl);
@@ -542,7 +551,7 @@ function addDecor(g){
        q.fillStyle='#ffd23f';q.font="76px 'Black Han Sans',sans-serif";q.textAlign='center';q.fillText('이 자리 광고 문의',512,118);
        q.fillStyle='#f4f1ea';q.font="700 40px 'Noto Sans KR',sans-serif";q.fillText('크루 · 인스타 · 센터 홍보  ·  @hyeok_73',512,186)}
      else{q.fillStyle=p.color||'#7c3aed';q.fillRect(0,0,1024,240);q.fillStyle='rgba(0,0,0,.28)';q.fillRect(0,170,1024,70);
-       q.textAlign='left';q.fillStyle='#fff';q.font="78px 'Black Han Sans',sans-serif";q.fillText(p.name,40,105);
+       q.drawImage(promoLogo(p,()=>tick()),24,14,148,148);q.textAlign='left';q.fillStyle='#fff';q.font="78px 'Black Han Sans',sans-serif";q.fillText(p.name,196,110);
        q.font="700 40px 'Noto Sans KR',sans-serif";q.fillText('📷 @'+p.handle+'   '+(p.line||''),40,218);
        if(p.ad){q.fillStyle='#ffd23f';q.fillRect(870,24,124,56);q.fillStyle='#111';q.font="700 36px 'Noto Sans KR',sans-serif";q.textAlign='center';q.fillText('광고',932,64)}}
      b.tx.needsUpdate=true};
@@ -562,6 +571,9 @@ function addDecor(g){
   const ht=new T.CanvasTexture(hc);ht.wrapS=T.RepeatWrapping;ht.repeat.set(18,1);
   const stripe=new T.Mesh(new T.PlaneGeometry(WALL_X1-WALL_X0+1,.18),new T.MeshBasicMaterial({map:ht}));stripe.rotation.x=-Math.PI/2;stripe.position.set((WALL_X0+WALL_X1)/2,.072,MAT_Z1+.18);g.add(stripe);
   const lt=textTex(['낙하 구역 · 앉지 마세요'],512,72,{bg:'rgba(0,0,0,0)',fg:'rgba(255,255,255,.8)',font:"44px 'Black Han Sans',sans-serif",y0:54,x:40});
+  if(PROMO_LIST.length){[-6.2,3.8].forEach((mx,i)=>{const p=PROMO_LIST[i%PROMO_LIST.length],c=document.createElement('canvas');c.width=c.height=512;const q=c.getContext('2d');
+      const draw=()=>{q.clearRect(0,0,512,512);q.globalAlpha=.8;q.drawImage(promoLogo(p,()=>{draw();t.needsUpdate=true}),96,40,320,320);q.globalAlpha=.85;q.fillStyle='#fff';q.textAlign='center';q.font="54px 'Black Han Sans',sans-serif";q.fillText(p.name,256,430);q.font="700 34px 'Noto Sans KR',sans-serif";q.fillText('@'+p.handle+(p.ad?'  · 광고':''),256,482)};
+      const t=new T.CanvasTexture(c);draw();const d=new T.Mesh(new T.PlaneGeometry(2.3,2.3),new T.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));d.rotation.x=-Math.PI/2;d.position.set(mx,.075,(WALL_Z+MAT_Z1)/2+.3);g.add(d)})}
   for(const fx of [-10,-1.5,7]){const d=new T.Mesh(new T.PlaneGeometry(3,.42),new T.MeshBasicMaterial({map:lt,transparent:true,depthWrite:false}));d.rotation.x=-Math.PI/2;d.position.set(fx,.07,MAT_Z1-.55);g.add(d)}
   // brush rack + chalk buckets at the wall's left end
   const rack=box(.5,.7,.25,0x5c3b20);rack.position.set(WALL_X0-.6,.35,WALL_Z+.4);g.add(rack);
@@ -919,7 +931,10 @@ function coachShow(k,circles,notes){
   for(const [t,n] of texts)try{const r=t.getBoundingClientRect(),W=innerWidth,m=16;let dx=0;if(r.left<m)dx=m-r.left;else if(r.right>W-m)dx=(W-m)-r.right;if(dx)t.setAttribute('x',n.lx+dx);if(r.top<60)t.setAttribute('y',+t.getAttribute('y')+(60-r.top))}catch(e){}labelsEl.classList.add('coaching');bannerEl.style.visibility='hidden';
   const close=e=>{e.preventDefault();e.stopPropagation();el.hidden=true;svg.textContent='';cv.classList.remove('coachgray');labelsEl.classList.remove('coaching');bannerEl.style.visibility='';if(S)S.paused=false;for(const q in input)input[q]=0;el.removeEventListener('pointerdown',close)};
   setTimeout(()=>el.addEventListener('pointerdown',close),350);
+  if(k==='a'&&isTouch)el.addEventListener('pointerdown',()=>setTimeout(coachCam,4000),{once:true});
 }
+function coachCam(){if(!S||S.over||!isTouch||coachDone('d'))return;const W=innerWidth,H=innerHeight,x=W*.74,y=H*.42;
+  coachShow('d',[{x,y,r:70}],[{lx:W*.5,ly:y-150,tx:x,ty:y-20,tr:70,text:'오른쪽 빈 곳 쓱~ = 시점 돌리기',y:1},{lx:W*.3,ly:y+170,tx:x-40,ty:y+40,tr:70,text:'왼손 이동 + 오른손 시점 OK'}])}
 function coachControls(){
   if(!S||coachDone('a'))return;const W=innerWidth,H=innerHeight;
   if(isTouch){const st=rectOf('stick'),at=rectOf('bAtk'),ju=rectOf('bJump'),ac=rectOf('bAct'),mb=rectOf('mBar');
@@ -2462,7 +2477,7 @@ document.getElementById('continueBtn').addEventListener('click',()=>{const d=loa
     banner('💾 이어하기',`WAVE ${d.wave}부터 다시 참교육`,2,'#46d18c')})});
 refreshContinue();refreshDex();
 {const c=document.getElementById('promoCard');if(PROMO_LIST.length){const p=PROMO_LIST[Math.floor(Math.random()*PROMO_LIST.length)];c.hidden=false;c.href='https://www.instagram.com/'+p.handle+'/';c.style.background=p.color||'#7c3aed';
-  const ic=document.createElement('i');ic.textContent='🧗';const tx=document.createElement('span');const nb=document.createElement('b');nb.textContent=p.name;const sm=document.createElement('small');sm.textContent=`@${p.handle} · ${p.line||''}`;tx.append(nb,sm);c.append(ic,tx);
+  const ic=document.createElement('i');const lg=promoLogo(p);lg.style.cssText='width:42px;height:42px;flex:none';ic.append(lg);const tx=document.createElement('span');const nb=document.createElement('b');nb.textContent=p.name;const sm=document.createElement('small');sm.textContent=`@${p.handle} · ${p.line||''}`;tx.append(nb,sm);c.append(ic,tx);
   if(p.ad){const t=document.createElement('span');t.className='adtag';t.textContent='광고';c.append(t)}}}
 document.getElementById('dexBtn').addEventListener('click',openDex);
 document.getElementById('dexClose').addEventListener('click',()=>{document.getElementById('dexUI').hidden=true;document.getElementById('title').style.visibility=''});
