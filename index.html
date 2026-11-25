@@ -1008,6 +1008,11 @@ function hitInnocent(n,dir){
   banner(`경고 ${S.warn} / 3`,S.warn>=3?'출입금지...':'직원: "등반 중인 분은 안 돼요 ㅠㅠ"',1.8,'#ff3b30');staffPanic();
   if(S.warn>=3)gameOver('출입금지 당했다','선량한 회원을 3번 때림');
 }
+// 정화된 빌런이 나가면서 하는 다짐 (자기 민폐에 맞춰서)
+const REFORM_PROMISE={sitter:'이제 매트엔 안 앉을게요',dumper:'짐은 락커에 넣을게요!',chalker:'이제 버킷 안에서만 바를게요',crowder:'...겹치는 거 맞았어요',
+  filmer:'촬영은 양해 구하고 할게요',sprayer:'베타는 물어보면 알려줄게요',spoiler:'남의 문제 안 건드릴게요',matwalker:'매트 가장자리로 다닐게요',
+  chatter:'수다는 휴게실에서 할게요',photogroup:'사진은 매트 밖에서 찍을게요',thief:'가져간 거 돌려놓을게요...',screamer:'이제 조용히 떨어질게요',
+  hogger:'다른 분들 먼저 하세요~',barefoot:'암벽화 신고 올게요',chalkhand:'손 씻고 다닐게요'};
 const REFORM_LINES=['덕분에 건강해졌어요. 감사합니다!','어깨가 하나도 안 아파요...! 착하게 살게요','팔꿈치 통증이 사라졌어요 ㅠㅠ 매너 지킬게요','손가락이 다 나았어요! 감사합니다!','저 그동안 왜 그랬을까요... 죄송합니다','이제 매트에 안 앉을게요... 감사합니다'];
 function addUlt(n){if(!S)return;const was=S.ult;S.ult=Math.min(100,(S.ult||0)+n);if(was<100&&S.ult>=100){pop(headPos(S.p,.8),'체외충격파 준비! (공격 길게)',24,'#7fc8ff',1.6);sfx('charge')}}
 function reformKO(v,dir){
@@ -1242,7 +1247,7 @@ function updateVillain(v,dt){
       say(v,v.type==='boss'?'클린이들아... 그동안 미안했다':pick(REFORM_LINES),2);sfx('ding');
       if(!v.halo){const h=new T.Mesh(new T.TorusGeometry(.17,.03,6,18),new T.MeshBasicMaterial({color:0xffe066}));h.rotation.x=Math.PI/2;h.position.y=.42;v.m.head.add(h);v.halo=h}
       puff(headPos(v,.2),12,0xffe066,1.5,.07)}}
-    else if(v.reformPh==='bow'){faceTo(v,p.pos.x,p.pos.z,dt);if(v.t>1.6){v.reformPh='leave';v.t=0}}
+    else if(v.reformPh==='bow'){faceTo(v,p.pos.x,p.pos.z,dt);if(v.t>1.6){v.reformPh='leave';v.t=0;const pr=REFORM_PROMISE[v.type];if(pr)say(v,pr,2)}}
     else{walkTo(v,RX1+.6,(DOOR.z0+DOOR.z1)/2,4.6,dt);if(v.pos.x>=RX1-.1||v.t>8)v.state='gone'}
     break;}
   case 'despair':v.t-=dt;if(Math.random()<dt*5)puff(headPos(v,-.3),1,0x7fc8ff,.3,.04);if(v.t<=0){v.state='gone';puff(v.pos.clone().setY(.3),10,0xf4f1ea,2,.12)}break;
