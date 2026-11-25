@@ -48,6 +48,18 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .kpbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#191600;padding:12px 16px;border-radius:8px;background:#fee500;box-shadow:0 4px 0 #b8a500}
 .tipnote{margin:0;font-size:12px;color:var(--mute);text-align:center}
 .supbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.actrow{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;width:100%}
+.actrow .btn{width:100%;margin:0}
+.tipbox{width:100%;display:flex;flex-direction:column;gap:10px;align-items:center;background:rgba(255,230,0,.06);border:1px solid rgba(255,230,0,.25);border-radius:12px;padding:14px 12px}
+.tipbox .tipnote{margin:0;font:700 15px/1.4 var(--body);color:var(--chalk)}
+.tipbox .tipnote small{display:block;font-weight:500;font-size:12px;color:var(--mute)}
+.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.tip{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;background:#2d2721;border:2px solid #4a4038;border-radius:10px;padding:10px 4px;color:var(--chalk)}
+.tip span{font-size:24px;line-height:1}.tip b{font:400 18px/1.1 var(--display);color:#ffe600}.tip small{font:600 11px/1.2 var(--body);color:var(--mute)}
+.tip.hot{background:#ffe600;border-color:#ffe600;transform:scale(1.06)}.tip.hot b{color:#191600}.tip.hot small{color:#4a4200}
+.tip:active{transform:scale(.96)}
+.tipsub{font-size:11px;color:var(--mute)}
+#nameUI{background:rgba(14,11,8,.97)}
 .gymbtn{display:block;text-align:center;text-decoration:none;font:700 14px/1.2 var(--body);color:var(--hazard);border:1.5px dashed rgba(255,210,63,.6);border-radius:8px;padding:10px 12px}
 .igbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#fff;padding:12px 16px;border-radius:8px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af);box-shadow:0 4px 0 #5b1f7a}
 .linkbtn{background:none;border:0;color:var(--mute);font:700 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
@@ -206,15 +218,23 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <div class="reason" id="overReason"></div>
     <div class="big" id="overScore">0</div>
     <div class="ttl" id="overTitle"></div>
-    <figure class="hlfig" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
     <p class="lead" id="overSub"></p>
-    <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
-    <label class="nick" for="nick2" style="width:100%">랭킹 이름 <input id="nick2" maxlength="12" autocomplete="off" readonly></label>
-    <p class="tipnote">재밌었으면 한 잔! (안 눌러도 랭킹은 그대로예요 😉)</p>
-    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a><a class="kpbtn" id="kpBtn" href="https://qr.kakaopay.com/Ej8IIIz52" target="_blank" rel="noopener">☕ 개발자 커피 한 잔 사주기</a></div>
-    <a class="gymbtn" href="https://ig.me/m/hyeok_73" target="_blank" rel="noopener">🧗 우리 센터 버전 만들기 · 광고 문의</a>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
+    <div class="actrow"><button class="btn" id="retryBtn">다시 참교육</button><button class="btn alt" id="shareBtn">결과 공유</button></div>
     <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
+    <figure class="hlfig" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
+    <section class="tipbox">
+      <p class="tipnote">재밌었으면 개발자한테 한 잔! <small>(안 눌러도 랭킹은 그대로예요 😉)</small></p>
+      <div class="tips">
+        <a class="tip" data-amt="1000" target="_blank" rel="noopener"><span>🍬</span><b>1,000원</b><small>초크볼 하나</small></a>
+        <a class="tip hot" data-amt="3000" target="_blank" rel="noopener"><span>☕</span><b>3,000원</b><small>커피 한 잔</small></a>
+        <a class="tip" data-amt="5000" target="_blank" rel="noopener"><span>🎫</span><b>5,000원</b><small>1일권 보태기</small></a>
+      </div>
+      <small class="tipsub">카카오페이로 열려요</small>
+    </section>
+    <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
+    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a></div>
+    <a class="gymbtn" href="https://ig.me/m/hyeok_73" target="_blank" rel="noopener">🧗 우리 센터 버전 만들기 · 광고 문의</a>
+    <label class="nick" for="nick2" hidden>랭킹 이름 <input id="nick2" maxlength="12" autocomplete="off" readonly></label>
   </div>
 </div>
 
@@ -1843,7 +1863,6 @@ function gameOver(reason,sub){
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
     S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{if(S&&S.frozen&&!document.getElementById('over').hidden)bgmStart('title')},1500);setTimeout(()=>{dtx.hidden=true},500);
     showHighlight();
-    document.getElementById('kpBtn').textContent=pick(['💉 개발자 체외충격파 치료비 보태주기','🩴 개발자 암벽화 창갈이값 보태주기','☕ 개발자 커피 한 잔 사주기','🩹 개발자 테이핑값 보태주기','🎫 개발자 1일권 쏴주기']);
     const run=S;submitScore().then(async r=>{const el=document.getElementById('overSub');if(r==='new')el.textContent+=' · 🏆 랭킹 기록 갱신!';
       const rk=await rankOf(run.score,run.daily?'daily':'all');if(rk&&S===run){run.rank=rk;el.textContent+=` · ${run.daily?'오늘':'전체'} ${rk}위`}});renderLB();
   },2800);
@@ -2020,7 +2039,7 @@ async function claimName(n){
 }
 let pendingStart=null;
 function needName(fn){if(cleanNick(nickVal()).length>=2){fn();return}pendingStart=fn;
-  const ui=document.getElementById('nameUI');ui.hidden=false;document.getElementById('nameMsg').textContent='';setTimeout(()=>document.getElementById('nameIn').focus(),50)}
+  const ui=document.getElementById('nameUI');ui.hidden=false;document.getElementById('title').style.visibility='hidden';document.getElementById('nameMsg').textContent='';setTimeout(()=>document.getElementById('nameIn').focus(),50)}
 document.getElementById('nameOk').addEventListener('click',async()=>{
   const btn=document.getElementById('nameOk'),msg=document.getElementById('nameMsg'),n=cleanNick(document.getElementById('nameIn').value);
   if(n.length<2){msg.textContent='2글자 이상 써주세요';return}
@@ -2030,7 +2049,7 @@ document.getElementById('nameOk').addEventListener('click',async()=>{
   const taken=await nameTaken(n)||(await claimName(n))==='taken';btn.disabled=false;msg.style.color='var(--hit)';
   if(taken){msg.textContent='이미 랭킹에 있는 이름이에요. 다른 이름으로 해주세요';return}
   try{localStorage.setItem('chamgyo3d-nick',n)}catch(e){}showNick();
-  document.getElementById('nameUI').hidden=true;const f=pendingStart;pendingStart=null;if(f)f();
+  document.getElementById('nameUI').hidden=true;document.getElementById('title').style.visibility='';const f=pendingStart;pendingStart=null;if(f)f();
 });
 document.getElementById('nameIn').addEventListener('keydown',e=>{if(e.code==='Enter'){e.preventDefault();document.getElementById('nameOk').click()}});
 document.querySelectorAll('.lbtabs button').forEach(b=>b.addEventListener('click',()=>{LB.view=b.dataset.v;renderLB()}));
@@ -2172,6 +2191,8 @@ document.getElementById('shareBtn').addEventListener('click',async e=>{
   try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
   catch(err){ta.value=txt;ta.hidden=false;ta.focus();ta.select();btn.textContent='아래 글을 복사하세요'}
 });
+// 카카오페이 송금 링크: 금액 × 524288 을 16진수로 뒤에 붙이면 금액이 미리 들어감
+document.querySelectorAll('.tip').forEach(a=>{const amt=+a.dataset.amt;a.href='https://qr.kakaopay.com/Ej8IIIz52'+(amt*524288).toString(16)});
 setTimeout(initLB,0);
 
 // ================= highlight capture =================
