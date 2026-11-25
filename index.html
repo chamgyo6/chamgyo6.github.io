@@ -1840,7 +1840,7 @@ const AI={
       if(walkTo(v,tri.pos.x,tri.pos.z-.5,d.speed,dt)){
         v.head=0;
         if(tri.rec){say(v,'잘 찍혔다~ 한 번 더',1.6);v.ph='climb'}
-        else if(xzDist(p.pos,v.pos)<2.6){say(v,'너지?!?! 내 영상 물어내!!',2);v.ph='rage';v.punchCD=1}
+        else if(xzDist(p.pos,v.pos)<2.6){say(v,'너지?!?! 내 영상 물어내!!',2);v.ph='rage';v.punchCD=1;if(!v.revealed)reveal(v)}
         else despairKO(v,'녹화 정지 참교육',800,'녹화가... 왜 꺼져있어...?');
       }
       break;
@@ -1850,7 +1850,7 @@ const AI={
         if(v.mournT<=0){v.mournT=null;v.sitting=false;v.mourning=false;tri.fallen=false;tri.rec=true;say(v,'다시 찍어야지...',1.6);v.ph='climb'}}
       break;
     case 'rage':
-      v.punchCD-=dt;v.running=true;
+      if(!v.revealed)reveal(v);v.punchCD-=dt;v.running=true;
       if(xzDist(p.pos,v.pos)>.8)walkTo(v,p.pos.x,p.pos.z,3.6,dt);
       else if(v.punchCD<=0&&p.inv<=0&&p.state==='ground'){v.punchCD=1.1;v.pointT=.3;S.mental-=8;p.inv=.5;S.shake=.1;sfx('hit');pop(headPos(p),'멘탈 -8',22,'#ff3b30')}
       if(v.pointT>0)v.pointT-=dt;
