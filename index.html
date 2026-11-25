@@ -724,7 +724,7 @@ function newGame(){
 function disposeGame(){
   const rm=m=>{scene.remove(m.root);scene.remove(m.shadow)};
   rm(S.p.m);S.inno.forEach(n=>rm(n.m));(S.crowd||[]).forEach(c=>{rm(c.m);c.sayEl&&c.sayEl.remove()});(S.walkers||[]).forEach(w=>{rm(w.m);w.sayEl&&w.sayEl.remove()});if(S.staff){rm(S.staff.m);S.staff.tag.remove();S.staff.sayEl&&S.staff.sayEl.remove()}(S.pickups||[]).forEach(q=>{scene.remove(q.g);q.lbl.remove()});S.villains.forEach(v=>{rm(v.m);v.tag&&v.tag.remove();v.arrow&&v.arrow.remove();v.sayEl&&v.sayEl.remove();scene.remove(v.marker)});
-  S.objs.forEach(o=>o.mesh&&scene.remove(o.mesh));S.clouds.forEach(c=>scene.remove(c.g));
+  S.objs.forEach(o=>o.mesh&&scene.remove(o.mesh));S.clouds.forEach(c=>scene.remove(c.g));S.villains.forEach(v=>{if(v.stars){scene.remove(v.stars);v.stars=null}});
   pops.forEach(p=>p.d.remove());pops.length=0;betas.forEach(b=>b.d.remove());betas.length=0;
   parts.forEach(q=>scene.remove(q.m));parts.length=0;
   if(promptEl)promptEl.style.display='none';
@@ -973,7 +973,11 @@ function hitVillain(v,kind,dir){
   }else{v.state='hurt';v.t=.32;v.vel.set(dir.x*2.4*hk,0,dir.z*2.4*hk)}
 }
 function setSpin(v,dir,s){v.spinAxis.set(dir.z,0,-dir.x).normalize();if(v.spinAxis.lengthSq()<.1)v.spinAxis.set(1,0,0);v.spin=s}
+// KO된 빌런 머리 위에서 빙글빙글 도는 별
+const starGeo=new T.OctahedronGeometry(.13,0),starMat=new T.MeshBasicMaterial({color:0xffe066});
+function addStars(v){if(v.stars)return;const g=new T.Group();for(let i=0;i<3;i++){const m=new T.Mesh(starGeo,starMat);const a=i/3*Math.PI*2;m.position.set(Math.cos(a)*.32,0,Math.sin(a)*.32);g.add(m)}scene.add(g);v.stars=g;v.starT=2.4}
 function knockOut(v,kind,dir){
+  addStars(v);
   v.ko=true;v.onWall=false;v.state='fly';
   const hk=v.heavy?.85:1;
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
@@ -1825,6 +1829,8 @@ function syncScene(){
     v.m.moving=true;v.tumbling=v.state==='fly'&&v.spin;
     if(!v.tumbling&&v.state!=='fly')v.m.root.quaternion.identity();
     poseEntity(v,pn,v.anim,0);
+    if(v.stars){v.starT-=1/60;const hp=headPos(v,.25);v.stars.position.copy(hp);v.stars.rotation.y+=.18;v.stars.children.forEach((m,i)=>{m.position.y=Math.sin(S.t*8+i*2)*.05;m.rotation.y+=.2});
+      if(v.starT<=0||v.state==='gone'){scene.remove(v.stars);v.stars=null}}
     {const q=Math.max(0,1-(S.t-(v.sqAt??-9))/.16),k=v.m.s;if(q>0)v.m.root.scale.set(k*(1+.3*q),k*(1-.25*q),k*(1+.3*q));else if(v.sqAt!=null){v.m.root.scale.setScalar(k);v.sqAt=null}}
     v.m.phone.visible=v.type==='sitter'&&v.sitting||v.posePN==='film';
     setFlash(v.m,v.flash>0||(v.tele>0&&Math.sin(S.t*40)>0));
