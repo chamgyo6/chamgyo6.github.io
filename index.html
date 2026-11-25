@@ -38,6 +38,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .tag.staff{color:var(--ok)}.tag.gift{color:var(--hazard);font-size:15px}
 .say{font:600 13px/1.25 var(--body);background:#fff;color:#1a1510;padding:5px 9px;border-radius:9px;box-shadow:0 2px 0 rgba(0,0,0,.35)}
 .say:after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-5px;border:5px solid transparent;border-top-color:#fff;border-bottom:0}
+.say.hot{background:#ffd23f;font-weight:800;font-size:14px;box-shadow:0 0 0 2px #120d08,0 3px 0 rgba(0,0,0,.45);animation:sayhot .25s ease-out}.say.hot:after{border-top-color:#ffd23f}
+@keyframes sayhot{from{scale:.4}60%{scale:1.15}to{scale:1}}
 .pop{font:400 34px/1 var(--display);color:var(--hazard);-webkit-text-stroke:6px #120d08;paint-order:stroke fill;animation:pop 1s ease-out forwards}
 @keyframes pop{0%{opacity:0;scale:.4}10%{opacity:1;scale:1.45}20%{scale:1}75%{opacity:1}100%{opacity:0;translate:0 -40px}}
 .beta{font:600 15px/1.2 var(--body);background:#fff;color:#2a1b4a;border:2.5px solid #7b4fd6;padding:7px 12px;border-radius:12px;animation:beta 3.4s ease-out forwards}
@@ -980,7 +982,7 @@ function coachUlt(){
   else coachShow('c',[{x:ub.x,y:ub.y,r:26}],[{lx:ub.x+240,ly:ub.y+110,tx:ub.x,ty:ub.y,tr:26,text:'가득 차면 J 꾹~ = 체외충격파',y:1}])}
 function bumpCombo(){S.combo++;S.comboT=2.6*(1+pk('combo'));S.maxCombo=Math.max(S.maxCombo,S.combo);
   const c=COMBO_CHEER[S.combo];if(c&&S.p){const g=addScore(S.combo*20);pop(headPos(S.p,1.2),`${S.combo} COMBO! ${c} +${g}`,40,'#c084fc',1.6);cheer(2);sfx('clear');buzz([20,20,20,20,60])}}
-function say(e,text,d=1.8){if(!e.sayEl){e.sayEl=mkLbl('say')}e.sayEl.textContent=text;e.sayEl.style.display='';e.sayT=d}
+function say(e,text,d=1.8,hot=false){if(!e.sayEl){e.sayEl=mkLbl('say')}e.sayEl.classList.toggle('hot',hot);e.sayEl.textContent=text;e.sayEl.style.display='';e.sayT=d}
 const headPos=(e,extra=0)=>v3(e.pos.x,e.pos.y+(e.m?1.95*e.m.s:1.95)+extra,e.pos.z);
 
 // ================= crowd =================
@@ -1276,7 +1278,8 @@ function knockOut(v,kind,dir){
   // 주변 사람들 반응 (2초에 한 번, 가까운 두 명)
   if(!(S.reactCD>S.t)){S.reactCD=S.t+2;const near=S.walkers.concat(S.crowd).filter(o=>o.state!=='fly'&&xzDist(o.pos,v.pos)<9).sort((a,b)=>xzDist(a.pos,v.pos)-xzDist(b.pos,v.pos)).slice(0,2);
     const L=v.type==='boss'?['사장님 불러!!!','이건 역사다','오늘 센터 레전드 찍혔다']:['헐 방금 봤어??','영상 찍었어?','와 저 무브 뭐야','인스타 각','속이 다 시원하네','저거 몇 점짜리야'];
-    const RL=v.type!=='boss'&&REACT[v.type];near.forEach((o,i)=>setTimeout(()=>{if(S&&!S.over)say(o,pick(RL&&(i===0||Math.random()<.5)?RL:L),1.6)},250+i*450))}
+    const RL=v.type!=='boss'&&REACT[v.type];near.forEach((o,i)=>setTimeout(()=>{if(S&&!S.over)say(o,pick(L),1.6)},250+i*450));
+    if(RL){const at=v.pos.clone();setTimeout(()=>{if(S&&!S.over)pop(at.setY(2.4),'회원: "'+pick(RL)+'"',26,'#ffd23f',2.2)},650)}}
   if(v.type==='boss'){bossReward(v);S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!',`${v.name} 퇴치`,2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
 }
 function despairKO(v,label,bonus,line){
