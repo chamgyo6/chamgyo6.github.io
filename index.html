@@ -97,6 +97,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #feverEdge{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .35s;box-shadow:inset 0 0 40px 10px rgba(255,120,20,.75),inset 0 0 110px 30px rgba(255,60,0,.35)}
 #feverEdge.on{opacity:1;animation:fever .5s ease-in-out infinite alternate}
 @keyframes fever{to{box-shadow:inset 0 0 54px 16px rgba(255,170,40,.85),inset 0 0 140px 40px rgba(255,40,0,.4)}}
+#rushClock{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 148px);z-index:5;pointer-events:none;text-align:center;font:400 clamp(16px,4.6vw,22px)/1 var(--display);color:#ff5a3c;-webkit-text-stroke:4px #120d08;paint-order:stroke fill;font-variant-numeric:tabular-nums}
+#rushClock.hurry{animation:rushb .4s steps(2) infinite}
+@keyframes rushb{50%{color:#fff}}
 #mkTxt{position:fixed;left:0;right:0;top:21%;z-index:6;pointer-events:none;text-align:center;padding:0 12px;font:400 clamp(30px,9.5vw,52px)/1.05 var(--display);-webkit-text-stroke:9px #120d08;paint-order:stroke fill;white-space:nowrap}
 #mkTxt small{display:block;font-size:.55em;margin-top:4px}
 #mkTxt .in{display:inline-block;max-width:100%}
@@ -225,6 +228,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="vsTxt" hidden></div>
 <div id="coach" hidden><svg></svg><div class="tap">화면을 누르면 계속</div></div>
 <div id="feverEdge"></div>
+<div id="rushClock" hidden></div>
 <div id="mkTxt" hidden></div>
 <div id="clearStamp" hidden><div></div></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
@@ -2243,6 +2247,9 @@ function syncScene(){
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
   document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE ${S.wave}\n빌런 ${left}`;vsHud();
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
+  {const rc=document.getElementById('rushClock'),rush=S.ev&&S.ev.k==='rush'&&!S.over&&S.queue.length+S.villains.filter(v=>!v.ko&&v.state!=='gone').length>0;
+   if(rush){if(S.rushT==null)S.rushT=600;S.rushT=Math.max(0,S.rushT-1/60*20);const m=Math.floor(S.rushT/60),sec=Math.floor(S.rushT%60);rc.textContent=`⏰ 마감까지 ${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;rc.classList.toggle('hurry',S.rushT<120);rc.hidden=false}
+   else{rc.hidden=true;S.rushT=null}}
   {const fv=p.fireT>0&&!S.over;document.getElementById('feverEdge').classList.toggle('on',fv);if(fv&&!S.feverOn)announce('피버 타임!!','점수 2배 · 음악 빨라짐','#ff9f1c');S.feverOn=fv}
   document.getElementById('scoreTxt').textContent=hudNum(S.score);
   document.getElementById('bestTxt').textContent='최고 '+hudNum(Math.max(best,S.score));
@@ -2546,7 +2553,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(.1,AC.currentTime,.1)}
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
-function toTitle(){document.getElementById('feverEdge').classList.remove('on');running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
+function toTitle(){document.getElementById('feverEdge').classList.remove('on');document.getElementById('rushClock').hidden=true;running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
   for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt','clearStamp'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
