@@ -236,7 +236,7 @@ function tone(f0,f1,dur,type,vol,t0=0){const t=AC.currentTime+t0,o=AC.createOsci
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05)}
 // ================= BGM (게임 안에서 직접 합성 — 외부 파일 없음) =================
 // 4마디 반복: Am - F - C - G. 웨이브가 오를수록 빨라지고, 빌런이 많거나 보스면 멜로디가 붙음
-const BGM={g:null,next:0,step:0,iv:null};
+const BGM={g:null,next:0,step:0,iv:null,mode:'game'};
 const midi=m=>440*Math.pow(2,(m-69)/12);
 const PROG=[[45,[57,60,64]],[41,[57,60,65]],[48,[55,60,64]],[43,[55,59,62]]];
 const PROG_BOSS=[[45,[57,60,64]],[45,[57,60,63]],[46,[58,62,65]],[44,[56,59,63]]];
@@ -245,6 +245,13 @@ function bOsc(type,f0,f1,t,dur,vol){const o=AC.createOscillator(),g=AC.createGai
 function bNoise(t,dur,vol,hp){const n=AC.createBufferSource();n.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=hp?'highpass':'bandpass';f.frequency.value=hp||1800;
   const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);n.connect(f);f.connect(g);g.connect(BGM.g);n.start(t,Math.random()*.5);n.stop(t+dur+.02)}
 function bgmBeat(st,t,sp){
+  if(BGM.mode==='title'){const bar=Math.floor(st/16)%4,i=st%16,[root,ch]=PROG[bar];   // 타이틀·결과: 잔잔한 버전
+    if(i===0||i===8)bOsc('sine',110,45,t,.3,.45);
+    if(i%8===0)bOsc('sine',midi(root),midi(root),t,sp*7,.22);
+    if(i===0)for(const n of ch)bOsc('triangle',midi(n),midi(n),t,sp*15,.035);
+    if(i%2===0){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[(i/2)%4]),midi(arp[(i/2)%4]),t,sp*1.6,.04)}
+    if(i===4||i===12)bNoise(t,.05,.06,7000);
+    return}
   const boss=S&&S.villains.some(v=>v.type==='boss'&&!v.ko&&v.state!=='gone');
   const heat=S?S.villains.filter(v=>v.revealed&&!v.ko&&v.state!=='gone').length:0;
   const P=boss?PROG_BOSS:PROG,bar=Math.floor(st/16)%4,i=st%16,[root,ch]=P[bar];
@@ -256,10 +263,10 @@ function bgmBeat(st,t,sp){
   if(heat>=4||boss){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[i%4]),midi(arp[i%4]),t,sp*.9,.07)} // 멜로디
   if(st%64===0)bNoise(t,.9,.18,5000);                                          // 4마디마다 심벌
 }
-function bgmStart(){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect(master)}
-  BGM.g.gain.cancelScheduledValues(AC.currentTime);BGM.g.gain.setValueAtTime(.42,AC.currentTime);
+function bgmStart(mode='game'){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect(master)}BGM.mode=mode;
+  BGM.g.gain.cancelScheduledValues(AC.currentTime);BGM.g.gain.setValueAtTime(mode==='title'?.36:.42,AC.currentTime);
   BGM.step=0;BGM.next=AC.currentTime+.1;clearInterval(BGM.iv);
-  BGM.iv=setInterval(()=>{if(!AC)return;const bpm=Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0),sp=60/bpm/4;
+  BGM.iv=setInterval(()=>{if(!AC)return;const bpm=BGM.mode==='title'?92:Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0),sp=60/bpm/4;
     if(BGM.next<AC.currentTime-.2)BGM.next=AC.currentTime+.05;
     while(BGM.next<AC.currentTime+.15){if(!muted&&!document.hidden)try{bgmBeat(BGM.step,BGM.next,sp)}catch(e){}BGM.next+=sp;BGM.step++}},30)}
 // 체외충격파: 음악이 순간 뚝 끊겼다가 쿵 하고 다시 터짐
@@ -1752,7 +1759,7 @@ function gameOver(reason,sub){
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
     document.getElementById('overSub').textContent=(S.daily?`📅 ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
-    S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{dtx.hidden=true},500);
+    S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{if(S&&S.frozen&&!document.getElementById('over').hidden)bgmStart('title')},1500);setTimeout(()=>{dtx.hidden=true},500);
     showHighlight();
     document.getElementById('kpBtn').textContent=pick(['💉 개발자 체외충격파 치료비 보태주기','🩴 개발자 암벽화 창갈이값 보태주기','☕ 개발자 커피 한 잔 사주기','🩹 개발자 테이핑값 보태주기','🎫 개발자 1일권 쏴주기']);
     const run=S;submitScore().then(async r=>{const el=document.getElementById('overSub');if(r==='new')el.textContent+=' · 🏆 랭킹 기록 갱신!';
@@ -2147,6 +2154,9 @@ addEventListener('keydown',e=>{if(e.code==='Enter'){if(!document.getElementById(
 gymGroup=buildGym();scene.add(gymGroup);
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{scene.remove(gymGroup);gymGroup=buildGym();scene.add(gymGroup)});
 requestAnimationFrame(frame);
+// 타이틀 화면: 처음 누르는 순간 잔잔한 음악 (브라우저는 터치 전 소리를 막음)
+function titleMusic(){if(BGM.iv||document.getElementById('title').hidden)return;initAudio();if(!AC)return;if(AC.state==='suspended')AC.resume();bgmStart('title')}
+addEventListener('pointerdown',titleMusic,true);addEventListener('keydown',titleMusic,true);
 window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
 })();
 </script>
