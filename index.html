@@ -88,6 +88,11 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #deathTxt.on{opacity:1}
 #deathTxt .dt{font:900 clamp(34px,11vw,104px)/1.05 'Hahmlet','Nanum Myeongjo',serif;color:#d11f1f;letter-spacing:.06em;text-shadow:0 3px 0 #2a0505,0 0 18px rgba(0,0,0,.85);animation:dstamp .6s cubic-bezier(.2,1.6,.4,1) both}
 #deathTxt .ds{margin-top:8px;font:700 clamp(13px,3.6vw,17px)/1.3 var(--body);color:#eee}
+#clearStamp{position:fixed;left:0;right:0;top:50%;z-index:7;pointer-events:none;text-align:center}
+#clearStamp div{display:inline-block;border:6px solid #e11d2a;border-radius:10px;padding:8px 18px 6px;color:#e11d2a;font:900 clamp(30px,10vw,60px)/1.05 'Hahmlet','Nanum Myeongjo',serif;letter-spacing:.08em;background:rgba(255,248,240,.82);box-shadow:0 0 0 3px rgba(225,29,42,.35) inset;rotate:-9deg}
+#clearStamp small{display:block;font:700 clamp(12px,3.4vw,15px)/1.3 var(--body);letter-spacing:0;margin-top:2px}
+#clearStamp.on div{animation:cstamp 1.7s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes cstamp{0%{scale:3;opacity:0}14%{scale:.94;opacity:1}20%{scale:1}80%{opacity:1}100%{opacity:0}}
 @keyframes dstamp{from{transform:scale(2.6);opacity:0}to{transform:scale(1);opacity:1}}
 #mkTxt{position:fixed;left:0;right:0;top:21%;z-index:6;pointer-events:none;text-align:center;padding:0 12px;font:400 clamp(30px,9.5vw,52px)/1.05 var(--display);-webkit-text-stroke:9px #120d08;paint-order:stroke fill;white-space:nowrap}
 #mkTxt small{display:block;font-size:.55em;margin-top:4px}
@@ -216,6 +221,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="vsTxt" hidden></div>
 <div id="coach" hidden><svg></svg><div class="tap">화면을 누르면 계속</div></div>
 <div id="mkTxt" hidden></div>
+<div id="clearStamp" hidden><div></div></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
 <div id="deathTxt" hidden><div class="dt"></div><div class="ds"></div></div>
 <div id="topbtns" hidden><button id="pauseBtn" aria-label="일시정지">⏸</button><button id="viewBtn">시점: 3인칭</button><button id="mute">소리 ON</button></div>
@@ -1265,6 +1271,12 @@ function bowl(v,o){if(!S||S.over)return;const r=v.bowlRoot||v;o.bowlRoot=r;r.bow
   else if(n===3){const g=addScore(800*Math.max(1,Math.floor(scaleW()/3)));announce('퍼펙트 스트라이크!!!',`빌런 볼링 +${g.toLocaleString()}`,'#ff2d95','clamp(36px,11vw,60px)',1.3);
     sfx('big');sfx('slam');buzz([60,30,60,30,120]);S.shake=Math.max(S.shake,.4);S.flash=Math.max(S.flash,.22);S.slow=Math.min(S.slow||1,.3);S.slowT=Math.max(S.slowT||0,.5);
     cheer(2);ring(o.pos,2.6,0xff2d95);staffSay(pick(['스트라이크!!!','볼링장이야 뭐야','핀 정리 누가 해요 ㅋㅋ']),1.6)}}
+// 웨이브 마지막 한 놈: 슬로우 + 클로즈업 + '참교육 완료' 도장 쾅
+function lastOneStamp(v){S.slow=Math.min(S.slow||1,.22);S.slowT=Math.max(S.slowT||0,.6);S.koCam={v,t:1.2};S.fovKick=Math.max(S.fovKick,1.2);
+  setTimeout(()=>{if(!S||S.over)return;const el=document.getElementById('clearStamp'),d=el.firstElementChild;d.textContent='참교육 완료';const sm=document.createElement('small');
+    sm.textContent=pick(['민폐 0건 · 센터 평화 회복','매트 위 질서 회복','오늘도 깨끗한 낙하 구역','회원님들 박수!','사장님이 좋아합니다']);d.append(sm);
+    el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');sfx('slam');buzz([80]);S.shake=Math.max(S.shake,.35);
+    setTimeout(()=>{el.hidden=true},1800)},380)}
 function multiKO(){if(!S||S.over)return;const m=S.mk||(S.mk={n:0,t:-9});m.n=S.t-m.t<2.6?m.n+1:1;m.t=S.t;const n=m.n;if(n<2)return;
   const k=Math.min(n,5),g=addScore(150*(n-1)*Math.max(1,Math.floor(scaleW()/3)));
   setTimeout(()=>{if(!S||S.over)return;const nm=n>5?`참교육 폭주 x${n}!!!!`:MK_NAMES[k];
@@ -1279,6 +1291,7 @@ function knockOut(v,kind,dir){
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
   S.kos++;addUlt(15);buzz([30,25,45]);S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
   multiKO();
+  if(v.type!=='boss'&&!S.queue.length&&!S.villains.some(o=>o!==v&&o.state!=='gone'&&!o.ko))lastOneStamp(v);
   sfx('big');sfx('ko');ring(v.pos,2.2,0xffd23f);
   highlight(v.type==='boss'?5:(v.lastKind||kind)==='slam'?4:(v.lastKind||kind)==='throw'||(v.lastKind||kind)==='domino'?3:1,v.type==='boss'?`${v.name} 참교육 완료!!!`:`${({slam:'바디슬램',throw:'랜지 던지기',dive:'다이노 킥',domino:'도미노',juggle:'공중 콤보',wave:'체외충격파'})[v.lastKind||kind]||'참교육'}! ${v.name} 퇴치`);
   const style={slam:['바디슬램',300],dive:['다이노 킥',150],domino:['도미노',200],juggle:['공중 콤보',150],throw:['랜지 던지기',150],wave:['체외충격파',200]}[v.lastKind||kind];
@@ -2526,7 +2539,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
 function toTitle(){running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
-  for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt'])document.getElementById(id).hidden=true;
+  for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt','clearStamp'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
 document.getElementById('resumeBtn').addEventListener('click',resumeGame);
