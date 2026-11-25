@@ -859,13 +859,16 @@ function coachShow(k,circles,notes){
   const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const q in a)e.setAttribute(q,a[q]);svg.appendChild(e);return e};
   for(const c of circles){mk('ellipse',{cx:c.x,cy:c.y,rx:c.r*1.12,ry:c.r,fill:'none',stroke:'#ffd23f','stroke-width':4.5,transform:`rotate(-8 ${c.x} ${c.y})`});
     mk('ellipse',{cx:c.x+2,cy:c.y-1,rx:c.r*1.06,ry:c.r*1.05,fill:'none',stroke:'#ffd23f','stroke-width':2,opacity:.7,transform:`rotate(6 ${c.x} ${c.y})`})}
+  const texts=[];
   for(const n of notes){const dx=n.tx-n.lx,dy=n.ty-n.ly,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,ex=n.tx-ux*(n.tr||0),ey=n.ty-uy*(n.tr||0);
     const sx=n.lx+ux*14,sy=n.ly+uy*14,mx=(sx+ex)/2,my=(sy+ey)/2,px=-uy*28,py=ux*28;
     mk('path',{d:`M${sx},${sy} Q${(sx+mx)/2+px},${(sy+my)/2+py} ${mx},${my} a13,13 0 1,0 .5,.5 Q${(mx+ex)/2-px},${(my+ey)/2-py} ${ex},${ey}`,fill:'none',stroke:'#fff','stroke-width':3.5,'stroke-linecap':'round'});
     const ang=Math.atan2(ey-((my+ey)/2-py),ex-((mx+ex)/2-px)),h=13;
     mk('path',{d:`M${ex-Math.cos(ang-.5)*h},${ey-Math.sin(ang-.5)*h} L${ex},${ey} L${ex-Math.cos(ang+.5)*h},${ey-Math.sin(ang+.5)*h}`,fill:'none',stroke:'#fff','stroke-width':3.5,'stroke-linecap':'round','stroke-linejoin':'round'});
-    const t=mk('text',{x:n.lx,y:n.ly-(dy>0?8:-26),'text-anchor':n.lx<innerWidth*.35?'start':n.lx>innerWidth*.65?'end':'middle',class:'ctxt'+(n.y?' y':'')});t.textContent=n.text}
-  S.paused=true;cv.classList.add('coachgray');el.hidden=false;labelsEl.classList.add('coaching');bannerEl.style.visibility='hidden';
+    const t=mk('text',{x:n.lx,y:n.ly-(dy>0?8:-26),'text-anchor':n.lx<innerWidth*.35?'start':n.lx>innerWidth*.65?'end':'middle',class:'ctxt'+(n.y?' y':'')});t.textContent=n.text;
+    texts.push([t,n])}
+  S.paused=true;cv.classList.add('coachgray');el.hidden=false;
+  for(const [t,n] of texts)try{const r=t.getBoundingClientRect(),W=innerWidth,m=16;let dx=0;if(r.left<m)dx=m-r.left;else if(r.right>W-m)dx=(W-m)-r.right;if(dx)t.setAttribute('x',n.lx+dx);if(r.top<60)t.setAttribute('y',+t.getAttribute('y')+(60-r.top))}catch(e){}labelsEl.classList.add('coaching');bannerEl.style.visibility='hidden';
   const close=e=>{e.preventDefault();e.stopPropagation();el.hidden=true;svg.textContent='';cv.classList.remove('coachgray');labelsEl.classList.remove('coaching');bannerEl.style.visibility='';if(S)S.paused=false;for(const q in input)input[q]=0;el.removeEventListener('pointerdown',close)};
   setTimeout(()=>el.addEventListener('pointerdown',close),350);
 }
@@ -887,9 +890,10 @@ function coachControls(){
       {lx:mb.x+260,ly:mb.y+70,tx:mb.x,ty:mb.y,tr:26,text:'멘탈 0 = 끝'}])}
 }
 function coachVillain(v){
-  if(!S||coachDone('b'))return;const a=project(v.pos.x,v.pos.y+1.1*v.s,v.pos.z);if(!a)return;
+  if(!S||coachDone('b'))return;const a=project(v.pos.x,v.pos.y+1.1*v.s,v.pos.z);
+  if(!a||a[0]<50||a[0]>innerWidth-50||a[1]<130||a[1]>innerHeight-260){v.coachTry=(v.coachTry||0)+1;if(v.coachTry<16&&!v.ko)setTimeout(()=>{if(S&&!S.over&&!v.ko)coachVillain(v)},500);return}
   const inn=S.walkers.concat(S.inno).map(o=>({o,p:project(o.pos.x,o.pos.y+1.9,o.pos.z)})).filter(q=>q.p&&q.p[0]>40&&q.p[0]<innerWidth-40&&q.p[1]>80&&q.p[1]<innerHeight-80&&Math.hypot(q.p[0]-a[0],q.p[1]-a[1])>150).sort((q,w)=>Math.abs(q.p[0]-a[0])<Math.abs(w.p[0]-a[0])?1:-1)[0];
-  const C=[{x:a[0],y:a[1],r:60}],N=[{lx:a[0]+(a[0]<innerWidth/2?170:-170),ly:a[1]-110,tx:a[0],ty:a[1],tr:60,text:'빨간 표시 = 빌런! 이놈만 👊',y:1}];
+  const C=[{x:a[0],y:a[1],r:60}],N=[{lx:innerWidth/2,ly:Math.max(150,a[1]-130),tx:a[0],ty:a[1],tr:60,text:'빨간 표시 = 빌런! 이놈만 👊',y:1}];
   if(inn){C.push({x:inn.p[0],y:inn.p[1],r:50});N.push({lx:Math.min(innerWidth-12,Math.max(12,inn.p[0]+(inn.p[0]>a[0]?120:-120))),ly:inn.p[1]+130,tx:inn.p[0],ty:inn.p[1],tr:50,text:'일반 회원 때리면 경고 ⚠️'})}
   coachShow('b',C,N)}
 function coachUlt(){
