@@ -174,7 +174,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #btns #bJump{right:100px;bottom:0;width:64px;height:64px}
 #btns #bAct{right:12px;bottom:104px;width:62px;height:62px}
 #btns button.on{transform:scale(.9);background:radial-gradient(circle,rgba(255,255,255,.4),rgba(255,255,255,.15))}
-#btns button.pop::before{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid #fff;animation:btnring .25s ease-out forwards;pointer-events:none}
+#btns button.tapfx::before{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid #fff;animation:btnring .25s ease-out forwards;pointer-events:none}
 @keyframes btnring{from{transform:scale(1);opacity:.9}to{transform:scale(1.35);opacity:0}}
 .hlfig{margin:0;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
 .hlfig img{width:100%;max-width:420px;border-radius:8px;border:2px solid #4a4038;display:block}
@@ -812,7 +812,7 @@ stick.addEventListener('pointerup',stickEnd);stick.addEventListener('pointercanc
 look.addEventListener('pointerdown',e=>{lookId=e.pointerId;look.setPointerCapture(e.pointerId);lookX=e.clientX;lookY=e.clientY});
 look.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;if(viewMode==='3rd'){camYaw-=(e.clientX-lookX)*.008;camPitch=clamp(camPitch+(e.clientY-lookY)*.005,.05,.9);lastManual=performance.now()}lookX=e.clientX;lookY=e.clientY});
 const lookEnd=e=>{if(e.pointerId===lookId)lookId=null};look.addEventListener('pointerup',lookEnd);look.addEventListener('pointercancel',lookEnd);
-function bindBtn(id,k){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();b.setPointerCapture(e.pointerId);input[k]=1;input[k+'P']=1;b.classList.add('on');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')});
+function bindBtn(id,k){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();b.setPointerCapture(e.pointerId);input[k]=1;input[k+'P']=1;b.classList.add('on');b.classList.remove('tapfx');void b.offsetWidth;b.classList.add('tapfx')});
   const up=()=>{input[k]=0;b.classList.remove('on')};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up)}
 bindBtn('bJump','jump');bindBtn('bAtk','atk');bindBtn('bAct','act');
 document.addEventListener('contextmenu',e=>e.preventDefault());
