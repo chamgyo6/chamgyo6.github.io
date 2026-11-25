@@ -149,18 +149,39 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #touch{position:fixed;inset:0;z-index:10;pointer-events:none}
 #look{position:absolute;right:0;top:0;bottom:0;width:55%;pointer-events:auto;touch-action:none}
 #stick{position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 22px);
-  width:140px;height:140px;border-radius:50%;background:rgba(244,241,234,.08);border:2px solid rgba(244,241,234,.22);pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(244,241,234,.35)}
+  width:140px;height:140px;border-radius:50%;pointer-events:auto;touch-action:none;
+  background:radial-gradient(circle,rgba(20,16,12,.55) 0 52%,rgba(20,16,12,.35) 53% 100%);border:3px solid rgba(255,210,63,.55);
+  box-shadow:0 0 0 2px rgba(0,0,0,.5),inset 0 0 18px rgba(0,0,0,.6),0 0 16px rgba(255,210,63,.18)}
+#stick::before{content:'';position:absolute;inset:8px;border-radius:50%;border:2px dashed rgba(255,210,63,.25)}
+#stick i{position:absolute;width:0;height:0;border:7px solid transparent;opacity:.7}
+#stick i:nth-child(2){left:50%;top:6px;margin-left:-7px;border-bottom:9px solid #ffd23f;border-top:0}
+#stick i:nth-child(3){left:50%;bottom:6px;margin-left:-7px;border-top:9px solid #ffd23f;border-bottom:0}
+#stick i:nth-child(4){top:50%;left:6px;margin-top:-7px;border-right:9px solid #ffd23f;border-left:0}
+#stick i:nth-child(5){top:50%;right:6px;margin-top:-7px;border-left:9px solid #ffd23f;border-right:0}
+#knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;z-index:1;
+  background:radial-gradient(circle at 35% 30%,#fff6c8 0 10%,#ffd23f 38%,#c99a0c 100%);border:3px solid #1a1300;box-shadow:0 4px 0 #6b5206,0 6px 10px rgba(0,0,0,.5)}
 #btns{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 20px);width:190px;height:170px;pointer-events:none}
-#btns button{position:absolute;border-radius:50%;border:0;font:400 18px/1 var(--display);touch-action:none;pointer-events:auto;color:#1a1300}
-#bAtk{right:0;bottom:0;width:84px;height:84px;background:var(--hazard);box-shadow:0 5px 0 #a8860f;font-size:20px!important}
-#bAtk.ult{background:#7fc8ff;box-shadow:0 5px 0 #3d7fae,0 0 0 4px rgba(127,200,255,.45);animation:ultpulse .9s ease-in-out infinite}
-#bAtk.ult::after{content:'길게!';position:absolute;left:0;right:0;top:-22px;font:700 13px/1 var(--body);color:#bfe6ff;text-shadow:0 1px 2px #000}
+#btns button{position:absolute;border-radius:50%;touch-action:none;pointer-events:auto;color:#fff;padding:0;
+  --c1:#ffe680;--c2:#ffd23f;--c3:#b88a00;--sh:#5c4500;
+  background:radial-gradient(circle at 50% 28%,var(--c1) 0 18%,var(--c2) 52%,var(--c3) 100%);
+  border:3px solid #120d08;box-shadow:0 6px 0 var(--sh),0 8px 14px rgba(0,0,0,.55),inset 0 -6px 10px rgba(0,0,0,.25);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:transform .05s}
+#btns button::before{content:'';position:absolute;left:18%;right:18%;top:7%;height:30%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,0));pointer-events:none}
+#btns button b{font:400 30px/1 var(--display);filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}
+#btns button span{font:400 14px/1 var(--display);letter-spacing:.02em;-webkit-text-stroke:4px #120d08;paint-order:stroke fill}
+#bAtk{right:0;bottom:0;width:88px;height:88px}
+#bAtk b{font-size:36px!important}#bAtk span{font-size:16px!important}
+#btns #bAtk.ult{--c1:#e6f6ff;--c2:#7fc8ff;--c3:#2f6f9e;--sh:#1d4766;animation:ultpulse .9s ease-in-out infinite}
+#bAtk.ult span{visibility:hidden}#bAtk.ult::after{content:'길게!';position:absolute;left:-10px;right:-10px;bottom:17px;font:400 16px/1 var(--display);color:#bfe6ff;-webkit-text-stroke:4px #120d08;paint-order:stroke fill}
 #bAtk.charging{background:conic-gradient(#fff calc(var(--ch,0)*1turn),#7fc8ff 0);animation:none}
-@keyframes ultpulse{50%{box-shadow:0 5px 0 #3d7fae,0 0 0 10px rgba(127,200,255,.15)}}
-#bJump{right:96px;bottom:0;width:66px;height:66px;background:#cfd6e6;box-shadow:0 5px 0 #7d8597}
-#bAct{right:14px;bottom:100px;width:64px;height:64px;background:var(--ok);box-shadow:0 5px 0 #1e7a4e;font-size:16px!important}
-#btns button.on{transform:translateY(3px);box-shadow:0 2px 0 #000}
+@keyframes ultpulse{50%{box-shadow:0 6px 0 #1d4766,0 0 0 10px rgba(127,200,255,.25),0 0 26px #7fc8ff}}
+#btns #bJump{right:100px;bottom:0;width:68px;height:68px;--c1:#e9f0ff;--c2:#9fb4dc;--c3:#4d5f86;--sh:#28324a}
+#btns #bAct{right:12px;bottom:104px;width:66px;height:66px;--c1:#c8ffe0;--c2:#46d18c;--c3:#16784a;--sh:#0b3f26}
+#btns button b,#btns button span{position:relative}
+#btns button.on{transform:translateY(5px) scale(.94);box-shadow:0 1px 0 var(--sh),0 2px 6px rgba(0,0,0,.5),inset 0 4px 10px rgba(0,0,0,.35)}
+#btns button.pop{animation:btnpop .22s ease-out}
+#btns button.pop.ult{animation:btnpop .22s ease-out,ultpulse .9s ease-in-out infinite}
+@keyframes btnpop{0%{filter:brightness(1.7)}100%{filter:none}}
 .hlfig{margin:0;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
 .hlfig img{width:100%;max-width:420px;border-radius:8px;border:2px solid #4a4038;display:block}
 .hlfig figcaption{font-size:12px;color:var(--mute)}
@@ -201,8 +222,8 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="topbtns" hidden><button id="pauseBtn" aria-label="일시정지">⏸</button><button id="viewBtn">시점: 3인칭</button><button id="mute">소리 ON</button></div>
 <div id="touch" hidden>
   <div id="look"></div>
-  <div id="stick"><div id="knob"></div></div>
-  <div id="btns"><button id="bAct">잡기</button><button id="bJump">점프</button><button id="bAtk">공격</button></div>
+  <div id="stick"><div id="knob"></div><i></i><i></i><i></i><i></i></div>
+  <div id="btns"><button id="bAct" aria-label="잡기"><b>✋</b><span>잡기</span></button><button id="bJump" aria-label="점프"><b><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17 15 7l10 10M5 26l10-10 10 10" fill="none" stroke="#120d08" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><path d="M5 17 15 7l10 10M5 26l10-10 10 10" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg></b><span>점프</span></button><button id="bAtk" aria-label="공격"><b>👊</b><span>공격</span></button></div>
 </div>
 
 <div class="overlay" id="title">
@@ -797,7 +818,7 @@ stick.addEventListener('pointerup',stickEnd);stick.addEventListener('pointercanc
 look.addEventListener('pointerdown',e=>{lookId=e.pointerId;look.setPointerCapture(e.pointerId);lookX=e.clientX;lookY=e.clientY});
 look.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;if(viewMode==='3rd'){camYaw-=(e.clientX-lookX)*.008;camPitch=clamp(camPitch+(e.clientY-lookY)*.005,.05,.9);lastManual=performance.now()}lookX=e.clientX;lookY=e.clientY});
 const lookEnd=e=>{if(e.pointerId===lookId)lookId=null};look.addEventListener('pointerup',lookEnd);look.addEventListener('pointercancel',lookEnd);
-function bindBtn(id,k){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();b.setPointerCapture(e.pointerId);input[k]=1;input[k+'P']=1;b.classList.add('on')});
+function bindBtn(id,k){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();b.setPointerCapture(e.pointerId);input[k]=1;input[k+'P']=1;b.classList.add('on');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')});
   const up=()=>{input[k]=0;b.classList.remove('on')};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up)}
 bindBtn('bJump','jump');bindBtn('bAtk','atk');bindBtn('bAct','act');
 document.addEventListener('contextmenu',e=>e.preventDefault());
