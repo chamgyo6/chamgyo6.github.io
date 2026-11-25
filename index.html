@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>참교육 클라이밍 3D</title>
-<meta name="description" content="클라이밍장 빌런들을 참교육하라! 친구들과 랭킹 대결하는 3D 액션 게임">
+<title>참교육 클라이밍</title>
+<meta name="description" content="클라이밍 센터 빌런들을 참교육하라! 친구들과 랭킹 대결하는 액션 게임">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://seo-kang-hyeok.github.io/seoakng/">
-<meta property="og:title" content="참교육 클라이밍 3D">
+<meta property="og:title" content="참교육 클라이밍">
 <meta property="og:description" content="클라이밍장 빌런들을 참교육하라! 친구들과 랭킹 대결 🧗">
 <meta property="og:image" content="https://seo-kang-hyeok.github.io/seoakng/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -222,7 +222,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 
 <div class="overlay" id="title">
   <div class="card">
-    <div class="eyebrow" id="eyebrow">클라이밍 센터 · 매너 단속반 · 3D</div>
+    <div class="eyebrow" id="eyebrow">클라이밍 센터 · 매너 단속반</div>
     <h1>참교육<br><em>클라이밍</em></h1>
     <p class="lead">우리 센터 빌런들, <b style="color:var(--hazard)">참교육</b>해드립니다.</p>
     <label class="nick" for="nick1" hidden>랭킹 이름 <input id="nick1" maxlength="12" autocomplete="off" readonly></label>
@@ -1452,6 +1452,9 @@ function updatePlayer(dt){
   p.pos.addScaledVector(p.vel,dt);
   if(p.state==='climb'){p.pos.x=clamp(p.pos.x,WALL_X0+.3,WALL_X1-.3);p.pos.y=clamp(p.pos.y,0,CLIMB_TOP);p.pos.z=CLIMB_Z}
   else{p.pos.x=clamp(p.pos.x,RX0+.4,RX1-.4);p.pos.z=clamp(p.pos.z,WALL_Z+.4,RZ1-.4)}
+  // 바닥 뚫림 방지: 어떤 상태에서도 바닥 아래로 못 내려가게, 숫자가 깨지면 센터 가운데로
+  if(!isFinite(p.pos.x)||!isFinite(p.pos.z)){p.pos.set(0,0,2);p.vel.set(0,0,0)}
+  if(!(p.pos.y>=0)){p.pos.y=0;if(!(p.vel.y>=0))p.vel.y=0;if(p.state!=='climb'&&p.state!=='ground'&&p.state!=='air')p.state='ground'}
   if(p.state!=='climb'&&p.pos.y<1.1){const x0=RX1-2.5,x1=RX1-1.5,z0=-.6,z1=1.6;
     if(p.pos.x>x0&&p.pos.x<x1&&p.pos.z>z0&&p.pos.z<z1){const dl=p.pos.x-x0,dr=x1-p.pos.x,db=p.pos.z-z0,df=z1-p.pos.z,mn=Math.min(dl,dr,db,df);
       if(mn===dl)p.pos.x=x0;else if(mn===dr)p.pos.x=x1;else if(mn===db)p.pos.z=z0;else p.pos.z=z1}}
@@ -2207,7 +2210,9 @@ function syncScene(){
 }
 function updateCamera(dt){
   const p=S.p;let tgt=p.pos;
-  if(S.camFocus&&S.camFocus.t>0&&S.camFocus.v)tgt=S.camFocus.v.pos;
+  if(S.camFocus&&S.camFocus.t>0&&S.camFocus.v&&S.camFocus.v.state!=='gone')tgt=S.camFocus.v.pos;
+  // 카메라가 방 밖(또는 바닥 아래)을 따라가지 않게: 따라갈 지점은 항상 센터 안으로
+  if(!(tgt.x>=RX0&&tgt.x<=RX1&&tgt.z>=WALL_Z&&tgt.z<=RZ1&&tgt.y>=0&&tgt.y<20)){const c=v3(clamp(tgt.x||0,RX0+.5,RX1-.5),clamp(tgt.y||0,0,8),clamp(tgt.z||0,WALL_Z+.5,RZ1-.5));if(tgt===p.pos)p.pos.copy(c);tgt=c}
   let look2=null;if(S.koCam&&S.koCam.t>0&&viewMode==='3rd'&&!(S.camFocus&&S.camFocus.t>0)){const kv=S.koCam.v.pos;look2=v3((p.pos.x+kv.x)/2,Math.max(p.pos.y,kv.y*.6)+1.2,(p.pos.z+kv.z)/2)}
   if(S.death){const k=Math.min(1,S.death.t/2),d=4.2-1.8*k,y=S.death.yaw;
     const want=v3(p.pos.x+Math.sin(y)*d,1.2+2.6*k,p.pos.z+Math.cos(y)*d);want.x=clamp(want.x,RX0+.4,RX1-.4);want.z=clamp(want.z,WALL_Z+.6,RZ1-.3);
@@ -2538,7 +2543,7 @@ requestAnimationFrame(frame);
 // 타이틀 화면: 처음 누르는 순간 잔잔한 음악 (브라우저는 터치 전 소리를 막음)
 function titleMusic(){if(BGM.iv||document.getElementById('title').hidden)return;initAudio();if(!AC)return;if(AC.state==='suspended')AC.resume();bgmStart('title')}
 addEventListener('pointerdown',titleMusic,true);addEventListener('keydown',titleMusic,true);
-window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),ko:v=>knockOut(v,"punch",v3(0,0,-1)),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
+window.__game={get S(){return S},get camYaw(){return camYaw},input,begin,spawn:t=>spawn(t),ko:v=>knockOut(v,"punch",v3(0,0,-1)),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
 })();
 </script>
 </body>
