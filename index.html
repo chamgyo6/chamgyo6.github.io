@@ -58,6 +58,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .tip span{font-size:24px;line-height:1}.tip b{font:400 18px/1.1 var(--display);color:#ffe600}.tip small{font:600 11px/1.2 var(--body);color:var(--mute)}
 .tip.hot{background:#ffe600;border-color:#ffe600;transform:scale(1.06)}.tip.hot b{color:#191600}.tip.hot small{color:#4a4200}
 .tip:active{transform:scale(.96)}
+.tipmini{padding:10px}.tipmini .tip{padding:6px 4px;flex-direction:row;justify-content:center;gap:6px}.tipmini .tip span{font-size:18px}.tipmini .tip b{font-size:16px}
 .tipsub{font-size:11px;color:var(--mute)}
 #nameUI{background:rgba(14,11,8,.97)}
 .gymbtn{display:block;text-align:center;text-decoration:none;font:700 14px/1.2 var(--body);color:var(--hazard);border:1.5px dashed rgba(255,210,63,.6);border-radius:8px;padding:10px 12px}
@@ -96,6 +97,16 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #title .lead{font-size:clamp(17px,4.6vw,21px)}
 .topone{font:700 15px/1.3 var(--body);color:var(--chalk);background:rgba(255,210,63,.12);border:1px solid rgba(255,210,63,.35);border-radius:8px;padding:10px 12px;text-align:center}
 .topone b{color:var(--hazard)}
+.vsbox{background:rgba(255,90,60,.14);border-color:rgba(255,90,60,.5);font-size:16px}.vsbox b{color:#ff8a6a}
+#vsTxt{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 205px);z-index:14;pointer-events:none;white-space:nowrap;font:700 13px/1 var(--body);color:#ffb39e;background:rgba(14,11,8,.7);border:1px solid rgba(255,90,60,.45);border-radius:999px;padding:6px 12px}
+#waveTxt{white-space:nowrap}#vsTxt.won{color:#46d18c;border-color:rgba(70,209,140,.5)}
+.dexgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.dexc{background:#2d2721;border:1px solid #4a4038;border-radius:10px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.dexc i{width:34px;height:34px;border-radius:50%;border:3px solid #120d08;display:block}
+.dexc b{font:700 12px/1.25 var(--body);color:var(--chalk);text-align:center;word-break:keep-all}
+.dexc small{font:700 11px/1 var(--body);color:var(--hazard)}
+.dexc.lock{opacity:.45}.dexc.lock i{background:#4a4038!important}
+.dexc.boss{border-color:var(--hazard)}
 #game.coachgray{filter:grayscale(1) brightness(.5);transition:filter .25s}
 #labels.coaching .lbl:not(.tag){visibility:hidden}
 #labels.coaching .tag{z-index:41;filter:drop-shadow(0 0 6px #ff3b30)}
@@ -178,6 +189,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
   <div class="hr"><span id="scoreTxt">0</span><small id="bestTxt">최고 0</small></div>
 </div>
 <div id="combo"></div>
+<div id="vsTxt" hidden></div>
 <div id="coach" hidden><svg></svg><div class="tap">화면을 누르면 계속</div></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
 <div id="deathTxt" hidden><div class="dt"></div><div class="ds"></div></div>
@@ -195,10 +207,20 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <p class="lead">우리 센터 빌런들, <b style="color:var(--hazard)">참교육</b>해드립니다.</p>
     <label class="nick" for="nick1" hidden>랭킹 이름 <input id="nick1" maxlength="12" autocomplete="off" readonly></label>
     <div class="topone" id="topOne" hidden></div>
+    <div class="topone vsbox" id="vsBox" hidden></div>
     <button class="btn" id="continueBtn" hidden>💾 이어하기<small id="contInfo"></small></button>
     <button class="btn" id="start3">참교육 시작<small>3인칭 · 등 뒤 카메라</small></button>
     <button class="btn alt" id="startDaily">⚡ 오늘의 챌린지<small id="dailyMod">오늘의 규칙</small></button>
+    <button class="linkbtn" id="dexBtn" type="button">📖 빌런 도감</button>
     <button class="linkbtn" id="startIso">쿼터뷰(2.5D)로 하기</button>
+    <section class="tipbox tipmini">
+      <p class="tipnote">☕ 재밌으면 개발자한테 한 잔!</p>
+      <div class="tips">
+        <a class="tip" data-amt="1000" target="_blank" rel="noopener"><span>🍬</span><b>1,000원</b></a>
+        <a class="tip hot" data-amt="3000" target="_blank" rel="noopener"><span>☕</span><b>3,000원</b></a>
+        <a class="tip" data-amt="5000" target="_blank" rel="noopener"><span>🎫</span><b>5,000원</b></a>
+      </div>
+    </section>
     <a class="credit" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">🧗 개발자 <b>@hyeok_73</b> · 인스타에서 클라이밍 일상 보기</a>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote">랭킹 불러오는 중...</div></section>
   </div>
@@ -212,6 +234,16 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <button class="btn" id="resumeBtn" style="width:100%">▶ 계속하기</button>
     <button class="btn alt" id="saveQuitBtn" style="width:100%">💾 저장하고 나가기<small>다음에 이번 웨이브부터 이어서</small></button>
     <button class="linkbtn" id="endRunBtn">🏁 여기서 끝내고 점수 등록</button>
+  </div>
+</div>
+
+<div class="overlay" id="dexUI" hidden>
+  <div class="card" style="text-align:center;align-items:center">
+    <div class="eyebrow">빌런 도감</div>
+    <h1 style="font-size:clamp(30px,8vw,44px)">우리 센터 <em>빌런들</em></h1>
+    <p class="lead" id="dexInfo"></p>
+    <div class="dexgrid" id="dexGrid"></div>
+    <button class="btn" id="dexClose" style="width:100%">닫기</button>
   </div>
 </div>
 
@@ -783,7 +815,7 @@ function newGame(){
   S.crowd=makeCrowd();S.walkers=[];S.walkerT=2;S.warnCD=0;S.staff=makeStaff();S.pickups=[];S.hl=null;S.ult=0;hlReq=null;S.grat=0;S.perks={};S.paused=false;S.perkT=0;
   PROBLEMS.forEach(pr=>pr.hog=null);
   [-9,-2,4.5].forEach((x,i)=>{const m=makePerson(INNO_LOOKS[i]);scene.add(m.root);scene.add(m.shadow);
-    S.inno.push({pos:v3(x,.4+i*.7,CLIMB_Z),vel:v3(),state:'climb',dir:1,speed:rand(.45,.65),t:rand(0,5),m,scared:0,rest:0,head:Math.PI,spin:0,knocked:false})});
+    S.inno.push({isInno:true,pos:v3(x,.4+i*.7,CLIMB_Z),vel:v3(),state:'climb',dir:1,speed:rand(.45,.65),t:rand(0,5),m,scared:0,rest:0,head:Math.PI,spin:0,knocked:false})});
   camYaw=0;camPitch=.4;
 }
 function disposeGame(){
@@ -863,7 +895,7 @@ const CROWD_LOOKS=[{skin:0xe8c09a,shirt:0xff6b6b,pants:0x2d2d33,hair:0x3b2416,sh
 const CHEER_LINES=['와아아!!','사이다!!','속이 다 시원하네','박수 박수!!','레전드다','저 사람 누구야?','매너 지켜라~!','브라보!!','이게 참교육이지','10년 묵은 체증이...','가보자고!!','나이스 무브~','이게 베타지','저 무브 영상 찍어놔','완등 각!!','캬 힐훅 미쳤다','저분 몇 년 하셨어요?','오늘 센터 물 좋네','쌤 저거 어떻게 해요?'];
 function makeCrowd(){
   return CROWD_SPOTS.map(([x,z,h,kind],i)=>{const m=makePerson(CROWD_LOOKS[i%CROWD_LOOKS.length]);scene.add(m.root);scene.add(m.shadow);
-    m.phone.visible=kind===1;return{pos:v3(x,0,z),head:h,m,t:rand(0,5),kind,cheerT:0,booT:0}});
+    m.phone.visible=kind===1;return{pos:v3(x,0,z),head:h,m,t:rand(0,5),kind,cheerT:0,booT:0,isCrowd:true}});
 }
 function cheer(level){
   if(!S||S.over)return;const big=level>=2;
@@ -886,6 +918,8 @@ function reveal(v,line,quiet){
 function wrongHit(e,dir){
   e.flash=.12;sfx('hurt');S.stop=Math.max(S.stop,.05);S.shake=Math.max(S.shake,.08);
   if(e.isWalker){e.state='hurt';e.t2=.6;e.vel.set(dir.x*3,0,dir.z*3)}
+  else if(e.isCrowd){e.booT=1.6;e.cheerT=0}
+  else if(e.isInno){if(e.state==='climb'){e.state='fall';e.vel.set(dir.x*1.5,1.5,1.2);e.knocked=true;e.spin=3}else{e.rest=Math.max(e.rest||0,2)}e.scared=1.5}
   else if(e.onWall)leaveWall(e);
   else{e.state='hurt';e.t=.5;e.vel.set(dir.x*2.5,0,dir.z*2.5);e.sitting=false}
   say(e,pick(['아니 왜 때려요?!','저 아무것도 안 했는데요?!','뭐야 이 사람!']),1.6);
@@ -1207,6 +1241,12 @@ function doHits(p){
     if(p.hitSet.has(w)||w.state==='fly')continue;
     if(xzDist(w.pos,center)<reach*.75+.35&&w.pos.y<1.7){p.hitSet.add(w);const dir=v3(w.pos.x-p.pos.x,0,w.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(f);wrongHit(w,dir.normalize())}
   }
+  const hitVillainNow=[...p.hitSet].some(o=>S.villains.includes(o));
+  if(p.state!=='climb'&&!hitVillainNow)for(const e of S.crowd.concat(S.inno)){
+    if(p.hitSet.has(e)||e.state==='fall')continue;
+    const ex=e.pos.x-p.pos.x,ez=e.pos.z-p.pos.z,el=Math.hypot(ex,ez)||1;
+    if(xzDist(e.pos,center)<reach*.5+.25&&(ex*f.x+ez*f.z)/el>.55&&e.pos.y<1.6){p.hitSet.add(e);const dir=v3(e.pos.x-p.pos.x,0,e.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(f);wrongHit(e,dir.normalize())}
+  }
   if(p.state!=='climb')for(const o of S.objs){
     if(o.kind==='locker'||o.kind==='chalkbag'||p.hitSet.has(o)||o.fly||o.fallen)continue;
     if(xzDist(o.pos,center)<reach*.75+.25){p.hitSet.add(o);kickObj(o,f)}
@@ -1490,7 +1530,7 @@ const AI={
       if(Math.random()<dt*2)pop(v3(RX1-.6,1.4,v.lz),pick(['뒤적','💰','👛','⌚']),22,'#ffd23f',.8);
       if(v.rumT<=0){v.ph='flee';say(v,'털었다~ 튀자!',1.6);sfx('whoosh');crowdMurmur(['도둑이야!!','저 사람 잡아요!!','내 지갑!!'],.5)}return}
     if(v.ph==='flee'){v.running=true;walkTo(v,RX1+.6,(DOOR.z0+DOOR.z1)/2,4.4,dt);
-      if(v.pos.x>=RX1-.1){v.state='gone';v.ko=true;S.mental-=15;sfx('hurt');banner('도둑 도망!','멘탈 -15 · 다음엔 꼭 잡자',2,'#ff3b30');staffSay('아... 놓쳤다 ㅠㅠ 경찰 불러야 하나',2)}}
+      if(v.pos.x>=RX1-.1){v.state='gone';v.ko=true;v.escaped=true;S.mental-=15;sfx('hurt');banner('도둑 도망!','멘탈 -15 · 다음엔 꼭 잡자',2,'#ff3b30');staffSay('아... 놓쳤다 ㅠㅠ 경찰 불러야 하나',2)}}
   },
   chatter(v,dt,p,d){
     const sp=groupSpot(v,()=>{const pr=pick(PROBLEMS);return{x:pr.x+rand(-.3,.3),z:WALL_Z+1.5}});
@@ -1838,6 +1878,7 @@ function update(dt){
     if(S.clearT>0)S.clearT-=gdt;
   }
   for(const v of S.villains)updateVillain(v,gdt);
+  for(const v of S.villains)if(v.state==='gone'&&v.ko&&!v.escaped&&!v.dexed){v.dexed=1;dexAdd(v.variant==='stink'?'stinkboss':v.type)}
   for(const v of S.villains)if(v.state==='gone'){scene.remove(v.m.root);scene.remove(v.m.shadow);scene.remove(v.marker);v.tag.remove();v.arrow.remove();v.sayEl&&v.sayEl.remove()}
   S.villains=S.villains.filter(v=>v.state!=='gone');
   if(!S.over)for(const v of S.villains)if(v.state==='act'&&!v.ko&&v.revealed){
@@ -1881,7 +1922,7 @@ function gameOver(reason,sub){
   setTimeout(()=>{
     document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
-    document.getElementById('overSub').textContent=(S.daily?`⚡ ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);
+    document.getElementById('overSub').textContent=(S.daily?`⚡ ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);if(VS){const os=document.getElementById('overSub');os.textContent+=S.score>=VS.score?` · 🔥 ${VS.name}님 기록 깸!`:` · 🔥 ${VS.name}님까지 ${(VS.score-S.score).toLocaleString()}점 모자람`}
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
     S.frozen=true;dtx.classList.remove('on');setTimeout(()=>{if(S&&S.frozen&&!document.getElementById('over').hidden)bgmStart('title')},1500);setTimeout(()=>{dtx.hidden=true},500);
     showHighlight();
@@ -1979,9 +2020,9 @@ function syncScene(){
   if(!p.charging&&input.atk&&S.ult<100&&p.state==='ground'&&(p.atkHoldDry=(p.atkHoldDry||0)+1/60)>.5){promptEl.textContent=`필살기 게이지 ${Math.floor(S.ult)}% · 빌런을 때려서 채우기`;promptEl.style.color='#7fc8ff';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.charging){if(!input.atk)p.atkHoldDry=0;promptEl.textContent='체외충격파 충전...';promptEl.style.color='#7fc8ff';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.held){promptEl.textContent=isTouch?'잡기: 던지기 · 공격: 멱살 펀치':'E 던지기 · J 멱살 펀치';promptEl.style.color='';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
-  else if(p.state==='ground'&&p.near){promptEl.textContent=(isTouch?'잡기 ':'E ')+(p.near.kind==='tripod'?'몰래 녹화 정지':p.near.kind==='chalkbag'?'초크백 주인에게 돌려주기':'자물쇠 잠그기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
-  else if(p.state==='ground'&&p.grabT){promptEl.textContent=(isTouch?'잡기 ':'E ')+(p.grabT.type==='boss'?'(너무 무거워서 못 잡음)':'멱살 잡기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
-  else if(p.state==='ground'&&S.hintGrab>0&&S.wave>=1&&onWallX(p.pos.x)&&p.pos.z<WALL_Z+1.3){promptEl.textContent=(isTouch?'잡기':'E')+' 벽 잡기';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
+  else if(p.state==='ground'&&p.near){promptEl.textContent=(isTouch?'🟢 ':'E ')+(p.near.kind==='tripod'?'몰래 녹화 정지':p.near.kind==='chalkbag'?'초크백 주인에게 돌려주기':'자물쇠 잠그기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
+  else if(p.state==='ground'&&p.grabT){promptEl.textContent=(isTouch?'🟢 ':'E ')+(p.grabT.type==='boss'?'(너무 무거워서 못 잡음)':'멱살 잡기');placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
+  else if(p.state==='ground'&&S.hintGrab>0&&S.wave>=1&&onWallX(p.pos.x)&&p.pos.z<WALL_Z+1.3){promptEl.textContent=(isTouch?'🟢 ':'E ')+'벽 잡기';placeLbl(promptEl,p.pos.x,p.pos.y+2.35,p.pos.z)}
   else if(p.state==='climb'||p.pump<99){const a=Math.round(clamp(p.pump,0,100));promptEl.textContent='펌프 '+a+'%';promptEl.style.color=a>35?'#46d18c':'#ff3b30';placeLbl(promptEl,p.pos.x,p.pos.y+2.3,p.pos.z)}
   else promptEl.style.display='none';
   if(!(p.state==='climb'||p.pump<99))promptEl.style.color='';
@@ -1990,7 +2031,7 @@ function syncScene(){
   if(!input.atk)S.p.atkHoldDry=0;{const u=document.getElementById('uBar');u.style.width=(S.ult||0)+'%';u.parentNode.classList.toggle('full',S.ult>=100)}
   document.querySelectorAll('#cards span').forEach((s,i)=>s.classList.toggle('on',i<S.warn));
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
-  document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE ${S.wave} · 빌런 ${left}`;
+  document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE ${S.wave} · 빌런 ${left}`;vsHud();
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
   document.getElementById('scoreTxt').textContent=S.score.toLocaleString();
   document.getElementById('bestTxt').textContent='최고 '+Math.max(best,S.score).toLocaleString();
@@ -2207,7 +2248,7 @@ async function submitScore(){
 const SHARE_URL='https://seo-kang-hyeok.github.io/seoakng/'+(GYM?'?gym='+encodeURIComponent(GYM_KEY):'');
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
-  const txt=(S.daily?`⚡ ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n개발자 인스타 @hyeok_73';
+  const txt=(S.daily?`⚡ ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+` (내 점수 깨면 인정 😤) 👉 ${challengeUrl()}`+'\n개발자 인스타 @hyeok_73';
   const ta=document.getElementById('shareText');
   if(!window.claude&&navigator.share){try{await navigator.share({text:txt});return}catch(err){}}
   try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
@@ -2261,6 +2302,25 @@ function frame(now){
 }
 const muteBtn=document.getElementById('mute');
 muteBtn.addEventListener('click',()=>{muted=!muted;muteBtn.textContent=muted?'소리 OFF':'소리 ON';muteBtn.blur()});
+// ---- 친구 도발: 공유 링크에 내 이름·점수를 실어 보냄 (?vs=이름&s=점수) → 받은 사람 화면에 목표로 뜸 ----
+const VS=(()=>{try{const q=new URLSearchParams(location.search),n=cleanNick(q.get('vs')||''),sc=Math.floor(+q.get('s'));return n&&sc>0&&sc<=2000000?{name:n,score:sc}:null}catch(e){return null}})();
+if(VS){const b=document.getElementById('vsBox');b.hidden=false;b.append('🔥 ');const nb=document.createElement('b');nb.textContent=VS.name;b.append(nb,`님의 도전장 · ${VS.score.toLocaleString()}점을 깨라!`)}
+function challengeUrl(){const q=new URLSearchParams();if(GYM)q.set('gym',GYM_KEY);const n=cleanNick(nickVal());if(n&&S&&S.score>0){q.set('vs',n);q.set('s',String(S.score))}const qs=q.toString();return 'https://seo-kang-hyeok.github.io/seoakng/'+(qs?'?'+qs:'')}
+function vsHud(){const el=document.getElementById('vsTxt');if(!VS||!S){el.hidden=true;return}el.hidden=false;
+  if(S.score>=VS.score){if(!S.vsWon){S.vsWon=true;pop(headPos(S.p,1.3),`🔥 ${VS.name} 추월!!!`,40,'#46d18c',1.8);cheer(2);sfx('clear');buzz([30,30,90])}el.className='won';el.textContent=`🔥 ${VS.name} 추월! +${(S.score-VS.score).toLocaleString()}`}
+  else{el.className='';el.textContent=`🔥 ${VS.name} ${VS.score.toLocaleString()}까지 ${(VS.score-S.score).toLocaleString()}`}}
+// ---- 빌런 도감: 참교육한 빌런 종류를 이 기기에 모음 ----
+const DEX_KEYS=['sitter','dumper','chalker','crowder','filmer','locker','sprayer','spoiler','matwalker','chatter','photogroup','thief','screamer','hogger','chalkhand','barefoot','boss','stinkboss'];
+function dexGet(){try{return JSON.parse(localStorage.getItem('chamgyo3d-dex')||'{}')||{}}catch(e){return {}}}
+function dexName(k){return k==='stinkboss'?'발냄새 대마왕':VT[k].name}
+function dexAdd(k){if(!DEX_KEYS.includes(k))return;const d=dexGet(),first=!d[k];d[k]=(d[k]||0)+1;try{localStorage.setItem('chamgyo3d-dex',JSON.stringify(d))}catch(e){}
+  if(first&&S&&S.p)setTimeout(()=>{if(S&&!S.over)pop(headPos(S.p,1.6),`📖 도감 등록! ${dexName(k)}`,26,'#c084fc',1.6)},500);refreshDex()}
+function refreshDex(){const d=dexGet(),n=DEX_KEYS.filter(k=>d[k]).length;document.getElementById('dexBtn').textContent=`📖 빌런 도감 ${n} / ${DEX_KEYS.length}`}
+function openDex(){const d=dexGet(),g=document.getElementById('dexGrid');g.textContent='';
+  for(const k of DEX_KEYS){const c=document.createElement('div'),got=d[k]>0;c.className='dexc'+(got?'':' lock')+(k==='boss'||k==='stinkboss'?' boss':'');
+    const dot=document.createElement('i'),lk=k==='stinkboss'?LOOKS.stinkboss:(LOOKS[k]||(LOOK_VARS[k]&&LOOK_VARS[k][0])||{});dot.style.background='#'+((lk.shirt??0x888888).toString(16).padStart(6,'0'));
+    const nm=document.createElement('b');nm.textContent=got?dexName(k):'???';const ct=document.createElement('small');ct.textContent=got?`참교육 ${d[k]}회`:'아직 못 잡음';c.append(dot,nm,ct);g.append(c)}
+  document.getElementById('dexInfo').textContent=`${DEX_KEYS.filter(k=>d[k]).length} / ${DEX_KEYS.length} 종 참교육 완료`;document.getElementById('dexUI').hidden=false;document.getElementById('title').style.visibility='hidden'}
 // ---- 저장(웨이브 시작 지점) · 일시정지 · 나가기 ----
 const SAVE_KEY='chamgyo3d-save';
 function saveRun(wave){try{localStorage.setItem(SAVE_KEY,JSON.stringify({wave,score:S.score,kos:S.kos,maxCombo:S.maxCombo,mental:Math.max(1,Math.round(S.mental)),warn:S.warn,ult:S.ult||0,daily:!!S.daily,day:DAY,view:viewMode}))}catch(e){}}
@@ -2273,7 +2333,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
 function toTitle(){running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
-  for(const id of ['pauseUI','hud','topbtns','touch','over'])document.getElementById(id).hidden=true;
+  for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
 document.getElementById('resumeBtn').addEventListener('click',resumeGame);
@@ -2284,7 +2344,9 @@ addEventListener('keydown',e=>{if(e.code==='Escape'||e.code==='KeyP'){if(S&&S.us
 document.getElementById('continueBtn').addEventListener('click',()=>{const d=loadSave();if(!d)return;
   needName(()=>{begin(d.view||'3rd',!!d.daily);Object.assign(S,{score:d.score,kos:d.kos,maxCombo:d.maxCombo,mental:d.mental,warn:d.warn,ult:d.ult,wave:d.wave-1,waveT:1.4});
     banner('💾 이어하기',`WAVE ${d.wave}부터 다시 참교육`,2,'#46d18c')})});
-refreshContinue();
+refreshContinue();refreshDex();
+document.getElementById('dexBtn').addEventListener('click',openDex);
+document.getElementById('dexClose').addEventListener('click',()=>{document.getElementById('dexUI').hidden=true;document.getElementById('title').style.visibility=''});
 let lastDaily=false;
 function begin(mode,daily){
   if(daily!==undefined)lastDaily=daily;
