@@ -48,6 +48,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .kpbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#191600;padding:12px 16px;border-radius:8px;background:#fee500;box-shadow:0 4px 0 #b8a500}
 .tipnote{margin:0;font-size:12px;color:var(--mute);text-align:center}
 .supbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gymbtn{display:block;text-align:center;text-decoration:none;font:700 14px/1.2 var(--body);color:var(--hazard);border:1.5px dashed rgba(255,210,63,.6);border-radius:8px;padding:10px 12px}
 .igbtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:400 18px/1 var(--display);color:#fff;padding:12px 16px;border-radius:8px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af);box-shadow:0 4px 0 #5b1f7a}
 .linkbtn{background:none;border:0;color:var(--mute);font:700 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:8px;align-self:center}
 .prompt{font:400 19px/1 var(--display);color:var(--ok);-webkit-text-stroke:5px #120d08;paint-order:stroke fill}
@@ -175,7 +176,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 
 <div class="overlay" id="title">
   <div class="card">
-    <div class="eyebrow">BOULDERING GYM · 매너 단속반 · 3D</div>
+    <div class="eyebrow" id="eyebrow">BOULDERING GYM · 매너 단속반 · 3D</div>
     <h1>참교육<br><em>클라이밍</em></h1>
     <p class="lead">우리 짐 빌런들, <b style="color:var(--hazard)">참교육</b>해드립니다.</p>
     <label class="nick" for="nick1" hidden>랭킹 이름 <input id="nick1" maxlength="12" autocomplete="off" readonly></label>
@@ -211,6 +212,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <label class="nick" for="nick2" style="width:100%">랭킹 이름 <input id="nick2" maxlength="12" autocomplete="off" readonly></label>
     <p class="tipnote">재밌었으면 한 잔! (안 눌러도 랭킹은 그대로예요 😉)</p>
     <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a><a class="kpbtn" id="kpBtn" href="https://qr.kakaopay.com/Ej8IIIz52" target="_blank" rel="noopener">☕ 개발자 커피 한 잔 사주기</a></div>
+    <a class="gymbtn" href="https://ig.me/m/hyeok_73" target="_blank" rel="noopener">🧗 우리 센터 버전 만들기 · 광고 문의</a>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn alt" id="shareBtn">결과 공유</button><button class="btn" id="retryBtn">다시 참교육</button></div>
     <textarea id="shareText" readonly hidden style="width:100%;min-height:70px;background:#2d2721;color:var(--chalk);border:0;border-radius:6px;padding:8px;font:500 13px/1.5 var(--body);user-select:text;-webkit-user-select:text"></textarea>
   </div>
@@ -343,6 +345,12 @@ addEventListener('resize',resize);resize();
 const matCache={};
 function lam(c){return matCache[c]||(matCache[c]=new T.MeshLambertMaterial({color:c}))}
 function box(w,h,d,c){return new T.Mesh(new T.BoxGeometry(w,h,d),typeof c==='number'?lam(c):c)}
+// 센터 맞춤 버전: 주소 뒤에 ?gym=키 → 간판·시작 화면·광고판이 그 센터로 바뀜 (여기 등록된 센터만)
+const GYMS={
+  demo:{name:'우리동네 클라이밍',sponsor:['🧗 우리동네 클라이밍','신규 세팅 매주 금요일','첫 방문 1일권 할인 중!']}
+};
+const GYM_KEY=(()=>{try{return (new URLSearchParams(location.search).get('gym')||'').toLowerCase()}catch(e){return ''}})();
+const GYM=Object.prototype.hasOwnProperty.call(GYMS,GYM_KEY)?GYMS[GYM_KEY]:null;
 function textTex(lines,w,h,opt={}){
   const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
   x.fillStyle=opt.bg||'#f4f1ea';x.fillRect(0,0,w,h);
@@ -422,8 +430,17 @@ function addDecor(g){
   // neon gym sign above the wall
   const sc=document.createElement('canvas');sc.width=1024;sc.height=160;const x=sc.getContext('2d');
   x.fillStyle='#16130f';x.fillRect(0,0,1024,160);x.font="96px 'Black Han Sans',sans-serif";x.textAlign='center';x.textBaseline='middle';
-  x.shadowColor='#ffd23f';x.shadowBlur=28;x.fillStyle='#ffe58a';x.fillText('참교육 클라이밍',512,72);
-  x.shadowBlur=0;x.font="700 28px 'Noto Sans KR',sans-serif";x.fillStyle='#46d18c';x.fillText('BOULDERING · 매너 지키는 짐',512,136);
+  {const main=GYM?GYM.name:'참교육 클라이밍';let fs=96;x.font=`${fs}px 'Black Han Sans',sans-serif`;while(x.measureText(main).width>960&&fs>40){fs-=4;x.font=`${fs}px 'Black Han Sans',sans-serif`}
+   x.shadowColor='#ffd23f';x.shadowBlur=28;x.fillStyle='#ffe58a';x.fillText(main,512,72)}
+  x.shadowBlur=0;x.font="700 28px 'Noto Sans KR',sans-serif";x.fillStyle='#46d18c';x.fillText(GYM?'× 참교육 클라이밍 · 매너 지키는 짐':'BOULDERING · 매너 지키는 짐',512,136);
+  // 광고 띠 (벽 아랫단, 경기장 광고판처럼): 센터 버전이면 그 센터 홍보, 아니면 광고 문의
+  {const ad=GYM&&GYM.sponsor||['📢 이 자리 광고 문의 · 인스타 @hyeok_73','암벽화 · 초크 · 센터 홍보 환영'];
+   const ac=document.createElement('canvas'),q=ac.getContext('2d'),F="700 40px 'Noto Sans KR',sans-serif",line=ad.join('   ·   ')+'      ';
+   q.font=F;const lw=Math.ceil(q.measureText(line).width);ac.width=lw*2;ac.height=80;
+   q.fillStyle='#16130f';q.fillRect(0,0,ac.width,80);q.fillStyle='#ffd23f';q.fillRect(0,0,ac.width,5);q.fillRect(0,75,ac.width,5);
+   q.font=F;q.textBaseline='middle';q.fillStyle='#ffe58a';q.fillText(line,0,42);q.fillText(line,lw,42);
+   const tx=new T.CanvasTexture(ac);const W=WALL_X1-WALL_X0;tx.wrapS=T.RepeatWrapping;tx.repeat.set(W/.46/(ac.width/80),1);
+   const strip=new T.Mesh(new T.PlaneGeometry(W,.46),new T.MeshBasicMaterial({map:tx}));strip.position.set((WALL_X0+WALL_X1)/2,.34,WALL_Z+.19);g.add(strip)}
   const sign=new T.Mesh(new T.PlaneGeometry(6.4,1),new T.MeshBasicMaterial({map:new T.CanvasTexture(sc)}));sign.position.set(-1.5,5.05,WALL_Z+.03);g.add(sign);
   // pendant lamps over the mats (hidden in quarter view with the ceiling)
   const cordM=lam(0x222222),shadeM=lam(0x2f2f33),bulbM=new T.MeshBasicMaterial({color:0xfff1c9});
@@ -2017,6 +2034,7 @@ document.getElementById('nameOk').addEventListener('click',async()=>{
 });
 document.getElementById('nameIn').addEventListener('keydown',e=>{if(e.code==='Enter'){e.preventDefault();document.getElementById('nameOk').click()}});
 document.querySelectorAll('.lbtabs button').forEach(b=>b.addEventListener('click',()=>{LB.view=b.dataset.v;renderLB()}));
+if(GYM)document.getElementById('eyebrow').textContent=`${GYM.name} × 참교육 클라이밍`;
 function renderLB(){
   {const t=document.getElementById('topOne'),f=LB.all.top&&LB.all.top[0];if(f&&Number(f.best)>0){t.hidden=false;t.textContent='';t.append('👑 현재 1위 ');const b=document.createElement('b');b.textContent=f.name;t.append(b,` · ${Number(f.best).toLocaleString()}점`)}else t.hidden=true}
   const B=brd(LB.view);
@@ -2145,7 +2163,7 @@ async function submitScore(){
   }catch(e){if(e&&(e.code==='invalid_argument'||e.code==='not_granted'))LB.writeOff=true;renderLB()}
 }
 // ---- share a result as text + link ----
-const SHARE_URL='https://seo-kang-hyeok.github.io/seoakng/';
+const SHARE_URL='https://seo-kang-hyeok.github.io/seoakng/'+(GYM?'?gym='+encodeURIComponent(GYM_KEY):'');
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
   const txt=(S.daily?`⚡ ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+(SHARE_URL?` 👉 ${SHARE_URL}`:'')+'\n개발자 인스타 @hyeok_73';
