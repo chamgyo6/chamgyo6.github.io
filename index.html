@@ -89,6 +89,10 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #deathTxt .dt{font:900 clamp(34px,11vw,104px)/1.05 'Hahmlet','Nanum Myeongjo',serif;color:#d11f1f;letter-spacing:.06em;text-shadow:0 3px 0 #2a0505,0 0 18px rgba(0,0,0,.85);animation:dstamp .6s cubic-bezier(.2,1.6,.4,1) both}
 #deathTxt .ds{margin-top:8px;font:700 clamp(13px,3.6vw,17px)/1.3 var(--body);color:#eee}
 @keyframes dstamp{from{transform:scale(2.6);opacity:0}to{transform:scale(1);opacity:1}}
+#mkTxt{position:fixed;left:0;right:0;top:21%;z-index:6;pointer-events:none;text-align:center;padding:0 12px;font:400 clamp(30px,9.5vw,52px)/1.05 var(--display);-webkit-text-stroke:9px #120d08;paint-order:stroke fill;white-space:nowrap}
+#mkTxt small{display:block;font-size:.55em;margin-top:4px}
+#mkTxt.on{animation:mkin 1.4s ease-out forwards}
+@keyframes mkin{0%{opacity:0;scale:2.2;rotate:-6deg}12%{opacity:1;scale:.92;rotate:-3deg}20%{scale:1.04}75%{opacity:1;scale:1}100%{opacity:0;scale:1;translate:0 -24px}}
 #banner{position:fixed;left:0;right:0;top:30%;z-index:6;pointer-events:none;text-align:center;padding:0 16px}
 #banner .t{font:400 clamp(40px,10vw,68px)/1 var(--display);-webkit-text-stroke:10px #120d08;paint-order:stroke fill;color:var(--hazard)}
 #banner .s{margin-top:10px;font:700 clamp(14px,3.6vw,18px)/1.3 var(--body);-webkit-text-stroke:5px #120d08;paint-order:stroke fill}
@@ -211,6 +215,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="combo"></div>
 <div id="vsTxt" hidden></div>
 <div id="coach" hidden><svg></svg><div class="tap">화면을 누르면 계속</div></div>
+<div id="mkTxt" hidden></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
 <div id="deathTxt" hidden><div class="dt"></div><div class="ds"></div></div>
 <div id="topbtns" hidden><button id="pauseBtn" aria-label="일시정지">⏸</button><button id="viewBtn">시점: 3인칭</button><button id="mute">소리 ON</button></div>
@@ -1250,12 +1255,23 @@ function setSpin(v,dir,s){v.spinAxis.set(dir.z,0,-dir.x).normalize();if(v.spinAx
 // KO된 빌런 머리 위에서 빙글빙글 도는 별
 const starGeo=new T.OctahedronGeometry(.13,0),starMat=new T.MeshBasicMaterial({color:0xffe066});
 function addStars(v){if(v.stars)return;const g=new T.Group();for(let i=0;i<3;i++){const m=new T.Mesh(starGeo,starMat);const a=i/3*Math.PI*2;m.position.set(Math.cos(a)*.32,0,Math.sin(a)*.32);g.add(m)}scene.add(g);v.stars=g;v.starT=2.4}
+// 연속 참교육: 2.6초 안에 연달아 쓰러뜨리면 단계별로 점점 크게 터짐
+const MK_NAMES=['','','더블 참교육!','트리플 참교육!!','쿼드라 참교육!!!','참교육 폭주!!!!'],MK_COLS=['','','#ffd23f','#ff9f1c','#ff5a3c','#ff2d95'];
+function multiKO(){if(!S||S.over)return;const m=S.mk||(S.mk={n:0,t:-9});m.n=S.t-m.t<2.6?m.n+1:1;m.t=S.t;const n=m.n;if(n<2)return;
+  const k=Math.min(n,5),g=addScore(150*(n-1)*Math.max(1,Math.floor(scaleW()/3)));
+  setTimeout(()=>{if(!S||S.over)return;const nm=n>5?`참교육 폭주 x${n}!!!!`:MK_NAMES[k];
+    const el=document.getElementById('mkTxt');el.textContent=nm;const sm=document.createElement('small');sm.textContent=`+${g.toLocaleString()}`;el.append(sm);
+    el.style.color=MK_COLS[k];el.style.fontSize=`clamp(${26+k*2}px,${7+k*.8}vw,${40+k*4}px)`;el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+    sfx('big');buzz(k>=4?[50,30,50,30,90]:[40,20,60]);S.speedT=Math.max(S.speedT||0,.25+k*.1);S.shake=Math.max(S.shake,.12+k*.05);
+    if(k>=3)cheer(2);if(k>=4){S.flash=Math.max(S.flash,.2);staffSay(pick(['미쳤다 미쳤어','저 회원님 누구세요??','오늘 센터 역사 쓴다']),1.6)}
+    if(k>=5){S.slow=Math.min(S.slow||1,.4);S.slowT=Math.max(S.slowT||0,.35)}},220)}
 function knockOut(v,kind,dir){
   addStars(v);
   v.ko=true;v.onWall=false;v.state='fly';
   const hk=v.heavy?.85:1;
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
   S.kos++;addUlt(15);buzz([30,25,45]);S.flash=Math.max(S.flash,.16);S.stop=Math.max(S.stop,.13);S.shake=Math.max(S.shake,.25);
+  multiKO();
   sfx('big');sfx('ko');ring(v.pos,2.2,0xffd23f);
   highlight(v.type==='boss'?5:(v.lastKind||kind)==='slam'?4:(v.lastKind||kind)==='throw'||(v.lastKind||kind)==='domino'?3:1,v.type==='boss'?`${v.name} 참교육 완료!!!`:`${({slam:'바디슬램',throw:'랜지 던지기',dive:'다이노 킥',domino:'도미노',juggle:'공중 콤보',wave:'체외충격파'})[v.lastKind||kind]||'참교육'}! ${v.name} 퇴치`);
   const style={slam:['바디슬램',300],dive:['다이노 킥',150],domino:['도미노',200],juggle:['공중 콤보',150],throw:['랜지 던지기',150],wave:['체외충격파',200]}[v.lastKind||kind];
@@ -2503,7 +2519,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
 function toTitle(){running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
-  for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt'])document.getElementById(id).hidden=true;
+  for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
 document.getElementById('resumeBtn').addEventListener('click',resumeGame);
