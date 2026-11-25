@@ -2084,7 +2084,7 @@ function update(dt){
     if(S.waveT>0){S.waveT-=gdt;if(S.waveT<=0)startWave()}
     else{
       if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(.55,.95)*Math.max(.45,1-.05*(S.wave-1))*(S.ev&&S.ev.k==='rush'?.5:1)}}
-      else if(!S.villains.some(v=>v.state!=='gone'&&!v.ko)&&S.clearT<=0){S.clearT=1;S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*scaleW());S.waveT=1.6;
+      else if(!S.villains.some(v=>v.state!=='gone'&&!v.ko)&&S.clearT<=0){S.clearT=1;if(S.ev&&S.ev.k==='patrol'){const clean=S.warn===S.waveW0;setTimeout(()=>{if(!S||S.over)return;if(clean){const g=addScore(1500*Math.max(1,Math.floor(scaleW()/3)));staffSay('깔끔하네~ 이달의 매너왕!',2);announce('사장님 인증!',`순찰 무사통과 +${g.toLocaleString()}`,'#46d18c',0,1.1);cheer(2);sfx('clear')}else{staffSay('흠... 회원은 때리지 맙시다',2)}},500)}S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*scaleW());S.waveT=1.6;
         if(S.wave%10===0){const g=addScore(1000*Math.min(S.wave/10,3));setTimeout(()=>{if(S&&!S.over){pop(headPos(S.p,1.9),S.wave%100===0?`🏆 WAVE ${S.wave} 돌파!! 센터의 전설`:`🏅 WAVE ${S.wave} 돌파!! +${g.toLocaleString()}`,S.wave%100===0?46:38,'#ffd23f',2.4);cheer(2);S.speedT=.6;buzz([30,30,30,30,90])}},1400)}
         {const lost=(S.waveM0??100)-(S.waveMin??0),clean=S.warn===(S.waveW0??0);
          const r=clean&&lost<3?['온사이트 클리어!!','한 번도 안 털림',600]:clean&&lost<15?['플래시 클리어!','거의 안 털림',300]:['레드포인트 클리어','털려도 결국 완등',0];
