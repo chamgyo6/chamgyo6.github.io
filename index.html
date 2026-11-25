@@ -297,7 +297,6 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
       <small class="tipsub">카카오페이로 열려요</small>
     </section>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
-    <div class="supbtns"><a class="igbtn" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">📷 @hyeok_73 팔로우</a></div>
     <a class="gymbtn" href="https://ig.me/m/hyeok_73" target="_blank" rel="noopener">📢 광고 · 크루 홍보 · 센터 버전 문의</a>
     <label class="nick" for="nick2" hidden>랭킹 이름 <input id="nick2" maxlength="12" autocomplete="off" readonly></label>
   </div>
@@ -2423,7 +2422,7 @@ async function submitScore(){
 const SHARE_URL='https://chamgyo6.github.io/'+(GYM?'?gym='+encodeURIComponent(GYM_KEY):'');
 document.getElementById('shareBtn').addEventListener('click',async e=>{
   if(!S)return;const btn=e.currentTarget;
-  const txt=(S.daily?`⚡ ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+` (내 점수 깨면 인정 😤) 👉 ${challengeUrl()}`+'\n개발자 인스타 @hyeok_73';
+  const txt=(S.daily?`⚡ ${DAY_LABEL} 참교육 클라이밍 챌린지\n`:'🧗 참교육 클라이밍\n')+`나 ${S.score.toLocaleString()}점${S.rank?` · ${S.daily?'오늘':'전체'} ${S.rank}위 🏆`:''} · "${titleFor(S.score)}" 찍음! (WAVE ${S.wave}, 빌런 ${S.kos}명 참교육)\n이겨볼 사람?`+` (내 점수 깨면 인정 😤) 👉 ${challengeUrl()}`;
   const ta=document.getElementById('shareText');
   if(!window.claude&&navigator.share){try{await navigator.share({text:txt});return}catch(err){}}
   try{await navigator.clipboard.writeText(txt);btn.textContent='복사 완료! 카톡에 붙여넣기';setTimeout(()=>{btn.textContent='결과 공유'},2200)}
@@ -2447,7 +2446,7 @@ function grabHighlight(){
     x.textAlign='left';x.lineJoin='round';
     x.font="44px 'Black Han Sans',sans-serif";x.lineWidth=8;x.strokeStyle='#120d08';x.strokeText(r.text,22,H-46);x.fillStyle='#ffd23f';x.fillText(r.text,22,H-46);
     x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='#f4f1ea';x.fillText(`참교육 클라이밍 · WAVE ${S.wave} · ${S.score.toLocaleString()}점`,24,H-18);
-    x.textAlign='right';x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='rgba(255,255,255,.85)';x.fillText('📷 @hyeok_73',W-18,28);x.textAlign='left';
+    x.textAlign='right';x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='rgba(255,255,255,.85)';x.fillText('chamgyo6.github.io',W-18,28);x.textAlign='left';
     S.hl={prio:r.prio,url:c.toDataURL('image/jpeg',.85),text:r.text};
   }catch(e){}
 }
