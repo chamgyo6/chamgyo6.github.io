@@ -2255,6 +2255,7 @@ function syncScene(){
   {const fv=p.fireT>0&&!S.over;document.getElementById('feverEdge').classList.toggle('on',fv);if(fv&&!S.feverOn)announce('피버 타임!!','점수 2배 · 음악 빨라짐','#ff9f1c');S.feverOn=fv}
   document.getElementById('scoreTxt').textContent=hudNum(S.score);
   document.getElementById('bestTxt').textContent='최고 '+hudNum(Math.max(best,S.score));
+  if(!S.pbDone&&best>=1000&&S.score>best&&!S.daily){S.pbDone=true;announce('내 신기록 갱신!!',`이전 최고 ${best.toLocaleString()}점 돌파`,'#46d18c',0,1.2);cheer(2);sfx('clear');buzz([30,30,90]);S.flash=Math.max(S.flash,.15);document.getElementById('bestTxt').style.color='#46d18c'}
   const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=20?'#c084fc':S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
   {const wh=document.getElementById('white');wh.style.background=S.inStink&&!S.inChalk?'#a7d98a':'#f5f3ee';wh.style.opacity=S.inChalk?.6:S.inStink?.4:0}
   document.getElementById('flash').style.opacity=Math.min(.7,S.flash*2.5);
@@ -2555,7 +2556,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(.1,AC.currentTime,.1)}
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
-function toTitle(){document.getElementById('feverEdge').classList.remove('on');document.getElementById('rushClock').hidden=true;running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
+function toTitle(){document.getElementById('bestTxt').style.color='';document.getElementById('feverEdge').classList.remove('on');document.getElementById('rushClock').hidden=true;running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
   for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt','clearStamp'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
