@@ -884,7 +884,7 @@ function newGame(){
   cv.classList.remove('dead');{const d=document.getElementById('deathTxt');d.hidden=true;d.classList.remove('on')}
   if(S)disposeGame();
   if(!gymGroup){gymGroup=buildGym();scene.add(gymGroup)}
-  const pm=makePerson(LOOKS.player);scene.add(pm.root);scene.add(pm.shadow);
+  /* 내 캐릭터는 살짝 크게: 화면에서 타격이 더 묵직하게 보이도록 */ const pm=makePerson(LOOKS.player,1.18);scene.add(pm.root);scene.add(pm.shadow);
   S={t:0,score:0,wave:0,warn:0,mental:100,queue:[],spawnT:0,waveT:.8,clearT:0,
     villains:[],objs:[],clouds:[],lockerUsed:[false,false,false],
     shake:0,stop:0,flash:0,slow:1,slowT:0,fovKick:0,koCam:null,combo:0,comboT:0,maxCombo:0,kos:0,over:false,camFocus:null,
@@ -2232,7 +2232,7 @@ function updateCamera(dt){
     camFov+=((camera.aspect<1?70:60)+(p.running&&p.moving?7:0)-camFov)*Math.min(1,dt*5);camera.fov=camFov-S.fovKick*9;
     if(p.state==='climb'){camYaw+=angDiff(camYaw,0)*Math.min(1,dt*3)}
     else if(p.moving&&performance.now()-lastManual>1500){const want=p.head+Math.PI;const d=angDiff(camYaw,want);if(Math.abs(d)<2.2)camYaw+=d*Math.min(1,dt*1.2)}
-    const tall=camera.aspect<1?1.55:1;const dist=(p.state==='climb'?4.8:4.3)*tall,h=(p.state==='climb'?1.6:1.2)*(tall>1?1.3:1);
+    const tall=camera.aspect<1?1.55:1;const dist=(p.state==='climb'?4.8:4.0)*tall,h=(p.state==='climb'?1.6:1.2)*(tall>1?1.3:1);
     const want=v3(tgt.x+Math.sin(camYaw)*Math.cos(camPitch)*dist,tgt.y+h+Math.sin(camPitch)*dist,tgt.z+Math.cos(camYaw)*Math.cos(camPitch)*dist);
     const sh=p.state==='climb'?0:(tall>1?.42:.85),rx=Math.cos(camYaw)*sh,rz=-Math.sin(camYaw)*sh;
     want.x+=rx;want.z+=rz;
