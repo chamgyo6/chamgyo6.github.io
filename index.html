@@ -94,6 +94,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 #clearStamp.on div{animation:cstamp 1.7s cubic-bezier(.2,1.5,.4,1) forwards}
 @keyframes cstamp{0%{scale:3;opacity:0}14%{scale:.94;opacity:1}20%{scale:1}80%{opacity:1}100%{opacity:0}}
 @keyframes dstamp{from{transform:scale(2.6);opacity:0}to{transform:scale(1);opacity:1}}
+#feverEdge{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .35s;box-shadow:inset 0 0 40px 10px rgba(255,120,20,.75),inset 0 0 110px 30px rgba(255,60,0,.35)}
+#feverEdge.on{opacity:1;animation:fever .5s ease-in-out infinite alternate}
+@keyframes fever{to{box-shadow:inset 0 0 54px 16px rgba(255,170,40,.85),inset 0 0 140px 40px rgba(255,40,0,.4)}}
 #mkTxt{position:fixed;left:0;right:0;top:21%;z-index:6;pointer-events:none;text-align:center;padding:0 12px;font:400 clamp(30px,9.5vw,52px)/1.05 var(--display);-webkit-text-stroke:9px #120d08;paint-order:stroke fill;white-space:nowrap}
 #mkTxt small{display:block;font-size:.55em;margin-top:4px}
 #mkTxt.on{animation:mkin 1.4s ease-out forwards}
@@ -115,7 +118,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .vsbox{background:rgba(255,90,60,.14);border-color:rgba(255,90,60,.5);font-size:16px}.vsbox b{color:#ff8a6a}
 #vsTxt{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 205px);z-index:14;pointer-events:none;white-space:nowrap;font:700 13px/1 var(--body);color:#ffb39e;background:rgba(14,11,8,.7);border:1px solid rgba(255,90,60,.45);border-radius:999px;padding:6px 12px}
 #waveTxt{white-space:pre-line;word-break:keep-all;font-size:clamp(12px,3.7vw,15px);line-height:1.25}.hc{flex:1 1 auto;min-width:0}.hr{flex:none}#scoreTxt{font-size:clamp(18px,5.8vw,26px)}#hud{gap:8px}
-#fireTxt{white-space:nowrap;font-size:clamp(13px,3.6vw,18px)!important}#vsTxt.won{color:#46d18c;border-color:rgba(70,209,140,.5)}
+#fireTxt{white-space:nowrap;font-size:clamp(13px,3.6vw,18px)!important;position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 122px);text-align:center;-webkit-text-stroke:4px #120d08;paint-order:stroke fill}#vsTxt.won{color:#46d18c;border-color:rgba(70,209,140,.5)}
 .dexgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
 .dexc{background:#2d2721;border:1px solid #4a4038;border-radius:10px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
 .dexc i{width:34px;height:34px;border-radius:50%;border:3px solid #120d08;display:block}
@@ -220,6 +223,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 <div id="combo"></div>
 <div id="vsTxt" hidden></div>
 <div id="coach" hidden><svg></svg><div class="tap">화면을 누르면 계속</div></div>
+<div id="feverEdge"></div>
 <div id="mkTxt" hidden></div>
 <div id="clearStamp" hidden><div></div></div>
 <div id="banner"><div class="t"></div><div class="s"></div></div>
@@ -352,13 +356,15 @@ function bgmBeat(st,t,sp){
   if(i%2===1)bNoise(t,.04,heat>=3||boss?.22:.13,7000);                         // 하이햇
   if(i%2===0)bOsc('sawtooth',midi(root+(i%4===2?12:0)),midi(root+(i%4===2?12:0)),t,sp*1.6,.16); // 베이스
   if(i===2||i===6||i===10||i===14)for(const n of ch)bOsc('square',midi(n),midi(n),t,sp*.9,.028); // 코드 끊어치기
-  if(heat>=4||boss){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[i%4]),midi(arp[i%4]),t,sp*.9,.07)} // 멜로디
+  const fever=S&&S.p&&S.p.fireT>0;
+  if(heat>=4||boss||fever){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[i%4]),midi(arp[i%4]),t,sp*.9,fever?.09:.07)} // 멜로디
+  if(fever){if(i%2===0)bNoise(t,.03,.12,9000);if(i%4===2)bOsc('square',midi(ch[(i>>2)%3]+24),midi(ch[(i>>2)%3]+24),t,sp*.7,.03)} // 피버: 하이햇 16비트 + 높은 리드
   if(st%64===0)bNoise(t,.9,.18,5000);                                          // 4마디마다 심벌
 }
 function bgmStart(mode='game'){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect(master)}BGM.mode=mode;
   BGM.g.gain.cancelScheduledValues(AC.currentTime);BGM.g.gain.setValueAtTime(mode==='title'?.36:.42,AC.currentTime);
   BGM.step=0;BGM.next=AC.currentTime+.1;clearInterval(BGM.iv);
-  BGM.iv=setInterval(()=>{if(!AC)return;const bpm=BGM.mode==='title'?92:Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0),sp=60/bpm/4;
+  BGM.iv=setInterval(()=>{if(!AC)return;const bpm=BGM.mode==='title'?92:Math.min(152,124+2*((S&&S.wave)||1))+(S&&S.villains.some(v=>v.type==='boss'&&!v.ko)?8:0)+(S&&S.p&&S.p.fireT>0?18:0),sp=60/bpm/4;
     if(BGM.next<AC.currentTime-.2)BGM.next=AC.currentTime+.05;
     while(BGM.next<AC.currentTime+.15){if(!muted&&!document.hidden)try{bgmBeat(BGM.step,BGM.next,sp)}catch(e){}BGM.next+=sp;BGM.step++}},30)}
 // 체외충격파: 음악이 순간 뚝 끊겼다가 쿵 하고 다시 터짐
@@ -2112,7 +2118,7 @@ function update(dt){
   if(!S.over&&S.mental<=0){S.mental=0;gameOver('멘탈 붕괴','빌런들의 민폐를 버티지 못했다')}
   input.jumpP=input.atkP=input.actP=0;
 }
-function gameOver(reason,sub){
+function gameOver(reason,sub){document.getElementById('feverEdge').classList.remove('on');
   if(S.over)return;if(reason.startsWith('출입금지'))sub='직원: "저도 이러고 싶지 않아요 ㅠㅠ" · '+sub;S.over=true;S.slow=.25;S.slowT=2.4;bgmStop(.4);
   clearSave();const ban=reason.startsWith('출입금지'),quit=reason==='여기까지!';S.death={t:0,yaw:camYaw};S.combo=0;
   sfx('slam');if(AC&&!muted){tone(130,38,1.6,'sawtooth',.3,.15);noise(1.4,380,.7,.15);tone(65,30,1.8,'sine',.8,.15)}buzz([120,60,300]);
@@ -2236,6 +2242,7 @@ function syncScene(){
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
   document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE ${S.wave}\n빌런 ${left}`;vsHud();
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
+  {const fv=p.fireT>0&&!S.over;document.getElementById('feverEdge').classList.toggle('on',fv);if(fv&&!S.feverOn)announce('피버 타임!!','점수 2배 · 음악 빨라짐','#ff9f1c');S.feverOn=fv}
   document.getElementById('scoreTxt').textContent=hudNum(S.score);
   document.getElementById('bestTxt').textContent='최고 '+hudNum(Math.max(best,S.score));
   const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=20?'#c084fc':S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
@@ -2538,7 +2545,7 @@ function pauseGame(){if(!S||S.over||!running||S.userPause||!document.getElementB
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(.1,AC.currentTime,.1)}
 function resumeGame(){if(!S||!S.userPause)return;S.userPause=false;S.paused=false;for(const q in input)input[q]=0;document.getElementById('pauseUI').hidden=true;
   if(BGM.g&&AC)BGM.g.gain.setTargetAtTime(BGM.mode==='title'?.36:.42,AC.currentTime,.1)}
-function toTitle(){running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
+function toTitle(){document.getElementById('feverEdge').classList.remove('on');running=false;if(S){disposeGame();S=null}bannerT=0;bannerEl.querySelector('.t').textContent='';bannerEl.querySelector('.s').textContent='';bannerEl.hidden=true;
   for(const id of ['pauseUI','hud','topbtns','touch','over','vsTxt','mkTxt','clearStamp'])document.getElementById(id).hidden=true;
   document.getElementById('title').hidden=false;document.getElementById('title').style.visibility='';refreshContinue();renderLB();if(AC)bgmStart('title')}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pauseGame()});
