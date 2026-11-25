@@ -58,7 +58,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .tip span{font-size:24px;line-height:1}.tip b{font:400 18px/1.1 var(--display);color:#ffe600}.tip small{font:600 11px/1.2 var(--body);color:var(--mute)}
 .tip.hot{background:#ffe600;border-color:#ffe600;transform:scale(1.06)}.tip.hot b{color:#191600}.tip.hot small{color:#4a4200}
 .tip:active{transform:scale(.96)}
-.tipmini{padding:10px}.tipmini .tip{padding:6px 4px;flex-direction:row;justify-content:center;gap:6px}.tipmini .tip span{font-size:18px}.tipmini .tip b{font-size:16px}
+.tipmini{padding:10px}.tipmini .tip{padding:6px 4px;flex-direction:row;justify-content:center;gap:6px}.tipmini .tip span{font-size:clamp(14px,4.4vw,18px)}.tipmini .tip b{font-size:clamp(13px,3.9vw,16px);white-space:nowrap}.tipmini .tip{gap:4px}
 .tipsub{font-size:11px;color:var(--mute)}
 #nameUI{background:rgba(14,11,8,.97)}
 .gymbtn{display:block;text-align:center;text-decoration:none;font:700 14px/1.2 var(--body);color:var(--hazard);border:1.5px dashed rgba(255,210,63,.6);border-radius:8px;padding:10px 12px}
@@ -70,7 +70,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
   background:linear-gradient(rgba(14,11,8,.85),rgba(14,11,8,0));display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .hl>span{white-space:nowrap}
 .hl{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font:400 14px/1 var(--display)}
-.bar{width:min(200px,30vw);height:14px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden}
+.bar{width:min(200px,28vw);height:14px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden}
 .bar.ult b{background:#7fc8ff}.bar.ult.full{box-shadow:0 0 0 2px #7fc8ff,0 0 12px #7fc8ff;animation:ultp .8s ease-in-out infinite alternate}
 @keyframes ultp{to{box-shadow:0 0 0 2px #bfe6ff,0 0 20px #7fc8ff}}
 .bar b{display:block;height:100%;border-radius:7px;background:var(--ok);transition:width .15s}
@@ -103,7 +103,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 .promocard .adtag{position:absolute;top:6px;right:8px;background:#ffd23f;color:#111;font:700 11px/1 var(--body);padding:3px 6px;border-radius:4px}
 .vsbox{background:rgba(255,90,60,.14);border-color:rgba(255,90,60,.5);font-size:16px}.vsbox b{color:#ff8a6a}
 #vsTxt{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 205px);z-index:14;pointer-events:none;white-space:nowrap;font:700 13px/1 var(--body);color:#ffb39e;background:rgba(14,11,8,.7);border:1px solid rgba(255,90,60,.45);border-radius:999px;padding:6px 12px}
-#waveTxt{white-space:normal;font-size:clamp(12px,3.7vw,15px)}.hc{flex:1 1 auto;min-width:0}.hr{flex:none}#scoreTxt{font-size:clamp(18px,6.4vw,26px)}
+#waveTxt{white-space:pre-line;word-break:keep-all;font-size:clamp(12px,3.7vw,15px);line-height:1.25}.hc{flex:1 1 auto;min-width:0}.hr{flex:none}#scoreTxt{font-size:clamp(18px,5.8vw,26px)}#hud{gap:8px}
 #fireTxt{white-space:nowrap;font-size:clamp(13px,3.6vw,18px)!important}#vsTxt.won{color:#46d18c;border-color:rgba(70,209,140,.5)}
 .dexgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
 .dexc{background:#2d2721;border:1px solid #4a4038;border-radius:10px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
@@ -145,6 +145,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
 #pauseBtn{font-size:16px!important;min-width:40px}
 #pauseUI{background:rgba(14,11,8,.9)}
 #topbtns{position:fixed;z-index:15;right:max(10px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 56px);display:flex;gap:6px}
+@media (max-width:390px){#topbtns{top:calc(env(safe-area-inset-top,0px) + 80px)}}
 #topbtns button{background:rgba(0,0,0,.45);color:var(--chalk);border:0;border-radius:6px;font:700 12px/1 var(--body);padding:8px 10px;cursor:pointer}
 #touch{position:fixed;inset:0;z-index:10;pointer-events:none}
 #look{position:absolute;right:0;top:0;bottom:0;width:55%;pointer-events:auto;touch-action:none}
@@ -902,6 +903,7 @@ function disposeGame(){
   parts.forEach(q=>scene.remove(q.m));parts.length=0;
   if(promptEl)promptEl.style.display='none';
 }
+const hudNum=n=>n<1e6?n.toLocaleString():n<1e8?Math.floor(n/1e4).toLocaleString()+'만':(Math.floor(n/1e6)/100).toFixed(2)+'억';
 function addScore(n){const m=(S.p.fireT>0?2:1)*(S.ev?S.ev.mul:1);S.score+=Math.round(n*m);return Math.round(n*m)}
 // 웨이브 마지막 빌런을 쓰러뜨리면 슬로모션 피니시
 // 보스 격파 보상: 멘탈 풀충전 + 필살기 가득 + 8초 피버(점수 2배) + 폭죽, 쓰러지며 정체 고백
@@ -2068,7 +2070,7 @@ function gameOver(reason,sub){
   setTimeout(()=>{dtx.hidden=false;requestAnimationFrame(()=>dtx.classList.add('on'))},450);
   const nb=S.score>best;if(nb){best=S.score;saveBest(best)}
   setTimeout(()=>{
-    document.getElementById('overReason').textContent=reason;document.getElementById('overScore').textContent=S.score.toLocaleString();
+    document.getElementById('overReason').textContent=reason;{const os=document.getElementById('overScore'),tx=S.score.toLocaleString();os.textContent=tx;os.style.fontSize=`min(clamp(60px,18vw,110px),calc((100vw - 56px) / ${(tx.length*.66).toFixed(2)}))`}
     document.getElementById('overTitle').textContent='칭호: '+titleFor(S.score);
     document.getElementById('overSub').textContent=(S.daily?`⚡ ${DAY_LABEL} 챌린지 · `:'')+`${sub} · WAVE ${S.wave} · 참교육 ${S.kos}명 · 최대 ${S.maxCombo}콤보`+(S.bossKills?` · 보스 ${S.bossKills}마리`:'')+(nb?' · 신기록!':` · 최고 ${best.toLocaleString()}`);if(VS){const os=document.getElementById('overSub');os.textContent+=S.score>=VS.score?` · 🔥 ${VS.name}님 기록 깸!`:` · 🔥 ${VS.name}님까지 ${(VS.score-S.score).toLocaleString()}점 모자람`}
     document.getElementById('over').hidden=false;document.getElementById('touch').hidden=true;
@@ -2179,10 +2181,10 @@ function syncScene(){
   if(!input.atk)S.p.atkHoldDry=0;{const u=document.getElementById('uBar');u.style.width=(S.ult||0)+'%';u.parentNode.classList.toggle('full',S.ult>=100)}
   document.querySelectorAll('#cards span').forEach((s,i)=>s.classList.toggle('on',i<S.warn));
   const left=S.villains.filter(v=>!v.ko).length+S.queue.length;
-  document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE\u00a0${S.wave} ·\u00a0빌런\u00a0${left}`;vsHud();
+  document.getElementById('waveTxt').textContent=(S.daily?'⚡ ':'')+`WAVE ${S.wave}\n빌런 ${left}`;vsHud();
   document.getElementById('fireTxt').textContent=p.fireT>0?`🔥 점수 2배 ${p.fireT.toFixed(1)}`:'';
-  document.getElementById('scoreTxt').textContent=S.score.toLocaleString();
-  document.getElementById('bestTxt').textContent='최고 '+Math.max(best,S.score).toLocaleString();
+  document.getElementById('scoreTxt').textContent=hudNum(S.score);
+  document.getElementById('bestTxt').textContent='최고 '+hudNum(Math.max(best,S.score));
   const ce=document.getElementById('combo');if(S.combo>=2){ce.textContent=S.combo+' COMBO';ce.style.color=S.combo>=20?'#c084fc':S.combo>=10?'#ff3b30':'#ffd23f';ce.style.transform=`scale(${1+Math.min(.6,S.combo*.03)})`}else ce.textContent='';
   {const wh=document.getElementById('white');wh.style.background=S.inStink&&!S.inChalk?'#a7d98a':'#f5f3ee';wh.style.opacity=S.inChalk?.6:S.inStink?.4:0}
   document.getElementById('flash').style.opacity=Math.min(.7,S.flash*2.5);
