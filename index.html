@@ -99,7 +99,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--chalk);overflow
 @keyframes fever{to{box-shadow:inset 0 0 54px 16px rgba(255,170,40,.85),inset 0 0 140px 40px rgba(255,40,0,.4)}}
 #mkTxt{position:fixed;left:0;right:0;top:21%;z-index:6;pointer-events:none;text-align:center;padding:0 12px;font:400 clamp(30px,9.5vw,52px)/1.05 var(--display);-webkit-text-stroke:9px #120d08;paint-order:stroke fill;white-space:nowrap}
 #mkTxt small{display:block;font-size:.55em;margin-top:4px}
-#mkTxt.on{animation:mkin 1.4s ease-out forwards}
+#mkTxt .in{display:inline-block;max-width:100%}
+#mkTxt.on .in{animation:mkin 1.4s ease-out forwards}
 @keyframes mkin{0%{opacity:0;scale:2.2;rotate:-6deg}12%{opacity:1;scale:.92;rotate:-3deg}20%{scale:1.04}75%{opacity:1;scale:1}100%{opacity:0;scale:1;translate:0 -24px}}
 #banner{position:fixed;left:0;right:0;top:30%;z-index:6;pointer-events:none;text-align:center;padding:0 16px}
 #banner .t{font:400 clamp(40px,10vw,68px)/1 var(--display);-webkit-text-stroke:10px #120d08;paint-order:stroke fill;color:var(--hazard)}
@@ -1270,7 +1271,7 @@ function addStars(v){if(v.stars)return;const g=new T.Group();for(let i=0;i<3;i++
 // 연속 참교육: 2.6초 안에 연달아 쓰러뜨리면 단계별로 점점 크게 터짐
 const MK_NAMES=['','','더블 참교육!','트리플 참교육!!','쿼드라 참교육!!!','참교육 폭주!!!!'],MK_COLS=['','','#ffd23f','#ff9f1c','#ff5a3c','#ff2d95'];
 // 볼링: 날아간 빌런이 다른 빌런을 2명 이상 쓰러뜨리면 스트라이크
-function announce(t,sub,col,size,lock){if(S&&S.annLock>S.t&&!lock)return;if(S&&lock)S.annLock=S.t+lock;const el=document.getElementById('mkTxt');el.textContent=t;if(sub){const sm=document.createElement('small');sm.textContent=sub;el.append(sm)}
+function announce(t,sub,col,size,lock){if(S&&S.annLock>S.t&&!lock)return;if(S&&lock)S.annLock=S.t+lock;const el=document.getElementById('mkTxt');el.textContent='';const inn=document.createElement('span');inn.className='in';inn.textContent=t;if(sub){const sm=document.createElement('small');sm.textContent=sub;inn.append(sm)}el.append(inn);
   el.style.color=col;el.style.fontSize=size||'clamp(32px,10vw,54px)';el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on')}
 function bowl(v,o){if(!S||S.over)return;const r=v.bowlRoot||v;o.bowlRoot=r;r.bowlN=(r.bowlN||0)+1;const n=Math.min(r.bowlN,3);if(r.bowlN>3)return;
   if(n===2){const g=addScore(300*Math.max(1,Math.floor(scaleW()/3)));announce('스트라이크!',`빌런 볼링 +${g.toLocaleString()}`,'#7fd8ff',0,.9);sfx('big');buzz([30,20,50]);S.shake=Math.max(S.shake,.2)}
