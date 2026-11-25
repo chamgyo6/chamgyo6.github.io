@@ -1176,6 +1176,16 @@ function spawn(type,opt){
   if(GROUPS.has(type)&&!opt){const grp=[v];for(let i=1;i<3;i++)grp.push(spawn(type,{gi:i}));grp.forEach(o=>o.grp=grp)}
   return v;
 }
+// 빌런이 참교육당했을 때 옆 회원 반응(타입별 공감 한마디)
+const REACT={sitter:['드디어 매트 비었다','저기 3시간 앉아 있었음','이제 착지할 수 있겠다'],dumper:['가방 치워지니 속 시원','발 디딜 데 생겼다','매트에 짐 좀 두지 마~'],
+  chalker:['콜록… 이제 숨 쉬겠다','초크 구름 걷혔다','앞이 보인다 앞이'],crowder:['안 겹친다며 ㅋㅋ','이제 내 차례 맞지?','거리두기 성공'],
+  filmer:['삼각대 치워졌다','이것도 찍어줄까?','그거 역광이었어'],sprayer:['베타 안 물어봤는데 ㅋㅋ','드디어 조용','내 문제 내가 풀게요'],
+  spoiler:['내 프로젝트 지켰다','남의 문제 건들지 마라'],matwalker:['매트는 산책로가 아니야','착지 구역 확보'],
+  chatter:['벽 앞이 비었다','수다는 휴게실에서~'],photogroup:['인증샷은 매트 밖에서~','단체샷 끝났나 봐'],
+  thief:['내 초크백 돌아왔다','경찰 안 불러도 되겠다'],screamer:['귀가 살았다','조용히 완등하는 사람이 멋있음'],
+  hogger:['드디어 내 차례!','그 문제 40분 붙어 있었음'],chalkhand:['홀드 브러싱하러 간다','손자국 다 지워야겠네'],
+  barefoot:['양말이라도 신지...','맨발은 좀 그렇잖아'],cutter:['줄 서 있었는데 ㅋㅋ','순서 지키자 순서'],
+  earphone:['낙하 구역에서 멍때리면 안 돼','아까 떨어질 뻔했잖아'],toiletshoe:['화장실 신발로 홀드를...','암벽화는 매트에서만']};
 const THEMES=[['초크 데이','chalker','chalkhand','chalker'],['새치기 대란','cutter','crowder','cutter'],['화장실 대란','toiletshoe','barefoot','toiletshoe'],['촬영의 날','filmer','photogroup','filmer'],['수다 데이','chatter','sprayer','chatter'],['매트 점령','sitter','matwalker','dumper']];
 const EVENTS=[{k:'setting',mul:1.5,t:'신규 세팅 오픈!',d:'회원들 우르르 입장 · 점수 ×1.5 · 회원 조심',crowd:['새 문제 나왔대!','저거 몇 그레이드예요?','오늘 사람 왜 이렇게 많아']},
   {k:'rush',mul:1.5,t:'마감 10분 전 러시!',d:'빌런 몰려옴 · 점수 ×1.5',crowd:['한 판만 더...','10분 남았어요~','빨리빨리!']},
@@ -1266,7 +1276,7 @@ function knockOut(v,kind,dir){
   // 주변 사람들 반응 (2초에 한 번, 가까운 두 명)
   if(!(S.reactCD>S.t)){S.reactCD=S.t+2;const near=S.walkers.concat(S.crowd).filter(o=>o.state!=='fly'&&xzDist(o.pos,v.pos)<9).sort((a,b)=>xzDist(a.pos,v.pos)-xzDist(b.pos,v.pos)).slice(0,2);
     const L=v.type==='boss'?['사장님 불러!!!','이건 역사다','오늘 센터 레전드 찍혔다']:['헐 방금 봤어??','영상 찍었어?','와 저 무브 뭐야','인스타 각','속이 다 시원하네','저거 몇 점짜리야'];
-    near.forEach((o,i)=>setTimeout(()=>{if(S&&!S.over)say(o,pick(L),1.6)},250+i*450))}
+    const RL=v.type!=='boss'&&REACT[v.type];near.forEach((o,i)=>setTimeout(()=>{if(S&&!S.over)say(o,pick(RL&&(i===0||Math.random()<.5)?RL:L),1.6)},250+i*450))}
   if(v.type==='boss'){bossReward(v);S.slow=.22;S.slowT=1.4;S.flash=.35;S.shake=.4;v.vel.y=11;banner('참교육 완료!!!',`${v.name} 퇴치`,2.6,'#ff3b30');setTimeout(()=>staffSay('사장님!!! 드디어 해냈어요!!! ㅠㅠㅠ',2.8),400);sfx('slam')}
 }
 function despairKO(v,label,bonus,line){
@@ -2525,7 +2535,7 @@ requestAnimationFrame(frame);
 // 타이틀 화면: 처음 누르는 순간 잔잔한 음악 (브라우저는 터치 전 소리를 막음)
 function titleMusic(){if(BGM.iv||document.getElementById('title').hidden)return;initAudio();if(!AC)return;if(AC.state==='suspended')AC.resume();bgmStart('title')}
 addEventListener('pointerdown',titleMusic,true);addEventListener('keydown',titleMusic,true);
-window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
+window.__game={get S(){return S},input,begin,spawn:t=>spawn(t),ko:v=>knockOut(v,"punch",v3(0,0,-1)),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
 })();
 </script>
 </body>
