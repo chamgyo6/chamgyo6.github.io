@@ -1015,11 +1015,11 @@ function dailyWave(n){
 // (perk picker removed: players found choosing between waves fiddly; pk() stays 0)
 function pk(id){return S&&S.perks?(S.perks[id]||0):0}
 // 웨이브 곡선 (20웨이브까지는 예전 그대로, 그 뒤로는 천천히 + 상한 → 100웨이브 이상도 가능)
-const hpBonus=w=>w<=20?Math.floor(Math.max(0,w-1)/3):Math.min(12,6+Math.floor((w-20)/8));
-const bossBonus=w=>{const c=Math.max(0,Math.floor(w/5)-1);return c<=3?6*c:Math.min(64,18+3*(c-3))};
-const drainMul=w=>w<=20?1+.12*(w-1):Math.min(5,3.28+.03*(w-20));
-const waveCount=n=>n<=20?Math.min(11,4+Math.floor((n-5)/1.1)):Math.min(13,11+Math.floor((n-20)/15));
-const scaleW=()=>Math.min(S.wave,30);
+const hpBonus=w=>w<=20?Math.floor(Math.max(0,w-1)/3):6+Math.floor((w-20)/8);
+const bossBonus=w=>{const c=Math.max(0,Math.floor(w/5)-1);return c<=3?6*c:18+3*(c-3)};
+const drainMul=w=>w<=20?1+.12*(w-1):3.28+.03*(w-20);
+const waveCount=n=>n<=20?Math.min(11,4+Math.floor((n-5)/1.1)):Math.min(16,11+Math.floor((n-20)/15));
+const scaleW=()=>S.wave;
 const TITLES=[[0,'매너 인턴'],[1500,'매너 지킴이'],[4000,'매너 보안관'],[8000,'참교육 전문가'],[14000,'클라이밍장 수호신'],[25000,'전설의 참교육러'],[60000,'센터의 전설'],[150000,'참교육 명예의 전당'],[400000,'살아있는 전설'],[900000,'클라이밍계 참교육 신']];
 function titleFor(sc){let t=TITLES[0][1];for(const [m,n] of TITLES)if(sc>=m)t=n;return t}
 
@@ -2309,7 +2309,7 @@ async function submitScore(){
   if(!S||S.score<=0)return;
   const b=S.daily?'daily':'all',B=brd(b);
   const name=cleanNick(nickVal())||'익명 클라이머';
-  const row={name,best:Math.min(S.score,2000000),wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
+  const row={name,best:Math.min(S.score,999999999),wave:S.wave,kos:S.kos,combo:S.maxCombo,at:Date.now(),title:titleFor(S.score)};if(b==='daily')row.day=DAY;
   if(LB.backend==='local'){const prev=B.top[0]?Number(B.top[0].best):0;B.top=localAdd(b,row).map(r=>Object.assign({},r,{id:r.at===row.at?'local-me':'x'}));renderLB();return S.score>prev?'new':null}
   if(LB.backend==='firebase'){
     try{const a=await fbAuth();LB.uid=a.uid;await claimName(name);const better=!B.mine||S.score>(Number(B.mine.best)||0);

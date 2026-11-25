@@ -8,10 +8,10 @@ service cloud.firestore {
         && !d.name.matches('.*/.*')
         && exists(/databases/$(database)/documents/names/$(d.name))
         && get(/databases/$(database)/documents/names/$(d.name)).data.uid == request.auth.uid
-        && d.best is int && d.best >= 0 && d.best <= 2000000
-        && d.wave is int && d.wave >= 0 && d.wave <= 500
-        && d.kos is int && d.kos >= 0 && d.kos <= 20000
-        && d.combo is int && d.combo >= 0 && d.combo <= 20000
+        && d.best is int && d.best >= 0 && d.best <= 999999999
+        && d.wave is int && d.wave >= 0 && d.wave <= 100000
+        && d.kos is int && d.kos >= 0 && d.kos <= 10000000
+        && d.combo is int && d.combo >= 0 && d.combo <= 10000000
         && d.at is int
         && d.title is string && d.title.size() <= 20;
     }
