@@ -48,5 +48,18 @@ service cloud.firestore {
         && (resource == null || request.resource.data.best >= resource.data.best);
       allow delete: if false;
     }
+      // 접속 통계(개인정보 없음): stats/{날짜} = v(방문) u(오늘 첫 방문 기기) p(판 수). 한 번에 딱 1씩만 올릴 수 있음
+    function prevN(f) { return resource == null || !(f in resource.data) ? 0 : resource.data[f]; }
+    function nextN(f) { return f in request.resource.data ? request.resource.data[f] : 0; }
+    match /stats/{day} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && day.matches('20[0-9]{6}')
+        && request.resource.data.keys().hasOnly(['v', 'u', 'p'])
+        && nextN('v') is int && nextN('u') is int && nextN('p') is int
+        && nextN('v') >= prevN('v') && nextN('u') >= prevN('u') && nextN('p') >= prevN('p')
+        && (nextN('v') - prevN('v')) + (nextN('u') - prevN('u')) + (nextN('p') - prevN('p')) == 1;
+      allow delete: if false;
+    }
   }
 }

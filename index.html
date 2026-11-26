@@ -2439,6 +2439,10 @@ async function fbAuth(){
   return a;
 }
 const toF=v=>Number.isInteger(v)?{integerValue:String(v)}:{stringValue:String(v)};
+// 접속 통계(개인정보 없음): 오늘 날짜 칸에 방문(v)·오늘 첫 방문 기기(u)·판 수(p)를 1씩 올림. 게임 주소에서만
+function stat(f){if(!FB_ON||location.hostname!=='chamgyo6.github.io')return;fbAuth().then(a=>{const base=FS.slice(FS.indexOf('projects/'));
+  return fetch(`${FS}:commit?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+a.token},body:JSON.stringify({writes:[{transform:{document:`${base}/stats/${DAY}`,fieldTransforms:[{fieldPath:f,increment:{integerValue:'1'}}]}}]})})}).catch(()=>{})}
+setTimeout(()=>{stat('v');try{if(localStorage.getItem('chamgyo3d-uday')!==DAY){localStorage.setItem('chamgyo3d-uday',DAY);setTimeout(()=>stat('u'),1500)}}catch(e){}},1200);
 const fromF=f=>{const o={};for(const k in f||{}){const v=f[k];o[k]=v.integerValue!=null?+v.integerValue:v.doubleValue!=null?+v.doubleValue:(v.stringValue||'')}return o};
 const fbPath=(b,uid)=>b==='daily'?`daily/${DAY}_${uid}`:`scores/${uid}`;
 async function fbQuery(q){const r=await fetch(`${FS}:runQuery?${KEY()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:q})});if(!r.ok)throw new Error('query '+r.status);return (await r.json()).filter(x=>x.document)}
@@ -2620,7 +2624,7 @@ document.getElementById('howBtn').addEventListener('click',()=>showHow(null));
 function begin(mode,daily){
   {let seen=false;try{seen=!!localStorage.getItem('chamgyo3d-how')}catch(e){}if(!seen&&!S){showHow(()=>begin(mode,daily));return}}
   if(daily!==undefined)lastDaily=daily;
-  initAudio();if(AC&&AC.state==='suspended')AC.resume();
+  initAudio();if(AC&&AC.state==='suspended')AC.resume();stat('p');
   if(mode)viewMode=mode;document.getElementById('viewBtn').textContent='시점: '+(viewMode==='3rd'?'3인칭':'쿼터뷰');
   try{document.fonts&&document.fonts.load("900 60px Hahmlet",'출입 금지멘탈붕괴')}catch(e){}
   newGame();S.hintGrab=3;running=true;S.daily=lastDaily;bgmStart();if(!coachDone('a'))setTimeout(coachControls,900);
