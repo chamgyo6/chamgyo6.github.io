@@ -1447,12 +1447,16 @@ function doHits(p){
         S.stop=Math.max(S.stop,.11);S.slow=Math.min(S.slow||1,.3);S.slowT=Math.max(S.slowT||0,.32);S.fovKick=Math.max(S.fovKick,1.1);S.shake=Math.max(S.shake,.3);
         const hp=v.pos.clone().setY(v.pos.y+1.2*v.s);sparks(hp,16);ring(v.pos,1.9,0xffd23f);puff(hp,6,0xffffff,3,.12);sfx('kick')}}
   }
-  if(p.state!=='climb')for(const w of S.walkers){
-    if(p.hitSet.has(w)||w.state==='fly')continue;
-    if(xzDist(w.pos,center)<reach*.75+.35&&w.pos.y<1.7){p.hitSet.add(w);const dir=v3(w.pos.x-p.pos.x,0,w.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(f);wrongHit(w,dir.normalize())}
-  }
   const hitVillainNow=[...p.hitSet].some(o=>S.villains.includes(o));
+  // 빌런이랑 겹쳐 있는 회원은 봐줌: 이번 스윙이 빌런을 맞혔거나, 회원 바로 옆(1.4m)에 드러난 빌런이 있으면 경고 없음
+  const nearVillain=e=>S.villains.some(v=>v.revealed&&alive(v)&&xzDist(v.pos,e.pos)<1.4);
+  if(p.state!=='climb'&&!hitVillainNow)for(const w of S.walkers){
+    if(p.hitSet.has(w)||w.state==='fly'||nearVillain(w))continue;
+    const wx=w.pos.x-p.pos.x,wz=w.pos.z-p.pos.z,wl=Math.hypot(wx,wz)||1;
+    if(xzDist(w.pos,center)<reach*.6+.3&&(wx*f.x+wz*f.z)/wl>.5&&w.pos.y<1.7){p.hitSet.add(w);const dir=v3(wx,0,wz);if(dir.lengthSq()<.01)dir.copy(f);wrongHit(w,dir.normalize())}
+  }
   if(p.state!=='climb'&&!hitVillainNow)for(const e of S.crowd.concat(S.inno)){
+    if(nearVillain(e))continue;
     if(p.hitSet.has(e)||e.state==='fall')continue;
     const ex=e.pos.x-p.pos.x,ez=e.pos.z-p.pos.z,el=Math.hypot(ex,ez)||1;
     if(xzDist(e.pos,center)<reach*.5+.25&&(ex*f.x+ez*f.z)/el>.55&&e.pos.y<1.6){p.hitSet.add(e);const dir=v3(e.pos.x-p.pos.x,0,e.pos.z-p.pos.z);if(dir.lengthSq()<.01)dir.copy(f);wrongHit(e,dir.normalize())}
