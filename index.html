@@ -783,11 +783,11 @@ function banner(t,s,life=2.2,col='#ffd23f'){bannerEl.querySelector('.t').textCon
 
 // ================= particles =================
 const parts=[];const puffGeo=new T.SphereGeometry(1,6,5),sparkGeo=new T.BoxGeometry(.04,.04,.18),ringGeo=new T.RingGeometry(.9,1,32);
-function puff(p,n,col=0xf4f1ea,sp=2.6,size=.12){for(let i=0;i<n;i++){const m=new T.Mesh(puffGeo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:.8,depthWrite:false}));
+function puff(p,n,col=0xf4f1ea,sp=2.6,size=.12){if(parts.length>360)n=Math.min(n,2);if(parts.length>520)return;for(let i=0;i<n;i++){const m=new T.Mesh(puffGeo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:.8,depthWrite:false}));
   m.position.copy(p);m.scale.setScalar(size*rand(.6,1.2));scene.add(m);const a=rand(0,Math.PI*2),e=rand(-.3,1);
   parts.push({m,type:'puff',v:new T.Vector3(Math.cos(a)*sp*rand(.2,1),e*sp*.6,Math.sin(a)*sp*rand(.2,1)),life:rand(.35,.7),max:.7,grow:size*1.6})}}
 const sparkMat=new T.MeshBasicMaterial({color:0xffd23f});
-function sparks(p,n){for(let i=0;i<n;i++){const m=new T.Mesh(sparkGeo,sparkMat);m.position.copy(p);scene.add(m);const v=new T.Vector3(rand(-1,1),rand(-.3,1),rand(-1,1)).normalize().multiplyScalar(rand(4,8));
+function sparks(p,n){if(parts.length>360)n=Math.min(n,2);if(parts.length>520)return;for(let i=0;i<n;i++){const m=new T.Mesh(sparkGeo,sparkMat);m.position.copy(p);scene.add(m);const v=new T.Vector3(rand(-1,1),rand(-.3,1),rand(-1,1)).normalize().multiplyScalar(rand(4,8));
   m.lookAt(p.clone().add(v));parts.push({m,type:'spark',v,life:rand(.15,.3),max:.3})}}
 function ring(p,r,col=0xffffff){const m=new T.Mesh(ringGeo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:1,side:T.DoubleSide,depthWrite:false}));
   m.rotation.x=-Math.PI/2;m.position.set(p.x,.08,p.z);m.scale.setScalar(.2);scene.add(m);parts.push({m,type:'ring',R:r,life:.45,max:.45})}
