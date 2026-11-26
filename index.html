@@ -1195,6 +1195,10 @@ function spawn(type,opt){
     for(const sx of [-.17,.17]){const cup=new T.Mesh(new T.BoxGeometry(.06,.13,.13),bk);cup.position.set(sx,.08,0);m.head.add(cup)}}
   v.gi=gi;if(opt)v.pos.z+=gi*.5-.5;
   S.villains.push(v);
+  if(type==='boss'&&S&&!S.over)setTimeout(()=>{if(!S||S.over||v.ko||v.state==='gone')return;const nm=v.variant==='stink'?'발냄새 대마왕':v.variant==='close'?'마감 대마왕':v.name;
+    const tag=v.variant==='stink'?'"암벽화 안 빤 지 3년째"':v.variant==='close'?'"마감은 내가 정한다"':'"여기 10년 다녔어"';
+    S.slow=Math.min(S.slow||1,.35);S.slowT=Math.max(S.slowT||0,.9);S.camFocus={v,t:1.3};S.shake=Math.max(S.shake,.25);sfx('slam');buzz([60,40,60]);
+    announce('VS  '+nm,tag,'#ff3b30','clamp(30px,9.5vw,52px)',1.6)},700);
   if(GROUPS.has(type)&&!opt){const grp=[v];for(let i=1;i<3;i++)grp.push(spawn(type,{gi:i}));grp.forEach(o=>o.grp=grp)}
   return v;
 }
