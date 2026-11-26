@@ -1050,6 +1050,10 @@ function pickWaypoint(w){
 }
 function knockWalker(w,dir){if(w.state==='fly')return;w.state='fly';w.vel.set(dir.x*4,4,dir.z*4);w.spin=8;w.spinAxis=v3(dir.z,0,-dir.x).normalize();if(w.spinAxis.lengthSq()<.1)w.spinAxis.set(1,0,0);pop(headPos(w),'으악!',24,'#fff')}
 function updateWalkers(dt){
+  // 가만히 서 있으면 주변에서 한마디 (빌런이 남아 있을 때만)
+  {const p=S.p,still=!p.moving&&!p.atkKind&&p.state==='ground'&&!S.over&&!S.paused&&S.villains.some(v=>!v.ko&&v.state!=='gone');
+   S.idleT=still?(S.idleT||0)+dt:0;if(S.idleT>6){S.idleT=-8;const L=['회원님 쉬시는 거예요?','저기 빌런 있는데요...','혹시 매트 죽돌이세요?','멍때리면 이어폰 빌런이랑 똑같아요','참교육 안 하세요??'];
+     if(Math.random()<.5)staffSay(pick(L),1.8);else{const c=pick(S.crowd);if(c)say(c,pick(L),1.8)}}}
   // 신규 세팅 오픈: 벽 여기저기 새 홀드가 반짝반짝
   if(S.ev&&S.ev.k==='setting'&&!S.over&&Math.random()<dt*9){const x=rand(WALL_X0+.6,WALL_X1-.6),y=rand(.8,WALL_H-.4),c=pick([0xffd23f,0x46d18c,0x7fc8ff,0xff5a3c,0xff2d95]);sparks(v3(x,y,WALL_Z+.3),12);puff(v3(x,y,WALL_Z+.35),5,c,1.1,.2);if(Math.random()<.12)pop(v3(x,y+.4,WALL_Z+.4),'NEW!',26,'#ffd23f',.9)}
   if(!S.over){S.walkerT-=dt;if(S.walkerT<=0){S.walkerT=S.ev&&S.ev.k==='setting'?rand(1.2,2.4):rand(6,11);if(S.walkers.length<(S.ev&&S.ev.k==='setting'?6:3))spawnWalker()}}
