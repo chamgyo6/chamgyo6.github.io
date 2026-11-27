@@ -1597,6 +1597,7 @@ function updateVillain(v,dt){
     v.t-=dt;v.pos.addScaledVector(v.vel,dt);v.vel.multiplyScalar(Math.pow(.02,dt));if(v.t<=0){v.state='act';v.timer=Math.max(v.timer,.6)}
     break;
   case 'fly':{
+    if(v.stuck>0){v.stuck-=dt;if(v.stuck<.35)v.pos.y=Math.max(0,v.pos.y-dt*1.6);if(v.stuck<=0){v.vel.set(0,-1,1.2);v.spin=0}break}
     v.vel.y+=G*dt;v.pos.addScaledVector(v.vel,dt);
     if(v.spin){const q=new T.Quaternion().setFromAxisAngle(v.spinAxis,v.spin*dt);v.m.root.quaternion.premultiply(q)}
     const spd=v.vel.length();
@@ -1615,6 +1616,10 @@ function updateVillain(v,dt){
     const slam=()=>{if(spd>6.5&&S.t-(v.wallAt??-9)>.6){v.wallAt=S.t;bumpCombo();const g=addScore(80);pop(headPos(v,.5),`벽꽝! +${g}`,34,'#ff8a3d',1);S.stop=Math.max(S.stop,.08);S.shake=Math.max(S.shake,.18);buzz(35);sfx('kick');sparks(v.pos.clone().setY(v.pos.y+1),8)}};
     const bounce=(ax,lo,hi)=>{if(v.pos[ax]<lo){v.pos[ax]=lo;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){S.shake=Math.max(S.shake,.1);sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6);slam()}}
       if(v.pos[ax]>hi){v.pos[ax]=hi;v.vel[ax]=-v.vel[ax]*.55;if(spd>5){sfx('thud');puff(v.pos.clone().setY(v.pos.y+1),6);slam()}}};
+    if(v.ko&&!v.stuckDone&&v.pos.z<WALL_Z+.35&&spd>7&&v.pos.y>.5){v.stuckDone=true;v.pos.z=WALL_Z+.32;v.vel.set(0,0,0);v.stuck=.9;v.spin=0;v.m.root.quaternion.identity();
+      bumpCombo();const g=addScore(150);pop(headPos(v,.6),'철퍼덕!!',40,'#ff8a3d',1.2);pop(headPos(v,.1),`벽화 등극 +${g}`,26,'#ffd23f',1.2);
+      S.stop=Math.max(S.stop,.12);S.shake=Math.max(S.shake,.3);buzz([30,20,50]);sfx('slam');puff(v.pos.clone().setY(v.pos.y+1),14,0xf4f1ea,3,.15);
+      setTimeout(()=>{if(S&&!S.over)crowdMurmur([pick(['벽화 됐다 ㅋㅋㅋ','홀드인 줄 ㅋㅋ','새 문제 세팅됐네','저거 몇 급이야 ㅋㅋ'])],.2)},250);break}
     bounce('x',RX0+.3,RX1-.3);bounce('z',WALL_Z+.35,RZ1-.3);
     if(v.pos.y<=0){
       v.pos.y=0;if(!v.ko)v.airHits=0;
