@@ -826,9 +826,15 @@ function sparks(p,n){if(parts.length>360)n=Math.min(n,2);if(parts.length>520)ret
   m.lookAt(p.clone().add(v));parts.push({m,type:'spark',v,life:rand(.15,.3),max:.3})}}
 function ring(p,r,col=0xffffff){const m=new T.Mesh(ringGeo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:1,side:T.DoubleSide,depthWrite:false}));
   m.rotation.x=-Math.PI/2;m.position.set(p.x,.08,p.z);m.scale.setScalar(.2);scene.add(m);parts.push({m,type:'ring',R:r,life:.45,max:.45})}
+const shoeGeo=new T.BoxGeometry(.42,.17,.17),soleGeo=new T.BoxGeometry(.45,.06,.18),soleMat=new T.MeshBasicMaterial({color:0x1d1812}),SHOE_COL=[0xe4572e,0x2b6cb0,0xffd23f,0x46d18c,0x9b5de5];
+function flyShoe(v,dir){if(parts.length>480)return;const m=new T.Mesh(shoeGeo,new T.MeshLambertMaterial({color:pick(SHOE_COL)}));const so=new T.Mesh(soleGeo,soleMat);so.position.y=-.1;m.add(so);
+  m.position.set(v.pos.x,.3,v.pos.z);scene.add(m);parts.push({m,type:'shoe',v:v3(dir.x*rand(4,7)+rand(-1.5,1.5),rand(7,10),dir.z*rand(4,7)+rand(-1.5,1.5)),sp:v3(rand(-14,14),rand(-14,14),rand(-14,14)),life:2.4,max:2.4})}
 function updateParts(dt){for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.life-=dt;const a=clamp(q.life/q.max,0,1);
   if(q.type==='puff'){q.v.multiplyScalar(Math.pow(.05,dt));q.m.position.addScaledVector(q.v,dt);q.m.scale.addScalar(q.grow*dt);q.m.material.opacity=a*.8}
   else if(q.type==='spark'){q.v.y+=G*.5*dt;q.m.position.addScaledVector(q.v,dt)}
+  else if(q.type==='shoe'){q.v.y+=G*dt;q.m.position.addScaledVector(q.v,dt);q.m.position.x=clamp(q.m.position.x,RX0+.3,RX1-.3);q.m.position.z=clamp(q.m.position.z,WALL_Z+.3,RZ1-.3);
+    if(q.m.position.y<.12){q.m.position.y=.12;if(q.v.y<-2){q.v.y*=-.35;q.v.x*=.6;q.v.z*=.6;q.sp.multiplyScalar(.5)}else{q.v.set(0,0,0);q.sp.set(0,0,0);q.m.rotation.x=q.m.rotation.z=0}}
+    q.m.rotation.x+=q.sp.x*dt;q.m.rotation.y+=q.sp.y*dt;q.m.rotation.z+=q.sp.z*dt;if(q.life<.3)q.m.scale.setScalar(Math.max(.01,q.life/.3))}
   else if(q.type==='ring'){const s=q.m.scale.x+(q.R-q.m.scale.x)*Math.min(1,dt*12);q.m.scale.setScalar(s);q.m.material.opacity=a}
   if(q.life<=0){scene.remove(q.m);if(q.type!=='spark')q.m.material.dispose();parts.splice(i,1)}}}
 
@@ -1342,6 +1348,7 @@ function multiKO(){if(!S||S.over)return;const m=S.mk||(S.mk={n:0,t:-9});m.n=S.t-
     if(k>=5){S.slow=Math.min(S.slow||1,.4);S.slowT=Math.max(S.slowT||0,.35)}},220)}
 function knockOut(v,kind,dir){
   addStars(v);
+  if(Math.random()<.4&&dir){flyShoe(v,dir);if(Math.random()<.5)setTimeout(()=>{if(S&&!S.over)pop(headPos(v,.2),pick(['암벽화 벗겨짐!','신발 날아감 ㅋㅋ','창갈이 각']),22,'#fff',.9)},120)}
   v.ko=true;v.onWall=false;v.state='fly';
   const hk=v.heavy?.85:1;
   v.vel.set(dir.x*rand(13,16)*hk,rand(7.5,9.5)*hk,dir.z*rand(13,16)*hk);setSpin(v,dir,rand(12,18));
@@ -2661,7 +2668,7 @@ requestAnimationFrame(frame);
 // 타이틀 화면: 처음 누르는 순간 잔잔한 음악 (브라우저는 터치 전 소리를 막음)
 function titleMusic(){if(BGM.iv||document.getElementById('title').hidden)return;initAudio();if(!AC)return;if(AC.state==='suspended')AC.resume();bgmStart('title')}
 addEventListener('pointerdown',titleMusic,true);addEventListener('keydown',titleMusic,true);
-window.__game={get S(){return S},get camYaw(){return camYaw},input,begin,spawn:t=>spawn(t),ko:v=>knockOut(v,"punch",v3(0,0,-1)),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
+window.__game={get S(){return S},get parts(){return parts},get camYaw(){return camYaw},input,begin,spawn:t=>spawn(t),ko:v=>knockOut(v,"punch",v3(0,0,-1)),toggleView,get view(){return viewMode},BGM,get AC(){return AC}};
 })();
 </script>
 </body>
