@@ -326,6 +326,7 @@ h1 em{font-style:normal;color:var(--hazard);display:inline-block;transform:rotat
     <figure class="hlfig" id="hl" hidden><img id="hlImg" alt="이번 판 하이라이트 장면"><figcaption>📸 이번 판 하이라이트 · 길게 눌러 저장하거나 아래 버튼</figcaption><button class="btn alt" id="hlSave" style="font-size:16px;padding:10px 14px">하이라이트 사진 저장</button></figure>
     <section class="lb" hidden><h2>🏆 명예의 전당</h2><div class="lbtabs"><button type="button" data-v="all">전체</button><button type="button" data-v="daily">오늘</button></div><ol></ol><div class="lbnote"></div></section>
     <a class="credit" href="https://www.instagram.com/hyeok_73/" target="_blank" rel="noopener">🧗 개발자 <b>@hyeok_73</b></a>
+    <a class="credit" href="https://www.instagram.com/ttitti_climbcrew/" target="_blank" rel="noopener">🤝 함께하는 크루 <b>@ttitti_climbcrew</b></a>
     <label class="nick" for="nick2" hidden>랭킹 이름 <input id="nick2" maxlength="12" autocomplete="off" readonly></label>
   </div>
 </div>
@@ -473,7 +474,7 @@ const GYMS={
 };
 // 크루·인스타 홍보 등록부 (개발자가 확인 후 직접 추가 — 사용자가 올리는 방식 아님)
 // {name, handle(인스타 아이디만), line(한 줄 소개), color, ad:true면 '광고' 표시}
-const PROMOS=[];
+const PROMOS=[{name:'띠띠 클라이밍 크루',handle:'ttitti_climbcrew',initials:'띠띠',logo:'promos/ttitti.jpg',line:'BE KIND · BE HAPPY',color:'#3d4a1f',ad:false}];
 const PROMO_DEMO=[{name:'예시 볼더링 크루',handle:'your_crew_here',initials:'예시',line:'매주 수요일 크루 세션 · 클린이 환영',color:'#7c3aed',ad:false},
   {name:'예시 암벽화 수선집',handle:'your_shop_here',initials:'수선',line:'창갈이 할인 이벤트 중',color:'#0ea5e9',ad:true}];
 const PROMO_LIST=(()=>{let l=PROMOS;try{if(false)l=PROMO_DEMO}catch(e){}return l.filter(x=>/^[A-Za-z0-9._]{1,30}$/.test(x.handle))})();
