@@ -365,7 +365,9 @@ function tone(f0,f1,dur,type,vol,t0=0){const t=AC.currentTime+t0,o=AC.createOsci
 // 4마디 반복: Am - F - C - G. 웨이브가 오를수록 빨라지고, 빌런이 많거나 보스면 멜로디가 붙음
 const BGM={g:null,next:0,step:0,iv:null,mode:'game'};
 const midi=m=>440*Math.pow(2,(m-69)/12);
-const PROG=[[45,[57,60,64]],[41,[57,60,65]],[48,[55,60,64]],[43,[55,59,62]]];
+const PROG=[[48,[60,64,67]],[45,[57,60,64]],[41,[57,60,65]],[43,[55,59,62]]];
+// 통통 튀는 메인 멜로디 (직접 작곡, 16칸 x 4마디, 0=쉼)
+const HOOK=[[72,0,0,72,0,0,76,0,79,0,0,0,76,0,0,0],[77,0,0,76,0,0,72,0,69,0,0,0,0,0,72,0],[74,0,0,74,0,0,77,0,81,0,0,0,79,0,77,0],[76,0,74,0,72,0,71,0,74,0,0,0,0,0,0,0]];
 const PROG_BOSS=[[45,[57,60,64]],[45,[57,60,63]],[46,[58,62,65]],[44,[56,59,63]]];
 function bOsc(type,f0,f1,t,dur,vol){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur);
   g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(BGM.g);o.start(t);o.stop(t+dur+.02)}
@@ -381,15 +383,21 @@ function bgmBeat(st,t,sp){
     return}
   const boss=S&&S.villains.some(v=>v.type==='boss'&&!v.ko&&v.state!=='gone');
   const heat=S?S.villains.filter(v=>v.revealed&&!v.ko&&v.state!=='gone').length:0;
+  const fever=S&&S.p&&S.p.fireT>0;
   const P=boss?PROG_BOSS:PROG,bar=Math.floor(st/16)%4,i=st%16,[root,ch]=P[bar];
   if(i%4===0||boss&&i===14)bOsc('sine',150,42,t,.22,.9);                       // 킥
-  if(i===4||i===12){bNoise(t,.16,.55);bOsc('triangle',190,140,t,.08,.25)}      // 스네어
-  if(i%2===1)bNoise(t,.04,heat>=3||boss?.22:.13,7000);                         // 하이햇
-  if(i%2===0)bOsc('sawtooth',midi(root+(i%4===2?12:0)),midi(root+(i%4===2?12:0)),t,sp*1.6,.16); // 베이스
-  if(i===2||i===6||i===10||i===14)for(const n of ch)bOsc('square',midi(n),midi(n),t,sp*.9,.028); // 코드 끊어치기
-  const fever=S&&S.p&&S.p.fireT>0;
-  if(heat>=4||boss||fever){const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('triangle',midi(arp[i%4]),midi(arp[i%4]),t,sp*.9,fever?.09:.07)} // 멜로디
-  if(fever){if(i%2===0)bNoise(t,.03,.12,9000);if(i%4===2)bOsc('square',midi(ch[(i>>2)%3]+24),midi(ch[(i>>2)%3]+24),t,sp*.7,.03)} // 피버: 하이햇 16비트 + 높은 리드
+  if(i===4||i===12){bNoise(t,.12,.5);bNoise(t+.012,.08,.3)}                    // 박수
+  if(i%2===1)bNoise(t,.04,heat>=3||boss?.2:.12,7000);                          // 하이햇
+  // 쿵짝 베이스: 근음(낮게) - 5도(통통)
+  if(i%4===0)bOsc('triangle',midi(root),midi(root),t,sp*1.8,.34);
+  if(i%4===2)bOsc('square',midi(root+7),midi(root+7),t,sp*.7,.05);
+  if(i===6||i===14)for(const n of ch)bOsc('square',midi(n),midi(n),t,sp*.6,.022); // 코드 짝
+  if(!boss){const m=HOOK[bar][i];if(m){const f=midi(m+(fever?12:0));bOsc('square',f*1.03,f,t,sp*1.5,.05);bOsc('triangle',f,f,t,sp*1.8,.05)}  // 메인 멜로디
+    if(bar===3&&i===12)bOsc('sine',260,900,t,sp*3.5,.12);                       // 뾰옹~
+    if(bar===1&&i===10){bOsc('square',800,800,t,.06,.05);bOsc('square',540,540,t,.06,.05)}} // 카우벨
+  else{const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+12];bOsc('sawtooth',midi(arp[i%4]),midi(arp[i%4]),t,sp*.8,.045);if(i===0)bOsc('sine',midi(root+24),midi(root+12),t,sp*6,.08)} // 보스: 긴장 아르페지오 + 사이렌
+  if(heat>=4&&!boss&&i%2===1){const n=ch[(i>>1)%3]+24;bOsc('triangle',midi(n),midi(n),t,sp*.6,.03)} // 빌런 많으면 반짝이
+  if(fever){if(i%2===0)bNoise(t,.03,.12,9000);if(i%4===2)bOsc('square',midi(ch[(i>>2)%3]+24),midi(ch[(i>>2)%3]+24),t,sp*.7,.03)} // 피버
   if(st%64===0)bNoise(t,.9,.18,5000);                                          // 4마디마다 심벌
 }
 function bgmStart(mode='game'){if(!AC)return;if(!BGM.g){BGM.g=AC.createGain();BGM.g.connect(master)}BGM.mode=mode;
