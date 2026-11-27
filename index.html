@@ -2555,7 +2555,7 @@ setTimeout(initLB,0);
 // The best moment of the run (boss KO > body slam > throw/exit/meltdown > other KO) is grabbed
 // from the canvas right after a render, captioned, and shown on the game-over screen.
 let hlReq=null;
-function highlight(prio,text){if(!S||S.over)return;if(S.hl&&S.hl.prio>prio)return;if(hlReq&&hlReq.prio>prio)return;hlReq={prio,text,delay:.12}}
+function highlight(prio,text){if(!S||S.over)return;if(S.hl&&(S.hl.prio>prio||S.hl.prio===prio&&S.t-S.hl.t<3))return;if(hlReq&&hlReq.prio>prio)return;hlReq={prio,text,delay:.12}}
 function grabHighlight(){
   const r=hlReq;hlReq=null;
   try{
@@ -2566,16 +2566,17 @@ function grabHighlight(){
     x.font="44px 'Black Han Sans',sans-serif";x.lineWidth=8;x.strokeStyle='#120d08';x.strokeText(r.text,22,H-46);x.fillStyle='#ffd23f';x.fillText(r.text,22,H-46);
     x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='#f4f1ea';x.fillText(`참교육 클라이밍 · WAVE ${S.wave} · ${S.score.toLocaleString()}점`,24,H-18);
     x.textAlign='right';x.font="700 16px 'Noto Sans KR',sans-serif";x.fillStyle='rgba(255,255,255,.85)';x.fillText('chamgyo6.github.io',W-18,28);x.textAlign='left';
-    S.hl={prio:r.prio,url:c.toDataURL('image/jpeg',.85),text:r.text};
+    S.hl={prio:r.prio,c,url:null,text:r.text,t:S.t};   // JPEG 변환은 결과 화면에서 (때리는 순간 렉 방지)
   }catch(e){}
 }
+function hlUrl(){if(!S.hl.url)S.hl.url=S.hl.c.toDataURL('image/jpeg',.85);return S.hl.url}
 function showHighlight(){
   const fig=document.getElementById('hl');if(!S||!S.hl){fig.hidden=true;return}
-  document.getElementById('hlImg').src=S.hl.url;fig.hidden=false;document.getElementById('hlSave').textContent='하이라이트 사진 저장';
+  document.getElementById('hlImg').src=hlUrl();fig.hidden=false;document.getElementById('hlSave').textContent='하이라이트 사진 저장';
 }
 document.getElementById('hlSave').addEventListener('click',async e=>{
   if(!S||!S.hl)return;const btn=e.currentTarget,name=`참교육클라이밍_${S.score}점.jpg`;
-  const blob=await (await fetch(S.hl.url)).blob();
+  const blob=await (await fetch(hlUrl())).blob();
   const C=window.claude;
   if(C&&C.use){const dl=await C.use('downloads').catch(()=>null);
     if(dl){try{await dl.save({filename:name,data:blob});btn.textContent='저장했어요!'}catch(err){btn.textContent=err&&err.code==='declined'?'저장 취소됨':'사진을 길게 눌러 저장하세요'}return}
