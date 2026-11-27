@@ -404,9 +404,9 @@ function bgmDrop(){if(!BGM.g||!AC||!BGM.iv)return;const t=AC.currentTime,g=BGM.g
 function bgmStop(fade=1.2){clearInterval(BGM.iv);BGM.iv=null;if(BGM.g&&AC){const t=AC.currentTime;BGM.g.gain.cancelScheduledValues(t);BGM.g.gain.setValueAtTime(BGM.g.gain.value,t);BGM.g.gain.linearRampToValueAtTime(0,t+fade)}}
 // 폰 진동 (소리 끄면 같이 꺼짐)
 function buzz(ms){if(!isTouch||muted||!navigator.vibrate)return;try{navigator.vibrate(ms)}catch(e){}}
-function sfx(k){if(!AC||muted)return;try{switch(k){
-  case 'hit':{const r=.85+Math.random()*.3;noise(.1,2600*r,.55);tone(190*r,70,.11,'sine',.6);break}
-  case 'kick':noise(.18,2000,.8);tone(150,45,.22,'sine',.9);break;
+function sfx(k,up){if(!AC||muted)return;const cu=up&&S?1+Math.min(S.combo||0,20)*.025:1;try{switch(k){
+  case 'hit':{const r=(.85+Math.random()*.3)*cu;noise(.1,2600*r,.55);tone(190*r,70,.11,'sine',.6);if(cu>1.2)tone(880*cu,900*cu,.05,'triangle',.06*(cu-1)*4);break}
+  case 'kick':noise(.18,2000*cu,.8);tone(150*cu,45,.22,'sine',.9);break;
   case 'big':noise(.3,1600,1);tone(130,35,.35,'sine',1);tone(80,30,.3,'square',.12);break;
   case 'slam':noise(.6,800,1);tone(110,22,.7,'sine',1);tone(60,25,.5,'square',.15);break;
   case 'whoosh':noise(.09,7000,.12);break;
@@ -1293,7 +1293,7 @@ function hitVillain(v,kind,dir){
   S.fovKick=Math.max(S.fovKick,kind==='punch'?.15:kind==='slam'?1:.45);
   puff(hp,kind==='punch'?6:12,0xf4f1ea,kind==='punch'?2:3.5,kind==='punch'?.08:.13);sparks(hp,kind==='punch'?5:10);
   pop(v3(hp.x,hp.y+.5,hp.z),HITNAME||pick(ONO[wasFly&&kind==='punch'?'kick':kind]||ONO.punch),kind==='punch'?30:kind==='slam'?54:42,kind==='slam'?'#ff3b30':'#ffd23f');
-  sfx(kind==='punch'?'hit':kind==='slam'?'slam':'kick');
+  sfx(kind==='punch'?'hit':kind==='slam'?'slam':'kick',1);
   if(Math.random()<.45&&v.hp>0)say(v,pick(LINES[v.type].hurt),1.1);
   if(v.hp<=0&&!v.ko){knockOut(v,kind,dir);return}
   const hk=v.heavy?.45:1;
