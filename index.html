@@ -474,7 +474,7 @@ const GYMS={
 };
 // 크루·인스타 홍보 등록부 (개발자가 확인 후 직접 추가 — 사용자가 올리는 방식 아님)
 // {name, handle(인스타 아이디만), line(한 줄 소개), color, ad:true면 '광고' 표시}
-const PROMOS=[{name:'띠띠 클라이밍 크루',handle:'ttitti_climbcrew',initials:'띠띠',logo:'promos/ttitti.jpg',line:'BE KIND · BE HAPPY',color:'#3d4a1f',ad:false}];
+const PROMOS=[{name:'뛰뛰 클라이밍 크루',handle:'ttitti_climbcrew',initials:'뛰뛰',logo:'promos/ttitti.jpg',line:'BE KIND · BE HAPPY',color:'#3d4a1f',ad:false}];
 const PROMO_DEMO=[{name:'예시 볼더링 크루',handle:'your_crew_here',initials:'예시',line:'매주 수요일 크루 세션 · 클린이 환영',color:'#7c3aed',ad:false},
   {name:'예시 암벽화 수선집',handle:'your_shop_here',initials:'수선',line:'창갈이 할인 이벤트 중',color:'#0ea5e9',ad:true}];
 const PROMO_LIST=(()=>{let l=PROMOS;try{if(false)l=PROMO_DEMO}catch(e){}return l.filter(x=>/^[A-Za-z0-9._]{1,30}$/.test(x.handle))})();
