@@ -78,7 +78,8 @@ canvas{transition:filter .18s}body.slow canvas{filter:grayscale(1) brightness(.7
   <ul>
     <li><b>동작마다 슬로우!</b> · 화면이 회색으로 멈추고 동그라미 게이지가 차요. <b>초록 칸</b>에서 버튼, <b>노란 칸</b>이면 퍼펙트</li>
     <li><b>밸런스</b> · 게이지 차는 동안 조이스틱으로 바늘을 초록 칸에. 벗어난 채 누르면 발 미끄러짐</li>
-    <li><b>다이노</b> · 반동 왼발! 오른발! 잡아! 연속 게이지. 하나라도 놓치면 추락</li>
+    <li><b>힐훅·크로스</b> · 칸이 좁은 대신 점수 2배</li>
+    <li><b>볼륨 다이노</b> · 반동 왼발! 오른발! 잡아! 연속 게이지. 하나라도 놓치면 추락</li>
     <li><b>겹치기 빌런</b> · 초록=날라차기, 노랑=머리 밟고 한 동작 건너뛰기</li>
   </ul>
   <button class="big" id="go">시작</button>
@@ -168,8 +169,8 @@ function newGame(){G={grade:0,prob:1,score:0,lives:3,t:0,over:false,best:+(local
 function startProblem(){
   for(const h of routeHolds)scene.remove(h);routeHolds.length=0;if(G.v)removeVillain();endQte();
   const g=G.grade,col=COLORS[(G.prob-1)%COLORS.length];G.col=col;
-  G.moves=[];const nS=2+Math.min(3,Math.floor(g/2));for(let i=0;i<nS;i++)G.moves.push('s');G.moves.splice(1+((Math.random()*(nS-1))|0),0,'d');G.moves.push('top');
-  G.vol=null;G.mi=0;G.villainLeft=1+(g>=4?1:0);{const si=G.moves.map((m,i)=>m==='s'&&i>0?i:-1).filter(i=>i>=0);G.villainAt=si.length?pick(si):0}
+  G.moves=[];const nS=2+Math.min(3,Math.floor(g/2));for(let i=0;i<nS;i++){const r=Math.random();G.moves.push(i===0||g<1&&i<2?'s':r<.28?'h':r<.56?'x':'s')}G.moves.splice(1+((Math.random()*(nS-1))|0),0,'d');G.moves.push('top');
+  G.vol=null;G.mi=0;G.villainLeft=1+(g>=4?1:0);{const si=G.moves.map((m,i)=>'shx'.includes(m)&&i>0?i:-1).filter(i=>i>=0);G.villainAt=si.length?pick(si):0}
   G.bal=0;G.balV=0;G.slips=0;G.foot='L';G.hand='L';
   const L=player.limbs;snapLimb(player,'lf',v3(-.25,.45,0));snapLimb(player,'rf',v3(.25,.45,0));snapLimb(player,'lh',v3(-.32,1.95,0));snapLimb(player,'rh',v3(.32,1.95,0));
   player.root.position.set(0,0,0);player.root.rotation.set(0,0,0);player.inner.position.set(0,0,0);player.lean=0;player.dip=0;player.spin=0;
@@ -179,8 +180,8 @@ function later(s,f){const id=G;setTimeout(()=>{if(G===id&&!G.over&&!G.fall)f()},
 function hud(){$('grade').firstChild.textContent='V'+G.grade;$('grade').querySelector('small').textContent=`문제 ${G.prob} · ${G.col[1]} 홀드`;$('score').textContent=G.score.toLocaleString();$('lives').textContent='🧗'.repeat(Math.max(0,G.lives))+'·'.repeat(3-Math.max(0,G.lives))}
 function addScore(n){G.score+=n;hud()}
 function nextMove(){const m=G.moves[G.mi];
-  if(m==='s'&&G.villainLeft>0&&G.mi===G.villainAt&&!G.v){G.villainLeft--;spawnVillain();return}
-  if(m==='s')startFoot();else if(m==='d')startDyno();else if(m==='top')topOut()}
+  if('shx'.includes(m)&&G.villainLeft>0&&G.mi===G.villainAt&&!G.v){G.villainLeft--;spawnVillain();return}
+  G.kind=m;if('shx'.includes(m))startFoot();else if(m==='d')startDyno();else if(m==='top')topOut()}
 // ---------- 동그라미 게이지 (슬로우 + 회색 화면) ----------
 // q={key,dur,zone:[a,b],perf:[a,b],anchor:()=>Vector3,bal:bool,ok(perfect),fail(why)}
 function qte(q){G.qte=q;q.p=0;const el=$('qte');el.hidden=false;el.querySelector('b').textContent=KNAME[q.key];el.querySelector('small').textContent=q.sub||'초록 칸에서 눌러!';
@@ -202,20 +203,25 @@ function updQte(rdt){const q=G.qte;if(!q)return;q.p+=rdt/q.dur;
 const gDur=(base,min,per)=>Math.max(min,base-G.grade*per);
 // --- 발 ---
 function startFoot(){
-  const k=G.foot==='L'?'lf':'rf',L=player.limbs[k].cur,others=COLORS.filter(c=>c!==G.col);
-  const to=v3(L.x+rand(-.12,.12),L.y+.5,0);G.footTo=to;G.footHold=makeHold(to.x,to.y,G.col[0],.11);
+  const k=G.foot==='L'?'lf':'rf',L=player.limbs[k].cur,others=COLORS.filter(c=>c!==G.col),heel=G.kind==='h';
+  const hk=player.limbs[k==='lf'?'lh':'rh'].cur;const to=heel?v3(hk.x+(k==='lf'?-.42:.42),hk.y-.25,0):v3(L.x+rand(-.12,.12),L.y+.5,0);if(heel)G.heelK=k;G.footTo=to;G.footHold=makeHold(to.x,to.y,G.col[0],.11);
   G.decoys=[-1,1].map(s=>makeHold(to.x+s*.3,to.y+rand(-.1,.1),pick(others)[0],.1));
-  qte({key:G.foot,dur:gDur(1.5,.8,.08),zone:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.footTo,sub:`${G.col[1]} 홀드 · 중심 잡고 초록 칸에서!`,
-    ok:pf=>{routeHolds.push(G.footHold);G.decoys.forEach(fadeHold);setLimb(player,k,G.footTo,.2);sfx.step();pop(pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore(pf?100:50);G.foot=G.foot==='L'?'R':'L';later(.32,startHand)},
+  qte({key:G.foot,dur:gDur(heel?1.3:1.5,.75,.08),zone:heel?[.72,.92]:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.footTo,sub:heel?'힐훅! 뒤꿈치 높이 걸기 · 중심 꽉':`${G.col[1]} 홀드 · 중심 잡고 초록 칸에서!`,
+    ok:pf=>{routeHolds.push(G.footHold);G.decoys.forEach(fadeHold);setLimb(player,k,G.footTo,heel?.32:.2);sfx.step();pop(heel?(pf?'힐훅 딱!':'힐훅!'):pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore((pf?100:50)*(heel?2:1));G.foot=G.foot==='L'?'R':'L';later(.32,startHand)},
     fail:why=>{slip(why);later(.5,()=>{scene.remove(G.footHold);G.decoys.forEach(m=>scene.remove(m));startFoot()})}})}
 function fadeHold(m){let o=1;m.material.transparent=true;const iv=setInterval(()=>{o-=.1;m.material.opacity=o;if(o<=0){clearInterval(iv);scene.remove(m)}},40)}
 function slip(t){G.slips++;sfx.slip();pop(t,'#ff3b30',46);G.balV+=(Math.random()<.5?-1:1)*1.2;stopT=.06;player.dip=.15;setTimeout(()=>player.dip=0,150);if(G.slips>=3){G.slips=0;fall('발이 다 터졌다')}}
 // --- 손 ---
-function startHand(){const k=G.hand==='L'?'lh':'rh',c=player.limbs[k].cur;const to=v3(c.x+rand(-.15,.15),c.y+.5,0);
+function startHand(){const k=G.hand==='L'?'lh':'rh',c=player.limbs[k].cur,o=player.limbs[k==='lh'?'rh':'lh'].cur,cross=G.kind==='x',far=G.kind==='h';
+  const to=cross?v3(o.x+(k==='lh'?.32:-.32),Math.max(c.y,o.y)+.35,0):v3(c.x+rand(-.15,.15),c.y+(far?.72:.5),0);
   // 볼륨 바로 위 홀드면 팔이 볼륨을 뚫으니, 볼륨 옆 바깥으로 비켜서 잡기
   if(G.vol&&to.y<G.vol.top+.9&&Math.abs(to.x-G.vol.cx)<G.vol.W/2+.12)to.x=G.vol.cx+(k==='lh'?-1:1)*(G.vol.W/2+.15);G.handTo=to;const hm=makeHold(to.x,to.y,G.col[0],.12);routeHolds.push(hm);
-  qte({key:'G',dur:gDur(1.3,.75,.07),zone:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.handTo,sub:'중심 잡고 초록 칸에서!',
-    ok:pf=>{setLimb(player,k,to,.28);sfx.grab();pop(pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore(pf?100:50);G.hand=G.hand==='L'?'R':'L';G.mi++;later(.35,nextMove)},
+  qte({key:'G',dur:gDur(cross?1.15:1.3,.7,.07),zone:cross?[.7,.92]:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.handTo,sub:cross?'크로스! 반대손 너머로':far?'힐훅 믿고 멀리!':'중심 잡고 초록 칸에서!',
+    ok:pf=>{setLimb(player,k,to,cross?.34:.28);sfx.grab();pop(cross?(pf?'크로스 딱!':'크로스!'):pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore((pf?100:50)*(cross||far?2:1));
+      if(!cross)G.hand=G.hand==='L'?'R':'L';
+      if(far&&G.heelK){const hk=G.heelK,of=player.limbs[hk==='lf'?'rf':'lf'].cur,ft=v3(player.limbs[hk].cur.x*.5+of.x*.5+(hk==='lf'?-.22:.22),of.y+.35,0);G.heelK=null;
+        later(.3,()=>{routeHolds.push(makeHold(ft.x,ft.y,G.col[0],.11));setLimb(player,hk,ft,.25);sfx.step()})}
+      G.mi++;later(far?.65:.35,nextMove)},
     fail:why=>{slip(why);later(.5,startHand2)}});
   function startHand2(){scene.remove(hm);routeHolds.splice(routeHolds.indexOf(hm),1);startHand()}}
 // --- 다이노 / 코디네이션: 반동 왼발 → 오른발 → 잡아 를 연속 게이지로 ---
