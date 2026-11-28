@@ -76,11 +76,10 @@ canvas{transition:filter .18s}body.slow canvas{filter:grayscale(1) brightness(.7
 <div class="ov" id="title">
   <h1>벽타기 <em>모드</em></h1>
   <ul>
-    <li><b>동작마다 슬로우!</b> · 화면이 회색으로 멈추고 동그라미 게이지가 차요. <b>초록 칸</b>에서 버튼, <b>노란 칸</b>이면 퍼펙트</li>
-    <li><b>밸런스</b> · 게이지 차는 동안 조이스틱으로 바늘을 초록 칸에. 벗어난 채 누르면 발 미끄러짐</li>
-    <li><b>힐훅·크로스</b> · 칸이 좁은 대신 점수 2배</li>
-    <li><b>볼륨 다이노</b> · 반동 왼발! 오른발! 잡아! 연속 게이지. 하나라도 놓치면 추락</li>
-    <li><b>겹치기 빌런</b> · 초록=날라차기, 노랑=머리 밟고 한 동작 건너뛰기</li>
+    <li><b>볼륨 코디네이션</b> · 화면이 느려지며 동그라미 게이지가 차요. <b>초록 칸</b>에서 왼발! 오른발! (노란 칸=퍼펙트)</li>
+    <li><b>점프</b> · 잡아!로 날아서 큰 볼륨 잡기 → <b>조이스틱</b>으로 배른도어 버티기</li>
+    <li><b>힐훅 → 맨틀</b> · 볼륨 위에 올라서면 다음 구간</li>
+    <li><b>겹치기 빌런</b> · 초록=날라차기, 노랑=머리 밟고 점프</li>
   </ul>
   <button class="big" id="go">시작</button>
   <a href="./">← 원래 게임으로</a>
@@ -97,205 +96,200 @@ canvas{transition:filter .18s}body.slow canvas{filter:grayscale(1) brightness(.7
 <script>
 'use strict';
 const T=THREE,$=id=>document.getElementById(id),v3=(x,y,z)=>new T.Vector3(x,y,z),rand=(a,b)=>a+Math.random()*(b-a),pick=a=>a[(Math.random()*a.length)|0],clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-// ---------- 3D ----------
+const eo=t=>1-(1-t)*(1-t),eio=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,lerp=(a,b,t)=>a+(b-a)*t;
+// ---------- 3D: 대회 벽 ----------
 const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));document.body.prepend(renderer.domElement);
-const scene=new T.Scene();scene.background=new T.Color(0x1d1915);scene.fog=new T.Fog(0x1d1915,9,20);
-const camera=new T.PerspectiveCamera(52,1,.1,60);
-scene.add(new T.HemisphereLight(0xfff4e0,0x3a3028,.95));const sun=new T.DirectionalLight(0xffffff,.65);sun.position.set(2,8,6);scene.add(sun);
+const scene=new T.Scene();scene.background=new T.Color(0x14161a);scene.fog=new T.Fog(0x14161a,13,28);
+const camera=new T.PerspectiveCamera(56,1,.1,60);
+scene.add(new T.HemisphereLight(0xffffff,0x4a4640,.92));const sun=new T.DirectionalLight(0xffffff,.7);sun.position.set(3,9,7);scene.add(sun);
 const lam=c=>new T.MeshLambertMaterial({color:c});
-const WALL_W=7,WALL_H=9;
-{const c=document.createElement('canvas');c.width=512;c.height=640;const q=c.getContext('2d');q.fillStyle='#d9c7a6';q.fillRect(0,0,512,640);
- for(let i=0;i<7;i++){q.fillStyle=i%2?'#d2bf9c':'#ddcdae';q.fillRect(i*73,0,73,640)}q.strokeStyle='#0002';q.lineWidth=2;for(let i=1;i<7;i++){q.beginPath();q.moveTo(i*73,0);q.lineTo(i*73,640);q.stroke()}for(let j=1;j<8;j++){q.beginPath();q.moveTo(0,j*80);q.lineTo(512,j*80);q.stroke()}
- q.fillStyle='#0004';for(let x=18;x<512;x+=36)for(let y=18;y<640;y+=36){q.beginPath();q.arc(x,y,2.5,0,7);q.fill()}
- const tx=new T.CanvasTexture(c);const w=new T.Mesh(new T.PlaneGeometry(WALL_W,WALL_H),new T.MeshLambertMaterial({map:tx}));w.position.set(0,WALL_H/2,0);scene.add(w)}
-{const m=new T.Mesh(new T.BoxGeometry(WALL_W+2,.35,3),lam(0x2b4f86));m.position.set(0,.175,1.5);scene.add(m);const f=new T.Mesh(new T.PlaneGeometry(40,40),lam(0x2a241e));f.rotation.x=-Math.PI/2;scene.add(f)}
-const DECOR=[0xe4572e,0x2b6cb0,0xffd23f,0x46d18c,0x9b5de5,0xff7eb6,0xf4f1ea,0x222222];
+const MAT=.4;
+const wallTex=(()=>{const c=document.createElement('canvas');c.width=c.height=512;const q=c.getContext('2d');q.fillStyle='#e9e7e2';q.fillRect(0,0,512,512);
+  for(let i=0;i<260;i++){q.strokeStyle=`rgba(40,40,45,${rand(.03,.13)})`;q.lineWidth=rand(1,3);const x=rand(0,512),y=rand(0,512),a=rand(0,6.28),l=rand(8,46);q.beginPath();q.moveTo(x,y);q.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);q.stroke()}
+  for(let i=0;i<40;i++){q.fillStyle=`rgba(255,255,255,${rand(.2,.5)})`;q.beginPath();q.arc(rand(0,512),rand(0,512),rand(8,26),0,7);q.fill()}
+  q.fillStyle='rgba(30,30,34,.75)';for(let x=32;x<512;x+=64)for(let y=32;y<512;y+=64){q.beginPath();q.arc(x,y,3.2,0,7);q.fill()}
+  q.strokeStyle='rgba(0,0,0,.22)';q.lineWidth=2;q.strokeRect(1,1,510,510);return c})();
+function wallPlane(w,h){const t=new T.CanvasTexture(wallTex);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(w/1.25,h/1.25);const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshLambertMaterial({map:t}));scene.add(m);return m}
+wallPlane(11,22).position.set(0,11,0);
+{const a=wallPlane(7,22);a.rotation.y=1.25;a.position.set(-6.6,11,3.32);const b=wallPlane(7,22);b.rotation.y=-1.25;b.position.set(6.6,11,3.32);
+ const m=new T.Mesh(new T.BoxGeometry(16,MAT,7),lam(0x2c8c82));m.position.set(0,MAT/2,3.5);scene.add(m);const f=new T.Mesh(new T.PlaneGeometry(40,40),lam(0x23201c));f.rotation.x=-Math.PI/2;scene.add(f)}
 const holdGeo=new T.SphereGeometry(1,10,7);
-function makeHold(x,y,col,s=.11,dim){const mt=lam(col);if(dim)mt.color.lerp(new T.Color(0xd9c7a6),.55);else{mt.emissive=new T.Color(col);mt.emissiveIntensity=.25}const m=new T.Mesh(holdGeo,mt);m.scale.set(s*1.25,s,s*.55);m.position.set(x,y,.04);m.rotation.z=rand(-1,1);scene.add(m);return m}
-for(let i=0;i<90;i++)makeHold(rand(-3.3,3.3),rand(.5,8.6),pick(DECOR),rand(.035,.065),true);
-const routeHolds=[];
-// 볼륨: 벽에 붙은 큰 사다리꼴 덩어리 (앞면이 좁아짐)
+function makeHold(x,y,z,col,sx,sy,sz){const mt=lam(col);const m=new T.Mesh(holdGeo,mt);m.scale.set(sx,sy,sz);m.position.set(x,y,z);scene.add(m);return m}
+for(let i=0;i<36;i++){const m=makeHold(rand(-5,5),rand(.8,20),.03,pick([0x777a80,0x9a9186,0x5d6068]),rand(.04,.07),rand(.03,.06),.03);m.rotation.z=rand(-1,1)}
 function makeVolume(cx,cy,w,h,d,col){let g=new T.BoxGeometry(w,h,d);const pa=g.attributes.position;for(let i=0;i<pa.count;i++)if(pa.getZ(i)>0){pa.setX(i,pa.getX(i)*.55);pa.setY(i,pa.getY(i)*.5)}
   g.translate(0,0,d/2);g=g.toNonIndexed();g.computeVertexNormals();const m=new T.Mesh(g,new T.MeshLambertMaterial({color:col}));m.position.set(cx,cy,0);scene.add(m);return m}
-// ---------- 클라이머 (막대 인형 + 2관절 IK) ----------
-const segGeo=new T.CylinderGeometry(1,1,1,8);segGeo.translate(0,.5,0);
-function seg(par,col,r){const m=new T.Mesh(segGeo,lam(col));m.userData.r=r;par.add(m);return m}
-function aim(m,a,b){const d=b.clone().sub(a),L=d.length()||1e-4;m.position.copy(a);m.scale.set(m.userData.r,L,m.userData.rz||m.userData.r);m.quaternion.setFromUnitVectors(v3(0,1,0),d.divideScalar(L))}
-function ik(a,t,l1,l2,bend){const d=t.clone().sub(a);let L=d.length();const maxL=(l1+l2)*.999;if(L>maxL){d.setLength(maxL);L=maxL}const tt=a.clone().add(d);
-  const c=clamp((l1*l1+L*L-l2*l2)/(2*l1*L),-1,1),s=Math.sqrt(1-c*c),dir=d.clone().normalize(),side=bend.clone().sub(dir.clone().multiplyScalar(bend.dot(dir))).normalize();
+const props=[];
+// ---------- 클라이머: 몸 기준 좌표(오른쪽 r · 위 u · 앞 f)로 뼈대를 세움. 무릎은 앞(벽에선 바깥)으로만 꺾임 ----------
+const segGeo=new T.CylinderGeometry(1,1,1,10);segGeo.translate(0,.5,0);const torsoGeo=new T.CylinderGeometry(1,.72,1,14);torsoGeo.translate(0,.5,0);const ballGeo=new T.SphereGeometry(1,14,10);
+function aim(m,a,b){const d=b.clone().sub(a),L=d.length()||1e-4;m.position.copy(a);m.scale.set(m.userData.r,L,m.userData.r);m.quaternion.setFromUnitVectors(v3(0,1,0),d.divideScalar(L))}
+function ik(a,t,l1,l2,bend){const d=t.clone().sub(a);let L=d.length()||1e-4;const maxL=(l1+l2)*.999;if(L>maxL){d.setLength(maxL);L=maxL}const tt=a.clone().add(d);
+  const c=clamp((l1*l1+L*L-l2*l2)/(2*l1*L),-1,1),s=Math.sqrt(1-c*c),dir=d.clone().normalize(),side=bend.clone().sub(dir.clone().multiplyScalar(bend.dot(dir)));if(side.lengthSq()<1e-6)side.set(0,0,1);side.normalize();
   return [a.clone().add(dir.multiplyScalar(l1*c)).add(side.multiplyScalar(l1*s)),tt]}
-const boxGeo=new T.BoxGeometry(1,1,1);boxGeo.translate(0,.5,0);const ballGeo=new T.SphereGeometry(1,12,9);
-// 비율: 머리 0.13 · 목 0.08 · 몸통 0.5(어깨폭 0.38) · 골반 0.3 · 팔 0.3+0.28 · 다리 0.42+0.4
-function makeRig(c){const root=new T.Group(),inner=new T.Group();root.add(inner);scene.add(root);
-  const box=(col,w,d)=>{const m=new T.Mesh(boxGeo,lam(col));m.userData.r=w;m.userData.rz=d;inner.add(m);return m};
-  const ball=(col,rr)=>{const m=new T.Mesh(ballGeo,lam(col));m.scale.setScalar(rr);inner.add(m);return m};
-  const r={root,inner,chest:box(c.shirt,.38,.2),belly:box(c.shirt,.32,.19),pelvis:box(c.pants,.31,.2),
-    sho:[ball(c.shirt,.07),ball(c.shirt,.07)],elb:[ball(c.skin,.042),ball(c.skin,.042)],knee:[ball(c.pants,.058),ball(c.pants,.058)],hipJ:[ball(c.pants,.075),ball(c.pants,.075)],
-    neck:seg(inner,c.skin,.05),hand:[ball(c.skin,.05),ball(c.skin,.05)],head:ball(c.skin,.13),hair:ball(c.hair,.138),
-    ua:[seg(inner,c.shirt,.058),seg(inner,c.shirt,.058)],la:[seg(inner,c.skin,.042),seg(inner,c.skin,.042)],ul:[seg(inner,c.pants,.072),seg(inner,c.pants,.072)],ll:[seg(inner,c.pants,.056),seg(inner,c.pants,.056)],
-    shoe:[new T.Mesh(new T.BoxGeometry(.11,.08,.22),lam(c.shoe)),new T.Mesh(new T.BoxGeometry(.11,.08,.22),lam(c.shoe))],
-    limbs:{lh:null,rh:null,lf:null,rf:null},lean:0,dip:0};
-  inner.add(...r.shoe);
-  for(const k of ['lh','rh','lf','rf'])r.limbs[k]={cur:v3(0,0,.08),from:v3(),to:v3(),t:1,dur:.25};
-  return r}
-function setLimb(r,k,p,dur=.25){const L=r.limbs[k];L.from.copy(L.cur);L.to.copy(p);L.to.z=p.z||.08;L.t=0;L.dur=dur}
-function snapLimb(r,k,p){const L=r.limbs[k];L.cur.copy(p);L.cur.z=p.z||.08;L.to.copy(L.cur);L.t=1}
-function hipOf(r){const l=r.limbs,fz=Math.max(l.lf.cur.z,l.rf.cur.z,l.lh.cur.z,l.rh.cur.z);return v3((l.lf.cur.x+l.rf.cur.x)/2+r.lean*.28+(r.sx||0)*.25,(l.lf.cur.y+l.rf.cur.y)/2+.7-r.dip,.36+Math.max(0,fz-.08)*.8)}
-function poseRig(r,dt){
-  for(const k in r.limbs){const L=r.limbs[k];if(L.t<1){L.t=Math.min(1,L.t+dt/L.dur);const e=L.t<.5?2*L.t*L.t:1-Math.pow(-2*L.t+2,2)/2;L.cur.lerpVectors(L.from,L.to,e);L.cur.z+=Math.sin(L.t*Math.PI)*.25}}
-  const l=r.limbs,hip=hipOf(r);const sRaw=v3((l.lh.cur.x+l.rh.cur.x)/2+r.lean*.1,(l.lh.cur.y+l.rh.cur.y)/2-.4,hip.z-.04);
-  const up=sRaw.sub(hip).normalize(),sh=hip.clone().addScaledVector(up,.52),mid=hip.clone().addScaledVector(up,.2);
-  aim(r.pelvis,hip.clone().addScaledVector(up,-.1),hip.clone().addScaledVector(up,.06));aim(r.belly,hip.clone().addScaledVector(up,.04),mid.clone().addScaledVector(up,.08));aim(r.chest,mid,sh.clone().addScaledVector(up,.03));
-  const nk=sh.clone().addScaledVector(up,.02);aim(r.neck,nk,nk.clone().addScaledVector(up,.1));r.head.position.copy(nk).addScaledVector(up,.2);r.hair.position.copy(r.head.position).add(v3(0,.022,.022));
-  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=sh.clone().add(v3(.17*sg,-.04,0));r.sho[i].position.copy(a);const [el,tt]=ik(a,l[k].cur,.3,.28,v3(.9*sg,-.7,.6));r.elb[i].position.copy(el);r.hand[i].position.copy(tt);aim(r.ua[i],a,el);aim(r.la[i],el,tt)});
-  [['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=hip.clone().add(v3(.1*sg,-.06,0));r.hipJ[i].position.copy(a);const [kn,tt]=ik(a,l[k].cur,.42,.4,v3(.8*sg,.25,1));r.knee[i].position.copy(kn);aim(r.ul[i],a,kn);aim(r.ll[i],kn,tt);r.shoe[i].position.copy(tt).add(v3(0,-.02,.05))})}
-const player=makeRig({skin:0xe0b48a,shirt:0x1d1812,pants:0x58613a,hair:0x1a1a1a,shoe:0xe4572e});
+function basis(m,p,r,u,f,sx,sy,sz){m.matrix.makeBasis(r.clone().multiplyScalar(sx),u.clone().multiplyScalar(sy),f.clone().multiplyScalar(-sz)).setPosition(p)}
+function makeRig(c){const g=new T.Group();scene.add(g);
+  const seg=(col,r)=>{const m=new T.Mesh(segGeo,lam(col));m.userData.r=r;g.add(m);return m},ball=(col,r)=>{const m=new T.Mesh(ballGeo,lam(col));m.scale.setScalar(r);g.add(m);return m},
+    fix=(geo,col)=>{const m=new T.Mesh(geo,lam(col));m.matrixAutoUpdate=false;g.add(m);return m},L=()=>({cur:v3(),pin:null,off:v3(),k:16});
+  const R={g,H:v3(0,1.3,.6),yaw:0,lean:0,pitch:0,frog:0,torso:fix(torsoGeo,c.shirt),pelvis:fix(segGeo,c.shorts),neck:seg(c.skin,.05),head:ball(c.skin,.155),hair:ball(c.hair,.162),
+    eye:[new T.Mesh(ballGeo,new T.MeshBasicMaterial({color:0x1a1a1a})),new T.Mesh(ballGeo,new T.MeshBasicMaterial({color:0x1a1a1a}))],bag:seg(c.bag,.06),
+    sho:[ball(c.shirt,.075),ball(c.shirt,.075)],elb:[ball(c.skin,.046),ball(c.skin,.046)],hand:[ball(c.skin,.055),ball(c.skin,.055)],hipJ:[ball(c.shorts,.085),ball(c.shorts,.085)],knee:[ball(c.skin,.062),ball(c.skin,.062)],
+    ua:[seg(c.shirt,.06),seg(c.shirt,.06)],la:[seg(c.skin,.045),seg(c.skin,.045)],ul:[seg(c.shorts,.082),seg(c.shorts,.082)],ll:[seg(c.skin,.058),seg(c.skin,.058)],
+    shoe:[new T.Mesh(new T.BoxGeometry(.1,.08,.25),lam(c.shoe)),new T.Mesh(new T.BoxGeometry(.1,.08,.25),lam(c.shoe))],limbs:{lh:L(),rh:L(),lf:L(),rf:L()}};
+  for(const e of R.eye){e.scale.setScalar(.024);g.add(e)}g.add(...R.shoe);return R}
+function setPin(R,k,p,kk){const l=R.limbs[k];l.pin=p.clone();if(kk)l.k=kk}
+function setOff(R,k,x,y,z,kk){const l=R.limbs[k];l.pin=null;l.off.set(x,y,z);if(kk)l.k=kk}
+const tmp=v3(),tmpA=v3();
+function pose(R,dt){
+  const sy=Math.sin(R.yaw),cy=Math.cos(R.yaw),f=v3(sy,0,-cy),r=v3(cy,0,sy),u=v3(0,1,0);
+  u.multiplyScalar(Math.cos(R.lean)).addScaledVector(r,Math.sin(R.lean));u.multiplyScalar(Math.cos(R.pitch)).addScaledVector(f,Math.sin(R.pitch)).normalize();
+  f.addScaledVector(u,-f.dot(u)).normalize();r.crossVectors(f,u).normalize();
+  const H=R.H,S=H.clone().addScaledVector(u,.5),P=(b,a,c,d)=>b.clone().addScaledVector(r,a).addScaledVector(u,c).addScaledVector(f,d);
+  basis(R.torso,P(H,0,-.02,0),r,u,f,.2,.56,.115);basis(R.pelvis,P(H,0,-.17,0),r,u,f,.158,.2,.112);
+  aim(R.neck,P(S,0,.02,0),P(S,0,.15,0));const hd=P(S,0,.27,.02);R.head.position.copy(hd);R.hair.position.copy(P(hd,0,.035,-.035));R.eye[0].position.copy(P(hd,-.06,.01,.14));R.eye[1].position.copy(P(hd,.06,.01,.14));
+  aim(R.bag,P(H,0,0,-.14),P(H,0,-.17,-.16));
+  const L=R.limbs,a1=1-Math.exp(-dt*1);for(const k in L){const l=L[k],o=l.off,tg=l.pin?l.pin:tmp.copy(H).addScaledVector(r,o.x).addScaledVector(u,o.y).addScaledVector(f,o.z);l.cur.lerp(tg,1-Math.exp(-l.k*dt));if(l.cur.z<.06)l.cur.z=.06;if(l.cur.y<MAT+.04)l.cur.y=MAT+.04}
+  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=P(S,.2*sg,-.03,0);R.sho[i].position.copy(a);const [el,tt]=ik(a,L[k].cur,.3,.28,v3().addScaledVector(f,-.6).addScaledVector(u,-.8).addScaledVector(r,.5*sg));R.elb[i].position.copy(el);R.hand[i].position.copy(tt);aim(R.ua[i],a,el);aim(R.la[i],el,tt)});
+  const fr=R.frog;[['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=P(H,.1*sg,-.1,0);R.hipJ[i].position.copy(a);const [kn,tt]=ik(a,L[k].cur,.42,.4,v3().addScaledVector(f,1-.55*fr).addScaledVector(r,sg*(.15+.85*fr)).addScaledVector(u,.25));if(kn.z<.1)kn.z=.1;
+    R.knee[i].position.copy(kn);aim(R.ul[i],a,kn);aim(R.ll[i],kn,tt);R.shoe[i].position.copy(tt).addScaledVector(f,.05);R.shoe[i].rotation.y=-R.yaw})}
+const player=makeRig({skin:0xe0b48a,shirt:0xff7a1a,shorts:0x1d1d22,hair:0x1a1a1a,shoe:0xffd23f,bag:0x4aa3ff});
+setOff(player,'lh',-.26,.3,.2);setOff(player,'rh',.26,.3,.2);setOff(player,'lf',-.12,-.8,0);setOff(player,'rf',.12,-.8,0);pose(player,1);
+// ---------- 시간 흐름에 따라 움직이는 동작(트윈) ----------
+const tweens=[];function tw(dur,fn,done){const o={t:0,dur,fn,done,dead:false};tweens.push(o);return o}
+function updTweens(dt){for(const o of tweens.slice()){if(o.dead)continue;o.t=Math.min(1,o.t+dt/o.dur);o.fn(o.t);if(o.t>=1&&!o.dead){o.dead=true;o.done&&o.done()}}for(let i=tweens.length-1;i>=0;i--)if(tweens[i].dead)tweens.splice(i,1)}
+function act(dur,fn,done){if(G.act)G.act.dead=true;return G.act=tw(dur,fn,done)}
+function later(s,f){const id=G;tw(s,()=>{},()=>{if(G===id&&!G.over&&!G.fall)f()})}
 // ---------- 오디오 ----------
 let AC=null;function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
 function tone(f0,f1,d,type='sine',v=.2,delay=0){if(!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02)}
 let NB=null;function noise(d,f,v,sweep){if(!AC)return;if(!NB){NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const a=NB.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}
   const t=AC.currentTime,n=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();n.buffer=NB;fl.type='bandpass';fl.frequency.setValueAtTime(f,t);if(sweep)fl.frequency.exponentialRampToValueAtTime(f*4,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);n.connect(fl);fl.connect(g);g.connect(AC.destination);n.start(t);n.stop(t+d+.02)}
-const sfx={step:()=>tone(300,180,.08,'triangle',.25),grab:()=>tone(520,780,.1,'triangle',.2),perfect:()=>{tone(880,880,.08,'square',.08);tone(1320,1320,.12,'square',.06,.06)},good:()=>tone(660,660,.08,'square',.07),
-  miss:()=>tone(200,90,.25,'sawtooth',.15),slip:()=>tone(900,200,.2,'sawtooth',.12),fall:()=>{tone(500,60,.6,'sine',.3)},thud:()=>tone(120,40,.3,'sine',.5),
-  kick:()=>{tone(160,40,.25,'sine',.7);tone(2400,600,.12,'sawtooth',.08)},top:()=>[523,659,784,1046].forEach((f,i)=>tone(f,f,.2,'triangle',.18,i*.09)),beat:()=>tone(1000,1000,.03,'square',.05),whoosh:()=>noise(.5,1200,.12,true),slap:()=>{noise(.12,2500,.6);tone(180,60,.18,'sine',.6)},warn:()=>{tone(1800,1800,.1,'square',.08);tone(1800,1800,.1,'square',.08,.15)}};
-// ---------- 화면 글자 ----------
+const sfx={step:()=>tone(300,180,.08,'triangle',.25),stomp:()=>{tone(150,55,.14,'sine',.6);noise(.07,900,.35)},perfect:()=>{tone(880,880,.08,'square',.08);tone(1320,1320,.12,'square',.06,.06)},
+  miss:()=>tone(200,90,.25,'sawtooth',.15),slip:()=>tone(900,200,.2,'sawtooth',.12),fall:()=>tone(500,60,.6,'sine',.3),thud:()=>{tone(120,40,.3,'sine',.6);noise(.12,500,.3)},
+  kick:()=>{tone(160,40,.25,'sine',.7);tone(2400,600,.12,'sawtooth',.08);noise(.1,1800,.4)},top:()=>[523,659,784,1046].forEach((f,i)=>tone(f,f,.2,'triangle',.18,i*.09)),
+  whoosh:()=>noise(.45,1200,.12,true),slap:()=>{noise(.12,2500,.6);tone(180,60,.18,'sine',.6)},warn:()=>{tone(1800,1800,.1,'square',.08);tone(1800,1800,.1,'square',.08,.15)}};
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+// ---------- 화면 글자·가루 ----------
 function pop(text,col='#fff',y=40){const e=document.createElement('div');e.className='pop';e.textContent=text;e.style.color=col;e.style.top=y+'%';$('pops').append(e);setTimeout(()=>e.remove(),1000)}
 function say(t,sub){const p=$('prompt');p.textContent=t;if(sub){const s=document.createElement('small');s.textContent=sub;p.append(s)}}
-// ---------- 게임 상태 ----------
-const COLORS=[[0x46d18c,'초록'],[0x4aa3ff,'파랑'],[0xffd23f,'노랑'],[0xff7eb6,'분홍'],[0x9b5de5,'보라'],[0xff8a3d,'주황']];
-let G=null;const input={jx:0,down:{}};let stopT=0,slowT=0;
-const KNAME={L:'왼발',R:'오른발',G:'잡아!',K:'날라차기!'};
-function newGame(){G={grade:0,prob:1,score:0,lives:3,t:0,over:false,best:+(localStorage.getItem('chamgyo-wall-best')||0)};startProblem()}
-function startProblem(){
-  for(const h of routeHolds)scene.remove(h);routeHolds.length=0;if(G.v)removeVillain();endQte();
-  const g=G.grade,col=COLORS[(G.prob-1)%COLORS.length];G.col=col;
-  G.moves=[];const nS=2+Math.min(3,Math.floor(g/2));for(let i=0;i<nS;i++){const r=Math.random();G.moves.push(i===0||g<1&&i<2?'s':r<.28?'h':r<.56?'x':'s')}{const nd=1+Math.min(2,Math.floor(g/2));for(let j=0;j<nd;j++)G.moves.splice(1+j*2+((Math.random()*2)|0),0,'d')}G.moves=G.moves.filter((m,i,a)=>!(m==='d'&&a[i-1]==='d'));G.moves.push('top');
-  G.vol=null;G.swingT=0;G.flying=false;slowT=0;player.sx=0;player.sv=0;G.mi=0;G.villainLeft=1+(g>=4?1:0);{const si=G.moves.map((m,i)=>'shx'.includes(m)&&i>0?i:-1).filter(i=>i>=0);G.villainAt=si.length?pick(si):0}
-  G.bal=0;G.balV=0;G.slips=0;G.foot='L';G.hand='L';
-  const L=player.limbs;snapLimb(player,'lf',v3(-.25,.45,0));snapLimb(player,'rf',v3(.25,.45,0));snapLimb(player,'lh',v3(-.32,1.95,0));snapLimb(player,'rh',v3(.32,1.95,0));
-  player.root.position.set(0,0,0);player.root.rotation.set(0,0,0);player.inner.position.set(0,0,0);player.lean=0;player.dip=0;player.spin=0;
-  for(const k of ['lf','rf','lh','rh'])routeHolds.push(makeHold(L[k].cur.x,L[k].cur.y,col[0],.12));
-  G.fall=null;hud();later(.5,nextMove)}
-function later(s,f){const id=G;setTimeout(()=>{if(G===id&&!G.over&&!G.fall)f()},s*1000)}
-function hud(){$('grade').firstChild.textContent='V'+G.grade;$('grade').querySelector('small').textContent=`문제 ${G.prob} · ${G.col[1]} 홀드`;$('score').textContent=G.score.toLocaleString();$('lives').textContent='🧗'.repeat(Math.max(0,G.lives))+'·'.repeat(3-Math.max(0,G.lives))}
-function addScore(n){G.score+=n;hud()}
-function nextMove(){const m=G.moves[G.mi];
-  if('shx'.includes(m)&&G.villainLeft>0&&G.mi===G.villainAt&&!G.v){G.villainLeft--;spawnVillain();return}
-  G.kind=m;if('shx'.includes(m))startFoot();else if(m==='d')startDyno();else if(m==='top')topOut()}
-// ---------- 동그라미 게이지 (슬로우 + 회색 화면) ----------
-// q={key,dur,zone:[a,b],perf:[a,b],anchor:()=>Vector3,bal:bool,ok(perfect),fail(why)}
-function qte(q){G.qte=q;q.p=0;const el=$('qte');el.hidden=false;el.querySelector('b').textContent=KNAME[q.key];el.querySelector('small').textContent=q.sub||'초록 칸에서 눌러!';
-  const C=2*Math.PI*42,arc=(id,a,b)=>{const e=$(id);e.setAttribute('stroke-dasharray',`${C*(b-a)} ${C}`);e.setAttribute('stroke-dashoffset',`${-C*a}`)};arc('qZone',q.zone[0],q.zone[1]);arc('qPerf',q.perf[0],q.perf[1]);
-  if(q.big)document.body.classList.add('slow');lit(q.key);showBal(!!q.bal);say('')}
-function endQte(){if(G)G.qte=null;$('qte').hidden=true;document.body.classList.remove('slow');lit(null);showBal(false)}
-function qtePress(k){const q=G.qte;if(!q)return false;
-  if(k!==q.key){pop(KNAME[q.key].replace('!','')+' 버튼이에요!','#ffd23f',58);return true}
-  const p=q.p;if(p<q.zone[0]){endQte();q.fail('너무 빨라!');return true}
-  if(q.bal&&Math.abs(G.bal)>.35){endQte();q.fail('발 미끄러짐!');return true}
-  const perfect=p>=q.perf[0]&&p<=q.perf[1];endQte();q.ok(perfect);return true}
-function updQte(rdt){const q=G.qte;if(!q)return;q.p+=rdt/q.dur;
-  $('qFill').setAttribute('stroke-dasharray',`${2*Math.PI*42*Math.min(1,q.p)} 999`);
-  const a=q.anchor().clone();a.project(camera);const el=$('qte'),w=el.offsetWidth,h=el.offsetHeight;
-  const x=clamp((a.x*.5+.5)*innerWidth,w/2+8,innerWidth-w/2-8),y=clamp((-a.y*.5+.5)*innerHeight,h/2+110,innerHeight-h/2-(innerHeight>500?190:120));
-  el.style.transform=`translate(${(x-w/2).toFixed(0)}px,${(y-h/2).toFixed(0)}px)`;
-  const inZ=q.p>=q.zone[0]&&q.p<=q.zone[1];el.classList.toggle('go',inZ);
-  if(q.p>q.zone[1]){endQte();q.fail('늦었다!')}}
-const gDur=(base,min,per)=>Math.max(min,base-G.grade*per);
-// --- 발 ---
-function startFoot(){
-  const k=G.foot==='L'?'lf':'rf',L=player.limbs[k].cur,others=COLORS.filter(c=>c!==G.col),heel=G.kind==='h';
-  const hk=player.limbs[k==='lf'?'lh':'rh'].cur;const to=heel?v3(hk.x+(k==='lf'?-.42:.42),hk.y-.25,0):v3(L.x+rand(-.12,.12),L.y+.5,0);if(heel)G.heelK=k;G.footTo=to;G.footHold=makeHold(to.x,to.y,G.col[0],.11);
-  G.decoys=[-1,1].map(s=>makeHold(to.x+s*.3,to.y+rand(-.1,.1),pick(others)[0],.1));
-  qte({key:G.foot,dur:gDur(heel?1.05:1.15,.6,.06),zone:heel?[.72,.92]:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.footTo,sub:heel?'힐훅! 뒤꿈치 높이 걸기 · 중심 꽉':`${G.col[1]} 홀드 · 중심 잡고 초록 칸에서!`,
-    ok:pf=>{routeHolds.push(G.footHold);G.decoys.forEach(fadeHold);setLimb(player,k,G.footTo,heel?.32:.2);sfx.step();pop(heel?(pf?'힐훅 딱!':'힐훅!'):pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore((pf?100:50)*(heel?2:1));G.foot=G.foot==='L'?'R':'L';player.dip=-.1;setTimeout(()=>player.dip=0,160);later(.16,startHand)},
-    fail:why=>{slip(why);later(.5,()=>{scene.remove(G.footHold);G.decoys.forEach(m=>scene.remove(m));startFoot()})}})}
-function fadeHold(m){let o=1;m.material.transparent=true;const iv=setInterval(()=>{o-=.1;m.material.opacity=o;if(o<=0){clearInterval(iv);scene.remove(m)}},40)}
-function slip(t){G.slips++;sfx.slip();pop(t,'#ff3b30',46);G.balV+=(Math.random()<.5?-1:1)*1.2;stopT=.06;player.dip=.15;setTimeout(()=>player.dip=0,150);if(G.slips>=3){G.slips=0;fall('발이 다 터졌다')}}
-// --- 손 ---
-function startHand(){const k=G.hand==='L'?'lh':'rh',c=player.limbs[k].cur,o=player.limbs[k==='lh'?'rh':'lh'].cur,cross=G.kind==='x',far=G.kind==='h';
-  const to=cross?v3(o.x+(k==='lh'?.32:-.32),Math.max(c.y,o.y)+.35,0):v3(c.x+rand(-.15,.15),c.y+(far?.72:.5),0);
-  // 볼륨 바로 위 홀드면 팔이 볼륨을 뚫으니, 볼륨 옆 바깥으로 비켜서 잡기
-  if(G.vol&&to.y<G.vol.top+.9&&Math.abs(to.x-G.vol.cx)<G.vol.W/2+.12)to.x=G.vol.cx+(k==='lh'?-1:1)*(G.vol.W/2+.15);G.handTo=to;const hm=makeHold(to.x,to.y,G.col[0],.12);routeHolds.push(hm);
-  qte({key:'G',dur:gDur(cross?.95:1.05,.58,.05),zone:cross?[.7,.92]:[.66,.92],perf:[.78,.85],bal:true,anchor:()=>G.handTo,sub:cross?'크로스! 반대손 너머로':far?'힐훅 믿고 멀리!':'중심 잡고 초록 칸에서!',
-    ok:pf=>{setLimb(player,k,to,cross?.34:.28);sfx.grab();pop(cross?(pf?'크로스 딱!':'크로스!'):pf?'딱!':'좋아',pf?'#ffd23f':'#fff',46);addScore((pf?100:50)*(cross||far?2:1));
-      if(!cross)G.hand=G.hand==='L'?'R':'L';
-      if(far&&G.heelK){const hk=G.heelK,of=player.limbs[hk==='lf'?'rf':'lf'].cur,ft=v3(player.limbs[hk].cur.x*.5+of.x*.5+(hk==='lf'?-.22:.22),of.y+.35,0);G.heelK=null;
-        later(.3,()=>{routeHolds.push(makeHold(ft.x,ft.y,G.col[0],.11));setLimb(player,hk,ft,.25);sfx.step()})}
-      player.sv+=(k==='lh'?-1:1)*1.4;player.dip=-.16;setTimeout(()=>player.dip=0,180);G.shake=Math.max(G.shake||0,.08);G.mi++;later(far?.45:.18,nextMove)},
-    fail:why=>{slip(why);later(.5,startHand2)}});
-  function startHand2(){scene.remove(hm);routeHolds.splice(routeHolds.indexOf(hm),1);startHand()}}
-// --- 다이노 / 코디네이션: 반동 왼발 → 오른발 → 잡아 를 연속 게이지로 ---
-function startDyno(){
-  const g=G.grade,seqs=[['L','R','G'],['L','R','L','G'],['R','L','R','G'],['L','R','L','R','G'],['L','L','R','R','G']];G.seq=seqs[Math.min(seqs.length-1,Math.floor(g/1.5))].slice();G.dPerf=0;G.dN=G.seq.length;
-  const l=player.limbs,dy=1.05,cx=(l.lh.cur.x+l.rh.cur.x)/2,hy=(l.lh.cur.y+l.rh.cur.y)/2+dy,W=1.1,H=.75,D=.26,cy=hy-H*.25;
-  G.vol={cx,top:hy,W};const vol=makeVolume(cx,cy,W,H,D,pick([0x4a5866,0x6b5a8e,0x2f6f63,0x8a4f3d]));routeHolds.push(vol);
-  // 손은 볼륨 윗모서리(립)를 때려 잡고, 발은 볼륨 아래쪽 면에 스미어
-  G.dynoTo={lh:v3(cx-.15,hy-.05,D+.07),rh:v3(cx+.15,hy-.05,D+.07),lf:v3(l.lf.cur.x,l.lf.cur.y+dy*.85,0),rf:v3(l.rf.cur.x,l.rf.cur.y+dy*.85,0)};
-  for(const k of ['lf','rf'])routeHolds.push(makeHold(G.dynoTo[k].x,G.dynoTo[k].y,G.col[0],.1));
-  say('볼륨 다이노!','반동 주고… 왼발! 오른발! 볼륨 잡아!');later(.7,dynoStep)}
-function dynoStep(){const k=G.seq.shift(),last=!G.seq.length,l=player.limbs;
-  const anchor=k==='G'?()=>G.dynoTo.rh:k==='L'?()=>l.lf.cur:()=>l.rf.cur;
-  qte({key:k,big:true,dur:gDur(last?.9:.75,.42,.035),zone:[.68,.94],perf:[.8,.88],anchor,sub:last?'지금 날아!':'반동!',
-    ok:pf=>{if(pf)G.dPerf++;(pf?sfx.perfect:sfx.good)();pop(pf?'퍼펙트!':'굿',pf?'#ffd23f':'#fff',30);addScore(pf?100:50);
-      if(!last){player.dip=.22;setTimeout(()=>player.dip=0,140);later(.18,dynoStep)}else dynoGo()},
-    fail:why=>{sfx.miss();pop(why,'#ff3b30',40);fall('다이노 실패')}})}
-// 날아가기: 긴 슬로우 + 줌인, 발은 벽에서 떨어져 대롱 → 볼륨 립에 '착!' (멈칫·흔들림·초크) → 발 스윙해서 다시 붙기
-function dynoGo(){const all=G.dPerf===G.dN;if(all){pop('퍼펙트 다이노!!','#ffd23f',24);addScore(300)}
-  slowT=9;G.zoom=1;const l=player.limbs,hy=G.dynoTo.lh.y;sfx.whoosh();
-  for(const k of ['lh','rh'])setLimb(player,k,G.dynoTo[k],.36);G.flying=true;
-  for(const k of ['lf','rf'])setLimb(player,k,v3(l[k].cur.x*.5+(k==='lf'?-.1:.1),hy-1.5,.6),.46);
-}
-function catchVol(){slowT=0;stopT=.13;G.shake=.4;G.zoom=0;sfx.slap();buzz([25,30,60]);pop(G.dPerf===G.dN?'착!!!':'착!','#fff',36);addScore(100);
-  for(const k of ['lh','rh'])chalk(G.dynoTo[k],14);
-  later(.3,()=>{for(const k of ['lf','rf'])setLimb(player,k,G.dynoTo[k],.32);sfx.step();for(const k of ['lf','rf'])chalk(G.dynoTo[k],5)});
-  later(.35,()=>{G.swingT=1.5;G.balV=(Math.random()<.5?-1:1)*(2.3+G.grade*.15);showBal(true);say('배른도어!','조이스틱으로 버텨!')});
-  later(1.95,()=>{if(G.swingT!==null){G.swingT=0;showBal(false);say('');pop('버팀!','#46d18c',46);addScore(150)}G.mi++;nextMove()})}
-function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 const parts=[],puffGeo=new T.SphereGeometry(1,6,5);
-function chalk(p,n){for(let i=0;i<n;i++){const m=new T.Mesh(puffGeo,new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85,depthWrite:false}));m.position.copy(p);m.position.z+=.05;m.scale.setScalar(.04);scene.add(m);
-  parts.push({m,v:v3(rand(-1.2,1.2),rand(-.2,1.4),rand(.2,1.4)),life:rand(.4,.8)})}}
+function chalk(p,n,col=0xffffff){if(parts.length>140)n=Math.min(n,2);for(let i=0;i<n;i++){const m=new T.Mesh(puffGeo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:.85,depthWrite:false}));m.position.copy(p);m.scale.setScalar(.04);scene.add(m);
+  parts.push({m,v:v3(rand(-1.2,1.2),rand(-.2,1.4),rand(.1,1.3)),life:rand(.4,.8)})}}
 function updParts(dt){for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.life-=dt;q.v.multiplyScalar(Math.pow(.1,dt));q.m.position.addScaledVector(q.v,dt);q.m.scale.addScalar(dt*.18);q.m.material.opacity=Math.max(0,q.life)*1.1;
   if(q.life<=0){scene.remove(q.m);q.m.material.dispose();parts.splice(i,1)}}}
-// --- 완등 ---
-function topOut(){
-  const l=player.limbs;const tp=v3(0,Math.max(l.lh.cur.y,l.rh.cur.y)+.55,0);routeHolds.push(makeHold(tp.x,tp.y,G.col[0],.18));
-  setLimb(player,'lh',v3(-.08,tp.y,0),.3);setLimb(player,'rh',v3(.08,tp.y,0),.36);
-  const g=500*(G.grade+1);addScore(g);sfx.top();say(`V${G.grade} 완등!!`,`+${g.toLocaleString()}`);
-  later(1.8,()=>{G.grade++;G.prob++;say('');startProblem()})}
-// --- 추락 ---
-function fall(why){if(G.fall||G.over)return;endQte();
-  sfx.fall();say('추락!',why);G.fall={t:0,vy:0,y:0};player.spin=0;player.root.rotation.set(0,0,0);player.root.position.set(0,0,0);player.inner.position.set(0,0,0);G.lives--;hud();
-  if(G.v&&G.v.mode==='come')G.v.mode='leave'}
-// --- 겹치기 빌런 ---
-const VLINES=['같이 붙어요~','이 홀드 제 거예요','어? 겹쳤네요 ㅎㅎ','제 루트랑 똑같네요?'];
-function spawnVillain(){
-  const side=Math.random()<.5?-1:1,r=makeRig({skin:0xc7966b,shirt:0xb6f03c,pants:0x3a3a3a,hair:0x1a1a1a,shoe:0xff2d55});
-  const hy=Math.max(.3,player.limbs.lf.cur.y-1.6),x0=side*1.25;
-  snapLimb(r,'lf',v3(x0-.2,hy,0));snapLimb(r,'rf',v3(x0+.2,hy,0));snapLimb(r,'lh',v3(x0-.3,hy+1.5,0));snapLimb(r,'rh',v3(x0+.3,hy+1.5,0));
-  G.v={r,side,p:0,mode:'come',cyc:0};sfx.warn();say('겹치기 빌런 접근!',`"${pick(VLINES)}"`);
-  later(1.1,()=>{if(!G.v)return;
-    qte({key:'K',big:true,dur:gDur(1.2,.7,.05),zone:[.62,.94],perf:[.84,.92],anchor:()=>G.v.r.head.position.clone().add(G.v.r.root.position),sub:'초록=날라차기 · 노랑=머리 밟기',
-      ok:pf=>kick(pf),fail:why=>{pop(why==='늦었다!'?'겹쳤어요~':'헛발질!','#ff3b30',40);sfx.miss();G.balV+=-side*1.5;G.v.mode='leave';later(.6,nextMove)}})})}
-function kick(perfect){const v=G.v;v.mode='kicked';v.t=0;stopT=.1;slowT=.6;sfx.kick();
-  {const ph=hipOf(player);player.root.position.copy(ph);player.inner.position.set(-ph.x,-ph.y,-ph.z)}player.spin=1;
-  if(perfect){pop('빌런 밟고 점프!!','#ffd23f',36);addScore(600);const fk=G.foot==='L'?'lf':'rf',back=player.limbs[fk].to.clone(),hp=v.r.head.position;setLimb(player,fk,v3(hp.x,hp.y+.1,0),.15);
-    setTimeout(()=>{if(G&&!G.fall)setLimb(player,fk,back,.2)},350);G.skip=true}
-  else{pop('날라차기 참교육!','#ff8a3d',36);addScore(300);const fk=v.side<0?'lf':'rf',back=player.limbs[fk].to.clone();setLimb(player,fk,v3(v.side*.9,player.limbs.lf.cur.y+.6,0),.14);setTimeout(()=>{if(G&&!G.fall)setLimb(player,fk,back,.2)},300)}
-  const hip=hipOf(v.r);v.r.inner.position.set(-hip.x,-hip.y,-hip.z);v.r.root.position.copy(hip);v.vel=v3(v.side*(perfect?1.5:3.5),perfect?-2:3,2.2);v.spin=v3(rand(4,8),0,v.side*rand(5,9));
-  later(.8,()=>{if(G.skip){G.skip=false;G.mi++;pop('한 동작 건너뛰기!','#ffd23f',52);const k=G.hand==='L'?'lh':'rh',c=player.limbs[k].cur,to=v3(c.x,c.y+.5,0);routeHolds.push(makeHold(to.x,to.y,G.col[0],.12));setLimb(player,k,to,.25);G.hand=G.hand==='L'?'R':'L'}nextMove()})}
-function updVillain(dt){const v=G.v;if(!v)return;const r=v.r;
-  if(v.mode==='come'){v.p=Math.min(1,v.p+dt/1.6);const tgtY=player.limbs.lf.cur.y,startY=Math.max(.3,tgtY-1.6),y=startY+(tgtY-startY)*v.p+.1,x=v.side*(1.25-.7*v.p);
-    v.cyc+=dt*6*(1-v.p*.8);const ph=Math.sin(v.cyc);snapLimb(r,'lf',v3(x-.2,y+(ph>0?.1:0),0));snapLimb(r,'rf',v3(x+.2,y+(ph<0?.1:0),0));snapLimb(r,'lh',v3(x-.3,y+1.5+(ph<0?.12:0),0));snapLimb(r,'rh',v3(x+.3,y+1.5+(ph>0?.12:0),0))}
-  else if(v.mode==='kicked'){v.t+=dt;v.vel.y-=14*dt;r.root.position.addScaledVector(v.vel,dt);r.root.rotation.x+=v.spin.x*dt;r.root.rotation.z+=v.spin.z*dt;
-    if(r.root.position.y<.5){r.root.position.y=.5;if(!v.landed){v.landed=true;sfx.thud();pop(pick(['매트에 철퍼덕!','겹치기 반성 중...','으아악 내 루트!!']),'#fff',62)}v.vel.set(0,0,0);v.spin.set(0,0,0)}
-    if(v.t>2.4)removeVillain()}
-  else if(v.mode==='leave'){r.root.position.x+=v.side*dt*2.4;r.root.position.y-=dt*.4;if(Math.abs(r.root.position.x)>5)removeVillain()}
-  poseRig(r,dt)}
-function removeVillain(){if(!G.v)return;scene.remove(G.v.r.root);G.v=null}
+// ---------- 게임 ----------
+const COLORS=[[0xffc21a,'노랑'],[0x46d18c,'초록'],[0x4aa3ff,'파랑'],[0xff7eb6,'분홍'],[0x9b5de5,'보라'],[0xff8a3d,'주황']];
+let G=null;const input={jx:0,down:{}};let stopT=0,slowT=0;
+const KNAME={L:'왼발!',R:'오른발!',G:'잡아!',K:'날라차기!'};
+function newGame(){tweens.length=0;if(G&&G.v)scene.remove(G.v.R.g);G={grade:0,prob:1,score:0,lives:3,over:false,best:+(localStorage.getItem('chamgyo-wall-best')||0)};startProblem()}
+// 문제 만들기: 구간마다 [발판 볼륨 n개를 밟고 달리기 → 큰 볼륨으로 점프 → 올라서기]. 올라선 큰 볼륨이 다음 구간의 출발점. 마지막 구간은 TOP 홀드
+function buildProblem(){for(const m of props)scene.remove(m);props.length=0;const g=G.grade,col=COLORS[(G.prob-1)%COLORS.length];G.col=col;const nSec=g<2?2:3;
+  let d=Math.random()<.5?1:-1,plat={x:-d*1.3,y:MAT,z:.75};G.secs=[];const stepCols=[0xc9a26b,0x8b9099,0x33363c,0xb9b2a4];
+  for(let s=0;s<nSec;s++){const n=g<1?2:g<3?2+((Math.random()*2)|0):3+((Math.random()*2)|0),steps=[],first=Math.random()<.5?'L':'R';
+    for(let i=1;i<=n;i++){const x=plat.x+d*.68*i,y=plat.y+.34*i,w=rand(.56,.7),h=rand(.4,.5),vol=makeVolume(x,y-.35*h,w,h,.5,pick(stepCols));props.push(vol,makeHold(x,y+.012,.3,col[0],.1,.02,.08));
+      steps.push({pin:v3(x,y+.05,.3),vol,key:i%2?first:first==='L'?'R':'L'})}
+    const lx=steps[n-1].pin.x,ly=steps[n-1].pin.y-.05,top=s===nSec-1,cx=lx+d*.85,lipY=ly+2.15;let big,next=null;
+    if(!top){const w=1.3,h=.7,dd=.55,cy=lipY-.25*h,sy=cy+.3875*h;props.push(makeVolume(cx,cy,w,h,dd,col[0]),makeHold(cx,lipY+.02,dd-.02,0xf4f1ea,.26,.03,.05));
+      big={cx,lipY,z:dd,hangZ:dd+.18,hl:v3(cx-.16,lipY+.02,dd+.05),hr:v3(cx+.16,lipY+.02,dd+.05),hc:v3(cx,lipY,dd)};next={x:cx,y:sy,z:dd*.45}}
+    else{const j=makeHold(cx,lipY-.03,.1,col[0],.24,.11,.12);props.push(j);const c=document.createElement('canvas');c.width=128;c.height=48;const q=c.getContext('2d');q.fillStyle='#16130f';q.fillRect(0,0,128,48);q.fillStyle='#ffd23f';q.font='bold 34px sans-serif';q.textAlign='center';q.fillText('TOP',64,37);
+      const sg=new T.Mesh(new T.PlaneGeometry(.5,.19),new T.MeshBasicMaterial({map:new T.CanvasTexture(c)}));sg.position.set(cx,lipY+.34,.02);scene.add(sg);props.push(sg);
+      big={cx,lipY,z:.14,hangZ:.5,hl:v3(cx-.1,lipY+.04,.18),hr:v3(cx+.1,lipY+.04,.18),hc:v3(cx,lipY,.2)}}
+    const mk=p=>({x:p.x,y:p.y,z:p.z,l:v3(p.x-.13,p.y+.05,p.z),r:v3(p.x+.13,p.y+.05,p.z)});G.secs.push({d,n,steps,big,top,plat:mk(plat)});if(next){plat=next;d=-d}}}
+function startProblem(){endQte();if(G.v){scene.remove(G.v.R.g);G.v=null}buildProblem();G.cp=0;G.vDone=false;G.vSec=1+((Math.random()*(G.secs.length-1))|0);G.fall=null;G.swing=null;G.zoom=0;G.bal=0;G.balV=0;slowT=0;hud();beginSection(0,true);camT.copy(player.H)}
+function hud(){$('grade').firstChild.textContent='V'+G.grade;$('grade').querySelector('small').textContent=`문제 ${G.prob} · ${G.col[1]} 볼륨`;$('score').textContent=G.score.toLocaleString();$('lives').textContent='🧗'.repeat(Math.max(0,G.lives))+'·'.repeat(3-Math.max(0,G.lives))}
+function addScore(n){G.score+=n;hud()}
+function readyPose(sec,tele){const P=player,pl=sec.plat,to=v3(pl.x,pl.y+.84,pl.z+.06),yaw=sec.d*1.0;P.frog=0;setPin(P,'lf',pl.l,20);setPin(P,'rf',pl.r,20);setOff(P,'lh',-.26,.3,.2,12);setOff(P,'rh',.26,.3,.2,12);
+  if(tele){if(G.act)G.act.dead=true;P.H.copy(to);P.yaw=yaw;P.lean=0;P.pitch=.12;pose(P,1)}
+  else{const from=P.H.clone(),y0=P.yaw,l0=P.lean,p0=P.pitch;act(.25,t=>{P.H.lerpVectors(from,to,eo(t));P.yaw=lerp(y0,yaw,t);P.lean=lerp(l0,0,t);P.pitch=lerp(p0,.12,t)})}}
+function beginSection(si,tele){G.si=si;G.step=0;readyPose(G.secs[si],tele);later(.45,()=>{if(si===G.vSec&&!G.vDone)villainCome();else runGauge()})}
+// ---------- 동그라미 게이지 (슬로우 + 회색 화면) ----------
+function qte(q){G.qte=q;q.p=0;const el=$('qte');el.hidden=false;el.querySelector('b').textContent=q.label||KNAME[q.key];el.querySelector('small').textContent=q.sub||'';
+  const C=2*Math.PI*42,arc=(id,a,b)=>{const e=$(id);e.setAttribute('stroke-dasharray',`${C*(b-a)} ${C}`);e.setAttribute('stroke-dashoffset',`${-C*a}`)};arc('qZone',q.zone[0],q.zone[1]);arc('qPerf',q.perf[0],q.perf[1]);
+  document.body.classList.add('slow');lit(q.key);say('')}
+function endQte(){if(G)G.qte=null;$('qte').hidden=true;document.body.classList.remove('slow');lit(null)}
+function qtePress(k){const q=G.qte;if(!q)return false;
+  if(k!==q.key){pop((q.key==='K'?'날라차기':q.key==='G'?'잡기':KNAME[q.key].replace('!',''))+' 버튼이에요!','#ffd23f',58);return true}
+  const p=q.p;if(p<q.zone[0]){endQte();q.fail('너무 빨라!');return true}
+  const perfect=p>=q.perf[0]&&p<=q.perf[1];endQte();if(perfect)sfx.perfect();q.ok(perfect);return true}
+function updQte(rdt){const q=G.qte;if(!q)return;q.p+=rdt/q.dur;
+  $('qFill').setAttribute('stroke-dasharray',`${2*Math.PI*42*Math.min(1,q.p)} 999`);
+  const a=tmpA.copy(q.anchor());a.project(camera);const el=$('qte'),w=el.offsetWidth,h=el.offsetHeight;
+  const x=clamp((a.x*.5+.5)*innerWidth,w/2+8,innerWidth-w/2-8),y=clamp((-a.y*.5+.5)*innerHeight-h*.72,h/2+70,innerHeight-h/2-(innerHeight>500?190:120));
+  el.style.transform=`translate(${(x-w/2).toFixed(0)}px,${(y-h/2).toFixed(0)}px)`;el.classList.toggle('go',q.p>=q.zone[0]&&q.p<=q.zone[1]);
+  if(q.p>q.zone[1]){endQte();q.fail('늦었다!')}}
+const gDur=(base,min,per)=>Math.max(min,base-G.grade*per);
+// ---------- 1) 볼륨 코디네이션: 왼발! 오른발! ----------
+function runGauge(){const s=G.secs[G.si],st=s.steps[G.step];
+  qte({key:st.key,dur:gDur(1,.5,.05),zone:[.6,.93],perf:[.78,.87],anchor:()=>st.pin,sub:G.step?'다음 볼륨!':'볼륨 밟고 달려!',ok:pf=>stepGo(st,pf),fail:why=>fall(why==='늦었다!'?'발이 늦었다':'너무 빨리 뛰었다')})}
+function stepGo(st,pf){const P=player,s=G.secs[G.si],k=st.key==='L'?'lf':'rf',o=k==='lf'?'rf':'lf',sk=k==='lf'?-1:1,from=P.H.clone(),to=v3(st.pin.x+s.d*.1,st.pin.y+.72,.48),y0=P.yaw;
+  setPin(P,k,st.pin,26);setOff(P,o,-sk*.1,-.5,-.36,14);setOff(P,k==='lf'?'rh':'lh',-sk*.22,.5,.34,14);setOff(P,k==='lf'?'lh':'rh',sk*.28,.14,-.26,14);let hit=false,nx=false;
+  act(.4,t=>{P.H.lerpVectors(from,to,eo(t));P.H.y+=Math.sin(Math.PI*t)*.14;P.pitch=.3-.15*t;P.yaw=lerp(y0,s.d*1.15,t);P.lean=Math.sin(Math.PI*t)*.12*sk;
+    if(t>.5)setOff(P,o,-sk*.1,-.34,.42,10);
+    if(t>.4&&!hit){hit=true;stomp(st,pf)}
+    if(t>.62&&!nx){nx=true;G.step++;G.step<s.n?runGauge():catchGauge()}})}
+function stomp(st,pf){stopT=.05;G.shake=Math.max(G.shake||0,pf?.2:.13);sfx.stomp();buzz(pf?[12,20,25]:14);chalk(st.pin,pf?9:5);pop(pf?'퍼펙트!':'탁!',pf?'#ffd23f':'#fff',44);addScore(pf?150:100);
+  const m=st.vol;tw(.18,t=>{const q=Math.sin(Math.PI*t);m.scale.set(1+.06*q,1-.1*q,1)})}
+// ---------- 2) 점프해서 큰 볼륨 잡기 → 배른도어 버티기 ----------
+function catchGauge(){const s=G.secs[G.si],b=s.big;qte({key:'G',dur:gDur(1.05,.55,.05),zone:[.62,.93],perf:[.8,.88],anchor:()=>b.hc,sub:s.top?'TOP 홀드로 날아!':'날아서 볼륨 잡아!',ok:jumpGo,fail:why=>fall(why==='늦었다!'?'점프가 늦었다':'너무 빨리 뛰었다')})}
+function jumpGo(pf){const P=player,b=G.secs[G.si].big,from=P.H.clone(),to=v3(b.cx,b.lipY-1,b.hangZ),y0=P.yaw,p0=P.pitch,dist=from.distanceTo(to);
+  slowT=99;G.zoom=1;sfx.whoosh();setOff(P,'lh',-.16,1.02,.18,12);setOff(P,'rh',.16,1.02,.18,12);let un=false,pin=false;
+  act(.36+dist*.07,t=>{P.H.lerpVectors(from,to,t);P.H.y+=Math.sin(Math.PI*t)*(.2+dist*.05);P.yaw=lerp(y0,0,eo(t));P.pitch=lerp(p0+.2,0,t);P.lean=0;
+    if(t>.12&&!un){un=true;setOff(P,'lf',-.1,-.72,-.3,9);setOff(P,'rf',.12,-.62,-.12,9)}
+    if(t>.78&&!pin){pin=true;setPin(P,'lh',b.hl,30);setPin(P,'rh',b.hr,30)}},()=>catchImpact(pf))}
+function catchImpact(pf){const P=player,s=G.secs[G.si],b=s.big;slowT=0;G.zoom=0;stopT=.14;G.shake=.45;sfx.slap();buzz([25,30,60]);pop(pf?'착!!!':'착!','#fff',36);addScore(pf?400:300);chalk(b.hl,12);chalk(b.hr,12);
+  P.frog=1;G.bal=0;G.balV=s.d*(1.5+G.grade*.2);G.swing={t:1.4,b};showBal(true);say(s.top?'매달려!':'배른도어!','조이스틱으로 버텨!')}
+// ---------- 3) 힐훅 → 맨틀로 볼륨 위에 올라서기 ----------
+function hookGauge(){const b=G.secs[G.si].big,key=Math.random()<.5?'L':'R',sg=key==='L'?-1:1,pin=v3(b.cx+sg*.46,b.lipY+.14,b.z*.4);
+  qte({key,dur:gDur(1,.55,.04),zone:[.62,.93],perf:[.79,.87],anchor:()=>pin,sub:'힐훅 걸어!',fail:()=>fall('힐훅이 빠졌다'),ok:pf=>{const P=player,k=key==='L'?'lf':'rf',from=P.H.clone(),to=v3(b.cx-sg*.1,b.lipY-.55,b.hangZ),l0=P.lean;setPin(P,k,pin,24);let hit=false,nx=false;
+    act(.32,t=>{P.H.lerpVectors(from,to,eo(t));P.lean=lerp(l0,sg*.3,t);
+      if(t>.45&&!hit){hit=true;stopT=.04;G.shake=.12;sfx.step();buzz(12);chalk(pin,5);pop(pf?'힐훅 딱!':'힐훅!',pf?'#ffd23f':'#fff',44);addScore(pf?150:100)}
+      if(t>.7&&!nx){nx=true;mantleGauge(k)}})}})}
+function mantleGauge(hk){const b=G.secs[G.si].big,nxt=G.secs[G.si+1],pl=nxt.plat,anc=v3(b.cx,b.lipY+.5,b.z);
+  qte({key:'G',label:'맨틀!',dur:gDur(1,.55,.04),zone:[.62,.93],perf:[.79,.87],anchor:()=>anc,sub:'눌러서 올라서!',fail:()=>fall('맨틀 실패'),ok:pf=>{const P=player,from=P.H.clone(),to=v3(pl.x,pl.y+.84,pl.z+.06),l0=P.lean,y1=nxt.d,o2=hk==='lf'?'rf':'lf';let a=false,c=false,h=false;sfx.whoosh();
+    act(.5,t=>{P.H.lerpVectors(from,to,eo(t));P.H.y+=Math.sin(Math.PI*t)*.12;P.lean=lerp(l0,0,t);P.yaw=lerp(0,y1,eio(t));P.frog=1-t;
+      if(t>.35&&!a){a=true;setPin(P,o2,o2==='lf'?pl.l:pl.r,20)}
+      if(t>.5&&!h){h=true;setOff(P,'lh',-.3,pf?1:.2,.1,12);setOff(P,'rh',.3,pf?1:.2,.1,12)}
+      if(t>.65&&!c){c=true;setPin(P,hk,hk==='lf'?pl.l:pl.r,20)}},
+     ()=>{stopT=.04;G.shake=.14;sfx.stomp();chalk(pl.l,4);chalk(pl.r,4);pop(pf?'완벽 맨틀!!':'올라섰다!',pf?'#ffd23f':'#46d18c',44);addScore(pf?350:200);G.cp=G.si+1;beginSection(G.si+1)})}})}
+// ---------- 완등 / 추락 ----------
+function topOut(){const P=player,g=G.grade,b=G.secs[G.si].big,from=P.H.clone(),to=v3(b.cx,b.lipY-1,b.hangZ),l0=P.lean;act(.2,t=>{P.H.lerpVectors(from,to,t);P.lean=lerp(l0,0,t)});
+  setPin(P,'lf',v3(b.cx-.22,b.lipY-1.55,.06),14);setPin(P,'rf',v3(b.cx+.22,b.lipY-1.5,.06),14);setOff(P,'rh',.32,1.05,-.1,8);
+  const sc=500*(g+1);addScore(sc);sfx.top();buzz([40,40,40,40,90]);say(`V${g} 완등!!`,`+${sc.toLocaleString()}`);for(let i=0;i<6;i++)later(.05+i*.12,()=>chalk(v3(b.cx+rand(-.8,.8),b.lipY+rand(-.4,.5),.4),6,pick(COLORS)[0]));
+  later(2,()=>{G.grade++;G.prob++;say('');startProblem()})}
+function fall(why,vx=0){if(G.fall||G.over)return;endQte();if(G.act)G.act.dead=true;G.swing=null;showBal(false);slowT=0;G.zoom=0;const P=player;
+  for(const k in P.limbs){const sg=k[0]==='l'?-1:1;k[1]==='h'?setOff(P,k,sg*.5,.75,.1,8):setOff(P,k,sg*.25,-.55,.25,8)}
+  sfx.slip();sfx.fall();say('추락!',why);G.fall={t:0,vy:1.2,vx,landed:false};G.lives--;hud();if(G.v&&G.v.mode!=='hit'&&G.v.mode!=='down'){G.v.mode='leave';G.v.t=0}}
+function gameOver(){G.over=true;endQte();const best=Math.max(G.best,G.score);try{localStorage.setItem('chamgyo-wall-best',best)}catch(e){}
+  $('rWhy').textContent=`추락 3번 · 최고 V${Math.max(0,G.grade-1)} 완등`;$('rScore').textContent=G.score.toLocaleString();$('rInfo').textContent=G.score>=G.best&&G.score>0?'🏆 내 신기록!':`내 최고 ${best.toLocaleString()}`;$('result').hidden=false}
+// ---------- 겹치기 빌런: 내 루트 볼륨을 반대로 달려옴 ----------
+const VLINES=['같이 붙어요~','이 볼륨 제 거예요','어? 겹쳤네요 ㅎㅎ','제 루트랑 똑같네요?'];
+function villainCome(){const s=G.secs[G.si],V=makeRig({skin:0xc7966b,shirt:0xb6f03c,shorts:0x3a3a3a,hair:0x1a1a1a,shoe:0xff2d55,bag:0xffffff});
+  const last=s.steps[s.n-1].pin,pts=[s.top?v3(last.x+s.d*.6,last.y+1.5,.5):v3(s.big.cx,s.big.lipY+.9,.35)];for(let i=s.n-1;i>=0;i--)pts.push(v3(s.steps[i].pin.x,s.steps[i].pin.y+.74,.48));
+  V.H.copy(pts[0]);V.yaw=-s.d;V.pitch=.15;pose(V,1);G.v={R:V,pts,p:0,mode:'run',t:0,d:s.d};G.vDone=true;sfx.warn();say('겹치기 빌런 접근!',`"${pick(VLINES)}"`)}
+function kickGauge(){const v=G.v;qte({key:'K',dur:gDur(1.15,.65,.05),zone:[.6,.93],perf:[.82,.9],anchor:()=>v.R.head.position,sub:'초록=날라차기 · 노랑=머리 밟고 점프',ok:kickGo,
+  fail:why=>{pop(why==='늦었다!'?'겹쳤어요~':'헛발질!','#ff3b30',40);sfx.miss();fall('겹치기 빌런한테 밀렸다',-v.d*1.8)}})}
+function kickGo(pf){const P=player,v=G.v,V=v.R,s=G.secs[G.si],d=s.d,from=P.H.clone(),y0=P.yaw,kk=d>0?'rf':'lf',ok=kk==='rf'?'lf':'rf',sg=kk==='rf'?1:-1,pl=s.plat;let hit=false,nx=false;sfx.whoosh();
+  if(pf){const hp=V.head.position.clone(),to=hp.clone().add(v3(0,.86,0));setOff(P,ok,-sg*.1,-.45,-.3,12);
+    act(.42,t=>{P.H.lerpVectors(from,to,eo(t));P.H.y+=Math.sin(Math.PI*t)*.2;P.pitch=.2;
+      if(t>.3&&!hit){hit=true;setPin(P,kk,hp.clone().add(v3(0,.12,0)),30);stopT=.1;G.shake=.4;sfx.kick();buzz([30,20,50]);chalk(hp,12);pop('머리 밟고 점프!!','#ffd23f',36);addScore(600);v.mode='hit';v.t=0;v.vel=v3(-d*.4,-2.8,1.6)}
+      if(t>.62&&!nx){nx=true;G.step=s.n;catchGauge()}})}
+  else{const mid=from.clone().add(v3(d*.42,.3,.05));setOff(P,kk,sg*.05,-.1,.82,30);setOff(P,ok,-sg*.12,-.6,-.2,14);setOff(P,'lh',-.4,.35,-.2,14);setOff(P,'rh',.4,.35,-.2,14);
+    act(.6,t=>{const a=t<.35?eo(t/.35):1-eio((t-.35)/.65);P.H.lerpVectors(from,mid,a);P.pitch=-.25*a;P.yaw=y0+(t>.3?d*Math.PI*2*eio((t-.3)/.7):0);
+      if(t>.26&&!hit){hit=true;stopT=.11;slowT=.35;G.shake=.45;sfx.kick();buzz([30,20,50]);chalk(V.H,12);pop('날라차기 참교육!','#ff8a3d',36);addScore(300);v.mode='hit';v.t=0;v.vel=v3(d*4.4,3.4,1.8)}
+      if(t>.5&&!nx){nx=true;setOff(P,kk,sg*.1,-.5,.1,16)}
+      if(t>.85){setPin(P,'lf',pl.l,18);setPin(P,'rf',pl.r,18);setOff(P,'lh',-.26,.3,.2,12);setOff(P,'rh',.26,.3,.2,12)}},
+     ()=>{P.yaw=y0;P.pitch=.12;later(.15,runGauge)})}}
+function updVillain(dt,rdt){const v=G.v;if(!v)return;const R=v.R;
+  if(v.mode==='run'){const segs=v.pts.length-1;v.p=Math.min(1,v.p+dt/(.36*segs));const x=v.p*segs,i=Math.min(segs-1,Math.floor(x)),fr=x-i;R.H.lerpVectors(v.pts[i],v.pts[i+1],fr);R.H.y+=Math.sin(Math.PI*fr)*.2;
+    const ph=Math.sin(x*Math.PI);setOff(R,'lf',-.1,-.6+.2*Math.max(0,ph),.32*ph,18);setOff(R,'rf',.1,-.6+.2*Math.max(0,-ph),-.32*ph,18);setOff(R,'lh',-.26,.3,-.25*ph,18);setOff(R,'rh',.26,.3,.25*ph,18);
+    if(v.p>=1){v.mode='lunge';kickGauge()}}
+  else if(v.mode==='lunge'){tmpA.copy(player.H).sub(R.H);tmpA.y+=.1;const L=tmpA.length();if(L>.45)R.H.addScaledVector(tmpA.multiplyScalar(1/L),dt*2.2);R.pitch=.35;setOff(R,'lh',-.2,.5,.42,14);setOff(R,'rh',.2,.5,.42,14);setOff(R,'lf',-.1,-.6,-.3,14);setOff(R,'rf',.1,-.5,.2,14)}
+  else if(v.mode==='hit'){v.vel.y-=16*dt;R.H.addScaledVector(v.vel,dt);R.pitch+=dt*9;R.lean+=dt*5;
+    if(R.H.y<MAT+.22){R.H.y=MAT+.22;v.mode='down';v.t=0;R.pitch=Math.PI/2;R.lean=0;sfx.thud();G.shake=Math.max(G.shake||0,.2);chalk(R.H,10);pop(pick(['매트에 철퍼덕!','겹치기 반성 중...','으아악 내 루트!!']),'#fff',62)}}
+  else{v.t+=rdt;if(v.t>1.6){chalk(R.H,8);scene.remove(R.g);G.v=null;return}}
+  pose(R,dt)}
 function lit(k){for(const b of ['L','R','G'])$('b'+b).classList.toggle('lit',b===k);$('kick').hidden=k!=='K'}
 function showBal(on){$('bal').hidden=!on;$('balLbl').hidden=!on}
 // ---------- 입력 ----------
-function press(k){if(!G||G.over||G.fall)return;initAudio();if(qtePress(k))return}
+function press(k){if(!G||G.over||G.fall)return;initAudio();qtePress(k)}
 for(const b of document.querySelectorAll('#btns button')){const k=b.dataset.k;
   b.addEventListener('pointerdown',e=>{e.preventDefault();input.down[k]=true;b.classList.add('tapfx');press(k)});
   const up=()=>{input.down[k]=false;b.classList.remove('tapfx')};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)}
@@ -309,39 +303,35 @@ addEventListener('keydown',e=>{if(e.code==='Enter'&&!$('title').hidden){$('go').
 addEventListener('keyup',e=>{const k=KEYS[e.code];if(k&&$('b'+k))$('b'+k).classList.remove('tapfx');if(e.code==='ArrowLeft'||e.code==='KeyA')kx.l=0;if(e.code==='ArrowRight'||e.code==='KeyD')kx.r=0});
 // ---------- 루프 ----------
 function update(dt,rdt){
-  if(!G||G.over)return;G.t+=rdt;
-  const jx=clamp(input.jx+(kx.r||0)-(kx.l||0),-1,1);
-  if(G.swingT>0){G.swingT-=rdt;G.balV+=(G.bal*1.6+jx*3.2)*rdt;G.balV*=Math.pow(.35,rdt);G.bal+=G.balV*rdt;if(Math.abs(G.bal)>=1){G.swingT=null;showBal(false);fall('배른도어! 몸이 돌아갔다');return}}
-  else if(G.qte&&G.qte.bal){const k=.9+G.grade*.15;G.gust=(G.gust||0)-rdt;if(G.gust<=0){G.gust=rand(.4,1);G.balV+=rand(-.7,.7)*(1+G.grade*.1)}
-    G.balV+=(G.bal*k+jx*2.6)*rdt;G.balV*=Math.pow(.25,rdt);G.bal=clamp(G.bal+G.balV*rdt,-1,1);if(Math.abs(G.bal)>=1)G.balV*=-.3}
-  else{G.bal*=Math.pow(.1,rdt);G.balV=0}
-  player.lean=G.bal*(G.swingT>0?1.5:.6);player.sv=(player.sv||0)*Math.pow(.02,dt)-(player.sx||0)*18*dt;player.sx=(player.sx||0)+player.sv*dt;
-  $('bal').querySelector('.needle').style.left=((G.bal+1)*50)+'%';$('bal').classList.toggle('bad',Math.abs(G.bal)>.35);
-  updQte(rdt);updVillain(dt);updParts(dt);
-  if(G.flying&&player.limbs.lh.t>=1&&player.limbs.rh.t>=1){G.flying=false;catchVol()}
-  if(player.spin>0){player.spin=Math.max(0,player.spin-dt*2.2);player.root.rotation.y=(1-player.spin)*Math.PI*2;if(player.spin===0){player.root.rotation.y=0;player.root.position.set(0,0,0);player.inner.position.set(0,0,0)}}
-  if(G.fall){const f=G.fall;f.t+=rdt;f.vy-=16*rdt;const floor=-(hipOf(player).y-.9);f.y=Math.max(f.y+f.vy*rdt,floor);player.inner.position.y=f.y;
-    if(f.t>.3&&!f.landed&&f.y<=floor+.01){f.landed=true;sfx.thud();stopT=.06}
-    if(f.t>1.5){if(G.lives<=0)gameOver();else{say('');startProblem()}}}
-  poseRig(player,dt)}
-// 옆에서 비스듬히 보는 카메라 (벽이 왼쪽, 클라이머 옆모습)
-let camY=1.6;function updCam(dt){const l=player.limbs,cy=(l.lf.cur.y+l.lh.cur.y)/2+(G&&G.fall?G.fall.y*.5:0);camY+=(cy-camY)*Math.min(1,dt*3);
-  const port=camera.aspect<.8,d=port?1:.8;let sx=0,sy=0;if(G&&G.shake>0){G.shake=Math.max(0,G.shake-dt*1.6);sx=(Math.random()-.5)*G.shake*.35;sy=(Math.random()-.5)*G.shake*.35}
-  const ot=G&&G.zoom?-.75:0;camO+=(ot-camO)*Math.min(1,dt*(ot?2.2:5));const ox=3.3*d,oz=3.1*d,ca=Math.cos(camO),sa=Math.sin(camO);
-  camera.position.set(ox*ca-oz*sa+sx,camY+.5+sy-camO*.6,ox*sa+oz*ca);camera.lookAt(port?-.25:-.1,camY,.2);
-  const zt=G&&G.zoom?1:0;camZ+=(zt-camZ)*Math.min(1,dt*(zt?4:6));const f=BASE_FOV-9*camZ;if(Math.abs(camera.fov-f)>.01){camera.fov=f;camera.updateProjectionMatrix()}}
-let camZ=0,BASE_FOV=58,camO=0;
-function gameOver(){G.over=true;endQte();const best=Math.max(G.best,G.score);try{localStorage.setItem('chamgyo-wall-best',best)}catch(e){}
-  $('rWhy').textContent=`추락 3번 · 최고 V${Math.max(0,G.grade-1)} 완등`;$('rScore').textContent=G.score.toLocaleString();$('rInfo').textContent=G.score>=G.best&&G.score>0?'🏆 내 신기록!':`내 최고 ${best.toLocaleString()}`;$('result').hidden=false}
-function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;BASE_FOV=w/h<.8?58:50;camera.fov=BASE_FOV;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
+  if(!G||G.over)return;const P=player,jx=clamp(input.jx+(kx.r||0)-(kx.l||0),-1,1);
+  updTweens(dt);
+  if(G.swing){const w=G.swing,b=w.b;w.t-=rdt;G.balV+=(G.bal*1.6+jx*3.2)*rdt;G.balV*=Math.pow(.35,rdt);G.bal+=G.balV*rdt;const a=clamp(G.bal,-1,1)*.8;
+    P.H.set(b.cx+Math.sin(a),b.lipY-Math.cos(a),b.hangZ);P.lean=-a;P.pitch=0;setOff(P,'lf',-.11-G.balV*.05,-.78,-.04,10);setOff(P,'rf',.11-G.balV*.05,-.78,-.04,10);
+    if(Math.abs(G.bal)>=1){fall('배른도어! 손이 터졌다',Math.sign(G.bal)*2)}
+    else if(w.t<=0){G.swing=null;showBal(false);say('');pop('버팀!','#46d18c',46);addScore(150);G.secs[G.si].top?topOut():hookGauge()}}
+  $('bal').querySelector('.needle').style.left=((clamp(G.bal,-1,1)+1)*50)+'%';$('bal').classList.toggle('bad',Math.abs(G.bal)>.6);
+  updQte(rdt);updVillain(dt,rdt);updParts(stopT>0?0:rdt);
+  if(G.fall){const f=G.fall;f.t+=rdt;
+    if(!f.landed){f.vy-=17*rdt;P.H.y+=f.vy*rdt;P.H.x+=f.vx*rdt;P.H.z+=(1.2-P.H.z)*Math.min(1,rdt*2);P.pitch+=rdt*3.2;P.lean+=rdt*1.5;
+      if(P.H.y<=MAT+.22){P.H.y=MAT+.22;f.landed=true;f.t=0;P.pitch=Math.PI/2;P.lean=0;stopT=.08;G.shake=.4;sfx.thud();buzz(40);chalk(P.H,14);pop('철퍼덕!','#fff',52)}}
+    else if(f.t>1.2){if(G.lives<=0)gameOver();else{G.fall=null;say('');beginSection(G.cp,true)}}}
+  pose(P,G.fall?rdt:dt)}
+// 카메라: 달리는 방향 뒤쪽에서 비스듬히. 날아갈 땐 반대편으로 돌면서 줌인
+const camT=v3(0,1.4,.6);let camD=1,camO=0,camZ=0,BASE_FOV=56;
+function updCam(dt){const sec=G&&G.secs&&G.secs[G.si],d=sec?sec.d:1;camT.lerp(player.H,Math.min(1,dt*5));camD+=(d-camD)*Math.min(1,dt*2.5);
+  const ot=G&&G.zoom?1:0;camO+=(ot-camO)*Math.min(1,dt*(ot?2.2:4));const port=camera.aspect<.8,dist=port?5.3:4.2;let sx=0,sy=0;
+  if(G&&G.shake>0){G.shake=Math.max(0,G.shake-dt*1.6);sx=(Math.random()-.5)*G.shake*.35;sy=(Math.random()-.5)*G.shake*.35}
+  camera.position.set(camT.x-camD*2.3*(1-1.5*camO)+sx,camT.y+.75+sy,dist);camera.lookAt(camT.x+camD*.7*(1-camO),camT.y+.55,.2);
+  const zt=G&&G.zoom?1:0;camZ+=(zt-camZ)*Math.min(1,dt*(zt?4:6));const f=BASE_FOV-8*camZ;if(Math.abs(camera.fov-f)>.01){camera.fov=f;camera.updateProjectionMatrix()}}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;BASE_FOV=w/h<.8?58:48;camera.fov=BASE_FOV;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
 let last=performance.now();function frame(now){let rdt=Math.min(.05,(now-last)/1000);last=now;if(document.hidden||window.__freeze)rdt=0;let dt=rdt;
-  if(stopT>0){stopT-=rdt;dt=0}else if(G&&G.qte&&G.qte.big)dt*=.12;else if(slowT>0){slowT-=rdt;dt*=.35}
+  if(stopT>0){stopT-=rdt;dt=0}else if(G&&G.qte)dt*=.1;else if(slowT>0){slowT-=rdt;dt*=.35}
   update(dt,rdt);updCam(Math.max(rdt,.016));renderer.render(scene,camera);requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 $('go').addEventListener('click',()=>{initAudio();$('title').hidden=true;newGame()});
 $('again').addEventListener('click',()=>{$('result').hidden=true;newGame()});
 // 시험용 훅
-window.__wall={get G(){return G},P:player,press,input,fall:w=>fall(w)};
+window.__wall={get G(){return G},press,input,P:player,fall:w=>fall(w)};
 </script>
 </body>
 </html>
