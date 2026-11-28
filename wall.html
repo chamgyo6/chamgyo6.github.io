@@ -116,13 +116,16 @@ const routeHolds=[];
 // ---------- 클라이머 (막대 인형 + 2관절 IK) ----------
 const segGeo=new T.CylinderGeometry(1,1,1,8);segGeo.translate(0,.5,0);
 function seg(par,col,r){const m=new T.Mesh(segGeo,lam(col));m.userData.r=r;par.add(m);return m}
-function aim(m,a,b){const d=b.clone().sub(a),L=d.length()||1e-4;m.position.copy(a);m.scale.set(m.userData.r,L,m.userData.r);m.quaternion.setFromUnitVectors(v3(0,1,0),d.divideScalar(L))}
+function aim(m,a,b){const d=b.clone().sub(a),L=d.length()||1e-4;m.position.copy(a);m.scale.set(m.userData.r,L,m.userData.rz||m.userData.r);m.quaternion.setFromUnitVectors(v3(0,1,0),d.divideScalar(L))}
 function ik(a,t,l1,l2,bend){const d=t.clone().sub(a);let L=d.length();const maxL=(l1+l2)*.999;if(L>maxL){d.setLength(maxL);L=maxL}const tt=a.clone().add(d);
   const c=clamp((l1*l1+L*L-l2*l2)/(2*l1*L),-1,1),s=Math.sqrt(1-c*c),dir=d.clone().normalize(),side=bend.clone().sub(dir.clone().multiplyScalar(bend.dot(dir))).normalize();
   return [a.clone().add(dir.multiplyScalar(l1*c)).add(side.multiplyScalar(l1*s)),tt]}
+const boxGeo=new T.BoxGeometry(1,1,1);boxGeo.translate(0,.5,0);const ballGeo=new T.SphereGeometry(1,10,8);
 function makeRig(c){const root=new T.Group(),inner=new T.Group();root.add(inner);scene.add(root);
-  const r={root,inner,torso:seg(inner,c.shirt,.17),head:new T.Mesh(new T.SphereGeometry(.15,12,10),lam(c.skin)),hair:new T.Mesh(new T.SphereGeometry(.155,12,8,0,7,0,1.4),lam(c.hair)),
-    ua:[seg(inner,c.skin,.05),seg(inner,c.skin,.05)],la:[seg(inner,c.skin,.045),seg(inner,c.skin,.045)],ul:[seg(inner,c.pants,.07),seg(inner,c.pants,.07)],ll:[seg(inner,c.pants,.06),seg(inner,c.pants,.06)],
+  const torso=new T.Mesh(boxGeo,lam(c.shirt));torso.userData.r=.42;torso.userData.rz=.22;inner.add(torso);
+  const ball=(col,rr)=>{const m=new T.Mesh(ballGeo,lam(col));m.scale.setScalar(rr);inner.add(m);return m};
+  const r={root,inner,torso,sho:[ball(c.shirt,.1),ball(c.shirt,.1)],elb:[ball(c.skin,.05),ball(c.skin,.05)],hipB:ball(c.pants,.15),knee:[ball(c.pants,.065),ball(c.pants,.065)],neck:seg(inner,c.skin,.06),hand:[ball(c.skin,.06),ball(c.skin,.06)],head:new T.Mesh(new T.SphereGeometry(.15,12,10),lam(c.skin)),hair:new T.Mesh(new T.SphereGeometry(.155,12,8,0,7,0,1.4),lam(c.hair)),
+    ua:[seg(inner,c.shirt,.07),seg(inner,c.shirt,.07)],la:[seg(inner,c.skin,.05),seg(inner,c.skin,.05)],ul:[seg(inner,c.pants,.07),seg(inner,c.pants,.07)],ll:[seg(inner,c.pants,.06),seg(inner,c.pants,.06)],
     shoe:[new T.Mesh(new T.BoxGeometry(.12,.08,.2),lam(c.shoe)),new T.Mesh(new T.BoxGeometry(.12,.08,.2),lam(c.shoe))],
     limbs:{lh:null,rh:null,lf:null,rf:null},lean:0,dip:0};
   inner.add(r.head,r.hair,...r.shoe);
@@ -134,10 +137,11 @@ function hipOf(r){const l=r.limbs;return v3((l.lf.cur.x+l.rf.cur.x)/2+r.lean*.28
 function poseRig(r,dt){
   for(const k in r.limbs){const L=r.limbs[k];if(L.t<1){L.t=Math.min(1,L.t+dt/L.dur);const e=L.t<.5?2*L.t*L.t:1-Math.pow(-2*L.t+2,2)/2;L.cur.lerpVectors(L.from,L.to,e);L.cur.z=.08+Math.sin(L.t*Math.PI)*.25}}
   const l=r.limbs,hip=hipOf(r);const sRaw=v3((l.lh.cur.x+l.rh.cur.x)/2+r.lean*.12,(l.lh.cur.y+l.rh.cur.y)/2-.42,.32);
-  const sh=hip.clone().add(sRaw.sub(hip).setLength(.58));aim(r.torso,hip,sh);
-  r.head.position.copy(sh).add(v3(r.lean*.05,.24,.04));r.hair.position.copy(r.head.position).add(v3(0,.02,-.01));
-  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=sh.clone().add(v3(.2*sg,0,0));const [el,tt]=ik(a,l[k].cur,.34,.32,v3(.6*sg,-.4,.8));aim(r.ua[i],a,el);aim(r.la[i],el,tt)});
-  [['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=hip.clone().add(v3(.12*sg,-.05,0));const [kn,tt]=ik(a,l[k].cur,.44,.42,v3(.7*sg,.2,1));aim(r.ul[i],a,kn);aim(r.ll[i],kn,tt);r.shoe[i].position.copy(tt).add(v3(0,-.02,.06))})}
+  const sh=hip.clone().add(sRaw.sub(hip).setLength(.58));aim(r.torso,hip.clone().add(v3(0,-.06,0)),sh.clone().add(v3(0,.04,0)));r.hipB.position.copy(hip);
+  const nk=sh.clone().add(v3(0,.04,.02));aim(r.neck,nk,nk.clone().add(v3(r.lean*.03,.12,.02)));
+  r.head.position.copy(sh).add(v3(r.lean*.05,.27,.05));r.hair.position.copy(r.head.position).add(v3(0,.02,-.01));
+  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=sh.clone().add(v3(.25*sg,-.03,0));r.sho[i].position.copy(a);const [el,tt]=ik(a,l[k].cur,.34,.32,v3(.8*sg,-.9,.5));r.elb[i].position.copy(el);r.hand[i].position.copy(tt);aim(r.ua[i],a,el);aim(r.la[i],el,tt)});
+  [['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=hip.clone().add(v3(.12*sg,-.05,0));const [kn,tt]=ik(a,l[k].cur,.44,.42,v3(.7*sg,.2,1));r.knee[i].position.copy(kn);aim(r.ul[i],a,kn);aim(r.ll[i],kn,tt);r.shoe[i].position.copy(tt).add(v3(0,-.02,.06))})}
 const player=makeRig({skin:0xe0b48a,shirt:0x1d1812,pants:0x58613a,hair:0x1a1a1a,shoe:0xe4572e});
 // ---------- 오디오 ----------
 let AC=null;function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
