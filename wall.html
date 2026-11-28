@@ -113,6 +113,9 @@ const holdGeo=new T.SphereGeometry(1,10,7);
 function makeHold(x,y,col,s=.11,dim){const mt=lam(col);if(dim)mt.color.lerp(new T.Color(0xd9c7a6),.55);else{mt.emissive=new T.Color(col);mt.emissiveIntensity=.25}const m=new T.Mesh(holdGeo,mt);m.scale.set(s*1.25,s,s*.55);m.position.set(x,y,.04);m.rotation.z=rand(-1,1);scene.add(m);return m}
 for(let i=0;i<90;i++)makeHold(rand(-3.3,3.3),rand(.5,8.6),pick(DECOR),rand(.035,.065),true);
 const routeHolds=[];
+// 볼륨: 벽에 붙은 큰 사다리꼴 덩어리 (앞면이 좁아짐)
+function makeVolume(cx,cy,w,h,d,col){let g=new T.BoxGeometry(w,h,d);const pa=g.attributes.position;for(let i=0;i<pa.count;i++)if(pa.getZ(i)>0){pa.setX(i,pa.getX(i)*.55);pa.setY(i,pa.getY(i)*.5)}
+  g.translate(0,0,d/2);g=g.toNonIndexed();g.computeVertexNormals();const m=new T.Mesh(g,new T.MeshLambertMaterial({color:col}));m.position.set(cx,cy,0);scene.add(m);return m}
 // ---------- 클라이머 (막대 인형 + 2관절 IK) ----------
 const segGeo=new T.CylinderGeometry(1,1,1,8);segGeo.translate(0,.5,0);
 function seg(par,col,r){const m=new T.Mesh(segGeo,lam(col));m.userData.r=r;par.add(m);return m}
@@ -120,28 +123,31 @@ function aim(m,a,b){const d=b.clone().sub(a),L=d.length()||1e-4;m.position.copy(
 function ik(a,t,l1,l2,bend){const d=t.clone().sub(a);let L=d.length();const maxL=(l1+l2)*.999;if(L>maxL){d.setLength(maxL);L=maxL}const tt=a.clone().add(d);
   const c=clamp((l1*l1+L*L-l2*l2)/(2*l1*L),-1,1),s=Math.sqrt(1-c*c),dir=d.clone().normalize(),side=bend.clone().sub(dir.clone().multiplyScalar(bend.dot(dir))).normalize();
   return [a.clone().add(dir.multiplyScalar(l1*c)).add(side.multiplyScalar(l1*s)),tt]}
-const boxGeo=new T.BoxGeometry(1,1,1);boxGeo.translate(0,.5,0);const ballGeo=new T.SphereGeometry(1,10,8);
+const boxGeo=new T.BoxGeometry(1,1,1);boxGeo.translate(0,.5,0);const ballGeo=new T.SphereGeometry(1,12,9);
+// 비율: 머리 0.13 · 목 0.08 · 몸통 0.5(어깨폭 0.38) · 골반 0.3 · 팔 0.3+0.28 · 다리 0.42+0.4
 function makeRig(c){const root=new T.Group(),inner=new T.Group();root.add(inner);scene.add(root);
-  const torso=new T.Mesh(boxGeo,lam(c.shirt));torso.userData.r=.42;torso.userData.rz=.22;inner.add(torso);
+  const box=(col,w,d)=>{const m=new T.Mesh(boxGeo,lam(col));m.userData.r=w;m.userData.rz=d;inner.add(m);return m};
   const ball=(col,rr)=>{const m=new T.Mesh(ballGeo,lam(col));m.scale.setScalar(rr);inner.add(m);return m};
-  const r={root,inner,torso,sho:[ball(c.shirt,.1),ball(c.shirt,.1)],elb:[ball(c.skin,.05),ball(c.skin,.05)],hipB:ball(c.pants,.15),knee:[ball(c.pants,.065),ball(c.pants,.065)],neck:seg(inner,c.skin,.06),hand:[ball(c.skin,.06),ball(c.skin,.06)],head:new T.Mesh(new T.SphereGeometry(.15,12,10),lam(c.skin)),hair:new T.Mesh(new T.SphereGeometry(.155,12,8,0,7,0,1.4),lam(c.hair)),
-    ua:[seg(inner,c.shirt,.07),seg(inner,c.shirt,.07)],la:[seg(inner,c.skin,.05),seg(inner,c.skin,.05)],ul:[seg(inner,c.pants,.07),seg(inner,c.pants,.07)],ll:[seg(inner,c.pants,.06),seg(inner,c.pants,.06)],
-    shoe:[new T.Mesh(new T.BoxGeometry(.12,.08,.2),lam(c.shoe)),new T.Mesh(new T.BoxGeometry(.12,.08,.2),lam(c.shoe))],
+  const r={root,inner,chest:box(c.shirt,.38,.2),belly:box(c.shirt,.32,.19),pelvis:box(c.pants,.31,.2),
+    sho:[ball(c.shirt,.07),ball(c.shirt,.07)],elb:[ball(c.skin,.042),ball(c.skin,.042)],knee:[ball(c.pants,.058),ball(c.pants,.058)],hipJ:[ball(c.pants,.075),ball(c.pants,.075)],
+    neck:seg(inner,c.skin,.05),hand:[ball(c.skin,.05),ball(c.skin,.05)],head:ball(c.skin,.13),hair:ball(c.hair,.138),
+    ua:[seg(inner,c.shirt,.058),seg(inner,c.shirt,.058)],la:[seg(inner,c.skin,.042),seg(inner,c.skin,.042)],ul:[seg(inner,c.pants,.072),seg(inner,c.pants,.072)],ll:[seg(inner,c.pants,.056),seg(inner,c.pants,.056)],
+    shoe:[new T.Mesh(new T.BoxGeometry(.11,.08,.22),lam(c.shoe)),new T.Mesh(new T.BoxGeometry(.11,.08,.22),lam(c.shoe))],
     limbs:{lh:null,rh:null,lf:null,rf:null},lean:0,dip:0};
-  inner.add(r.head,r.hair,...r.shoe);
+  inner.add(...r.shoe);
   for(const k of ['lh','rh','lf','rf'])r.limbs[k]={cur:v3(0,0,.08),from:v3(),to:v3(),t:1,dur:.25};
   return r}
-function setLimb(r,k,p,dur=.25){const L=r.limbs[k];L.from.copy(L.cur);L.to.copy(p);L.to.z=.08;L.t=0;L.dur=dur}
-function snapLimb(r,k,p){const L=r.limbs[k];L.cur.copy(p);L.cur.z=.08;L.to.copy(L.cur);L.t=1}
-function hipOf(r){const l=r.limbs;return v3((l.lf.cur.x+l.rf.cur.x)/2+r.lean*.28,(l.lf.cur.y+l.rf.cur.y)/2+.72-r.dip,.34)}
+function setLimb(r,k,p,dur=.25){const L=r.limbs[k];L.from.copy(L.cur);L.to.copy(p);L.to.z=p.z||.08;L.t=0;L.dur=dur}
+function snapLimb(r,k,p){const L=r.limbs[k];L.cur.copy(p);L.cur.z=p.z||.08;L.to.copy(L.cur);L.t=1}
+function hipOf(r){const l=r.limbs,fz=Math.max(l.lf.cur.z,l.rf.cur.z,l.lh.cur.z,l.rh.cur.z);return v3((l.lf.cur.x+l.rf.cur.x)/2+r.lean*.28,(l.lf.cur.y+l.rf.cur.y)/2+.7-r.dip,.36+Math.max(0,fz-.08)*.8)}
 function poseRig(r,dt){
-  for(const k in r.limbs){const L=r.limbs[k];if(L.t<1){L.t=Math.min(1,L.t+dt/L.dur);const e=L.t<.5?2*L.t*L.t:1-Math.pow(-2*L.t+2,2)/2;L.cur.lerpVectors(L.from,L.to,e);L.cur.z=.08+Math.sin(L.t*Math.PI)*.25}}
-  const l=r.limbs,hip=hipOf(r);const sRaw=v3((l.lh.cur.x+l.rh.cur.x)/2+r.lean*.12,(l.lh.cur.y+l.rh.cur.y)/2-.42,.32);
-  const sh=hip.clone().add(sRaw.sub(hip).setLength(.58));aim(r.torso,hip.clone().add(v3(0,-.06,0)),sh.clone().add(v3(0,.04,0)));r.hipB.position.copy(hip);
-  const nk=sh.clone().add(v3(0,.04,.02));aim(r.neck,nk,nk.clone().add(v3(r.lean*.03,.12,.02)));
-  r.head.position.copy(sh).add(v3(r.lean*.05,.27,.05));r.hair.position.copy(r.head.position).add(v3(0,.02,-.01));
-  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=sh.clone().add(v3(.25*sg,-.03,0));r.sho[i].position.copy(a);const [el,tt]=ik(a,l[k].cur,.34,.32,v3(.8*sg,-.9,.5));r.elb[i].position.copy(el);r.hand[i].position.copy(tt);aim(r.ua[i],a,el);aim(r.la[i],el,tt)});
-  [['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=hip.clone().add(v3(.12*sg,-.05,0));const [kn,tt]=ik(a,l[k].cur,.44,.42,v3(.7*sg,.2,1));r.knee[i].position.copy(kn);aim(r.ul[i],a,kn);aim(r.ll[i],kn,tt);r.shoe[i].position.copy(tt).add(v3(0,-.02,.06))})}
+  for(const k in r.limbs){const L=r.limbs[k];if(L.t<1){L.t=Math.min(1,L.t+dt/L.dur);const e=L.t<.5?2*L.t*L.t:1-Math.pow(-2*L.t+2,2)/2;L.cur.lerpVectors(L.from,L.to,e);L.cur.z+=Math.sin(L.t*Math.PI)*.25}}
+  const l=r.limbs,hip=hipOf(r);const sRaw=v3((l.lh.cur.x+l.rh.cur.x)/2+r.lean*.1,(l.lh.cur.y+l.rh.cur.y)/2-.4,hip.z-.04);
+  const up=sRaw.sub(hip).normalize(),sh=hip.clone().addScaledVector(up,.52),mid=hip.clone().addScaledVector(up,.2);
+  aim(r.pelvis,hip.clone().addScaledVector(up,-.1),hip.clone().addScaledVector(up,.06));aim(r.belly,hip.clone().addScaledVector(up,.04),mid.clone().addScaledVector(up,.08));aim(r.chest,mid,sh.clone().addScaledVector(up,.03));
+  const nk=sh.clone().addScaledVector(up,.02);aim(r.neck,nk,nk.clone().addScaledVector(up,.1));r.head.position.copy(nk).addScaledVector(up,.2);r.hair.position.copy(r.head.position).add(v3(0,.022,.022));
+  [['lh',-1,0],['rh',1,1]].forEach(([k,sg,i])=>{const a=sh.clone().add(v3(.17*sg,-.04,0));r.sho[i].position.copy(a);const [el,tt]=ik(a,l[k].cur,.3,.28,v3(.9*sg,-.7,.6));r.elb[i].position.copy(el);r.hand[i].position.copy(tt);aim(r.ua[i],a,el);aim(r.la[i],el,tt)});
+  [['lf',-1,0],['rf',1,1]].forEach(([k,sg,i])=>{const a=hip.clone().add(v3(.1*sg,-.06,0));r.hipJ[i].position.copy(a);const [kn,tt]=ik(a,l[k].cur,.42,.4,v3(.8*sg,.25,1));r.knee[i].position.copy(kn);aim(r.ul[i],a,kn);aim(r.ll[i],kn,tt);r.shoe[i].position.copy(tt).add(v3(0,-.02,.05))})}
 const player=makeRig({skin:0xe0b48a,shirt:0x1d1812,pants:0x58613a,hair:0x1a1a1a,shoe:0xe4572e});
 // ---------- 오디오 ----------
 let AC=null;function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
@@ -211,9 +217,12 @@ function startHand(){const k=G.hand==='L'?'lh':'rh',c=player.limbs[k].cur;const 
 // --- 다이노 / 코디네이션: 반동 왼발 → 오른발 → 잡아 를 연속 게이지로 ---
 function startDyno(){
   const g=G.grade,seqs=[['L','R','G'],['L','R','L','G'],['R','L','R','G'],['L','R','L','R','G'],['L','L','R','R','G']];G.seq=seqs[Math.min(seqs.length-1,Math.floor(g/1.5))].slice();G.dPerf=0;G.dN=G.seq.length;
-  const l=player.limbs,dy=1.05;G.dynoTo={lh:v3(l.lh.cur.x-.05,l.lh.cur.y+dy,0),rh:v3(l.rh.cur.x+.05,l.rh.cur.y+dy,0),lf:v3(l.lf.cur.x,l.lf.cur.y+dy,0),rf:v3(l.rf.cur.x,l.rf.cur.y+dy,0)};
-  for(const k of ['lh','rh','lf','rf'])routeHolds.push(makeHold(G.dynoTo[k].x,G.dynoTo[k].y,G.col[0],k[1]==='h'?.14:.1));
-  say('다이노!','반동 주고… 왼발! 오른발! 잡아!');later(.7,dynoStep)}
+  const l=player.limbs,dy=1.05,cx=(l.lh.cur.x+l.rh.cur.x)/2,hy=(l.lh.cur.y+l.rh.cur.y)/2+dy,W=1.3,H=.9,D=.42,cy=hy-H*.25;
+  const vol=makeVolume(cx,cy,W,H,D,pick([0x4a5866,0x6b5a8e,0x2f6f63,0x8a4f3d]));routeHolds.push(vol);
+  // 손은 볼륨 윗모서리(립)를 때려 잡고, 발은 볼륨 아래쪽 면에 스미어
+  G.dynoTo={lh:v3(cx-.17,hy,D-.02),rh:v3(cx+.17,hy,D-.02),lf:v3(l.lf.cur.x,l.lf.cur.y+dy*.85,0),rf:v3(l.rf.cur.x,l.rf.cur.y+dy*.85,0)};
+  for(const k of ['lf','rf'])routeHolds.push(makeHold(G.dynoTo[k].x,G.dynoTo[k].y,G.col[0],.1));
+  say('볼륨 다이노!','반동 주고… 왼발! 오른발! 볼륨 잡아!');later(.7,dynoStep)}
 function dynoStep(){const k=G.seq.shift(),last=!G.seq.length,l=player.limbs;
   const anchor=k==='G'?()=>G.dynoTo.rh:k==='L'?()=>l.lf.cur:()=>l.rf.cur;
   qte({key:k,dur:gDur(last?.9:.75,.42,.035),zone:[.68,.94],perf:[.8,.88],anchor,sub:last?'지금 날아!':'반동!',
