@@ -2134,8 +2134,11 @@ function updateInno(n,dt){
 
 // ================= main update =================
 let promptEl=null,hintEl=null;S=null;
+// 초반 1~3웨이브만 멘탈 덜 깎임·빌런 천천히 등장 (처음 하는 사람 배려). 4웨이브부터는 원래 난이도
+const EASE=w=>w<=1?.5:w===2?.6:w===3?.75:1;
 function update(dt){
   if(!S||S.frozen)return;
+  const m0=S.mental;
   if(S.death){S.death.t+=dt;S.death.yaw+=dt*.45;const p=S.p;if(p.pos.y>0){p.pos.y=Math.max(0,p.pos.y-dt*5);if(p.state==='climb')p.pos.z=Math.min(p.pos.z+dt*2,WALL_Z+.9)}}
   S.t+=dt;
   if(S.slowT>0){S.slowT-=dt;if(S.slowT<=0)S.slow=1}
@@ -2148,7 +2151,7 @@ function update(dt){
     updatePlayer(gdt);
     if(S.waveT>0){S.waveT-=gdt;if(S.waveT<=0)startWave()}
     else{
-      if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(.55,.95)*Math.max(.45,1-.05*(S.wave-1))*(S.ev&&S.ev.k==='rush'?.5:1)}}
+      if(S.queue.length){S.spawnT-=gdt;if(S.spawnT<=0){spawn(S.queue.shift());S.spawnT=rand(.55,.95)*Math.max(.45,1-.05*(S.wave-1))*(S.ev&&S.ev.k==='rush'?.5:1)/EASE(S.wave)}}
       else if(!S.villains.some(v=>v.state!=='gone'&&!v.ko)&&S.clearT<=0){S.clearT=1;if(S.ev&&S.ev.k==='patrol'){const clean=S.warn===S.waveW0;setTimeout(()=>{if(!S||S.over)return;if(clean){const g=addScore(1500*Math.max(1,Math.floor(scaleW()/3)));staffSay('깔끔하네~ 이달의 매너왕!',2);announce('사장님 인증!',`순찰 무사통과 +${g.toLocaleString()}`,'#46d18c',0,1.1);cheer(2);sfx('clear')}else{staffSay('흠... 회원은 때리지 맙시다',2)}},500)}S.mental=Math.min(100,S.mental+12);sfx('clear');banner('WAVE CLEAR','직원: "이달의 회원은 당신이에요 ㅠㅠ" · 멘탈 +12',2.4,'#46d18c');cheer(2);S.grat=0;setTimeout(giveReward,1000);addScore(300*scaleW());S.waveT=1.6;
         if(S.wave%10===0){const g=addScore(1000*Math.min(S.wave/10,3));setTimeout(()=>{if(S&&!S.over){pop(headPos(S.p,1.9),S.wave%100===0?`🏆 WAVE ${S.wave} 돌파!! 센터의 전설`:`🏅 WAVE ${S.wave} 돌파!! +${g.toLocaleString()}`,S.wave%100===0?46:38,'#ffd23f',2.4);cheer(2);S.speedT=.6;buzz([30,30,30,30,90])}},1400)}
         {const lost=(S.waveM0??100)-(S.waveMin??0),clean=S.warn===(S.waveW0??0);
@@ -2187,6 +2190,7 @@ function update(dt){
   if(S.koCam&&S.koCam.t>0)S.koCam.t-=dt;
   S.fovKick*=Math.pow(.004,dt);if(S.fovKick<.01)S.fovKick=0;
   if(bannerT>0){bannerT-=dt;if(bannerT<=0)bannerEl.hidden=true}
+  if(S.mental<m0&&EASE(S.wave)<1)S.mental=m0-(m0-S.mental)*EASE(S.wave);
   if(!S.over&&S.mental<=0){S.mental=0;gameOver('멘탈 붕괴','빌런들의 민폐를 버티지 못했다')}
   input.jumpP=input.atkP=input.actP=0;
 }
